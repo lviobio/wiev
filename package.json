@@ -5,10 +5,12 @@
         "build": "vite build",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
-        "check": "vue-tsc --noEmit",
+        "check": "npm run ts:check && npm run lint:check && npm run format:check",
+        "ts:check": "vue-tsc --noEmit",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
-        "lint": "eslint . --fix"
+        "lint": "eslint . --fix",
+        "lint:check": "eslint ."
     },
     "devDependencies": {
         "@eslint/js": "^9.35.0",

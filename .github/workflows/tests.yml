@@ -37,11 +37,14 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
-      - name: Check typescript
-        run: npm run check
+      - name: Run eslint check
+        run: npm run eslint:check
 
-      - name: Check frontend code formatting with Prettier
+      - name: Run prettier check
         run: npm run format:check
+
+      - name: Run typescript check
+        run: npm run check
 
       - name: Build Assets
         run: npm run build
