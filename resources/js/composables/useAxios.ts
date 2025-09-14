@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/composables/useAuthStore'
+import { AxiosUtils, UnauthorizedHttpException } from '@/core/errors/axios'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { useNotification } from 'naive-ui'
@@ -21,22 +22,20 @@ export const useAxios = () => {
 
   instance.interceptors.response.use(
     (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        authStore.logout()
+    (_) => {
+      const error = AxiosUtils.toSpecificException(_)
 
+      if (error instanceof UnauthorizedHttpException) {
+        authStore.logout()
         window.location.reload()
+
+        return
       }
 
-      if (
-        error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data
-      ) {
+      if (error.message) {
         notification.error({
           title: 'Error',
-          content: error.response.data.message as string,
+          content: error.message,
           meta: format(new Date(), 'dd.MM.yyyy HH:mm'),
           duration: 5000,
         })
