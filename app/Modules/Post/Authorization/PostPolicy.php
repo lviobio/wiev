@@ -21,6 +21,11 @@ class PostPolicy
         return Response::allow();
     }
 
+    public function show(?User $user): Response
+    {
+        return Response::allow();
+    }
+
     public function update(?User $user): Response
     {
         return Response::allow();

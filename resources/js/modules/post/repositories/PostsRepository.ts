@@ -32,9 +32,14 @@ interface PostStoreQuery extends DefaultStoreQueryContract<PostStoreData> {}
 
 type PostStoreQueryResult = Post
 
+type PostFindResult = Post
+type PostDestroyResult = void
+
 interface PostsRepository {
   index(options: PostIndexQuery): Promise<PostIndexQueryResult>
-  destroy(id: PostIdentifier): Promise<void>
+  find(id: PostIdentifier): Promise<PostFindResult>
+  store(options: PostStoreQuery): Promise<PostStoreQueryResult>
+  destroy(id: PostIdentifier): Promise<PostDestroyResult>
 }
 
 class PostsApiRepository implements PostsRepository {
@@ -50,13 +55,19 @@ class PostsApiRepository implements PostsRepository {
     return data
   }
 
+  async find(id: PostIdentifier): Promise<PostFindResult> {
+    const { data } = await this.axios.get<Post>(`posts/${id}`)
+
+    return data
+  }
+
   async store(options: PostStoreQuery): Promise<PostStoreQueryResult> {
     const { data } = await sendAxiosPostRequest<Post>(this.axios, 'posts', options)
 
     return data
   }
 
-  async destroy(id: PostIdentifier): Promise<void> {
+  async destroy(id: PostIdentifier): Promise<PostDestroyResult> {
     await this.axios.delete(`posts/${id}`)
   }
 }
