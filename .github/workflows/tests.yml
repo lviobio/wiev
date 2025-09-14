@@ -38,13 +38,13 @@ jobs:
         run: npm ci
 
       - name: Run eslint check
-        run: npm run eslint:check
+        run: npm run lint:check
 
       - name: Run prettier check
         run: npm run format:check
 
       - name: Run typescript check
-        run: npm run check
+        run: npm run ts:check
 
       - name: Build Assets
         run: npm run build
