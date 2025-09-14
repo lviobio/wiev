@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { PageExpose } from '@/types'
+import { PageExpose } from '@/core/types'
 
 defineExpose<PageExpose>({
   title: 'Home',

@@ -1,9 +1,6 @@
 <template>
   <n-breadcrumb>
-    <n-breadcrumb-item
-      v-for="breadcrumb in computedBreadcrumbs"
-      :key="breadcrumb.title"
-    >
+    <n-breadcrumb-item v-for="breadcrumb in computedBreadcrumbs" :key="breadcrumb.title">
       <router-link :to="breadcrumb.route">
         {{ breadcrumb.title }}
       </router-link>
@@ -12,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { Breadcrumb } from '@/types'
+import { Breadcrumb } from '@/core/types'
 import { computed } from 'vue'
 
 const props = defineProps<{

@@ -12,10 +12,7 @@
         @collapse="collapsed = true"
         @expand="collapsed = false"
       >
-        <AppLogo
-          class="justify-center my-4 text-xl"
-          :collapsed="collapsed"
-        />
+        <AppLogo class="my-4 justify-center text-xl" :collapsed="collapsed" />
         <AppMenu :collapsed="collapsed" />
       </n-layout-sider>
       <n-layout>
@@ -26,10 +23,7 @@
               :breadcrumbs="currentComponent.breadcrumbs"
             />
 
-            <component
-              :is="Component"
-              ref="currentComponent"
-            />
+            <component :is="Component" ref="currentComponent" />
           </div>
         </RouterView>
       </n-layout>
@@ -38,13 +32,13 @@
 </template>
 
 <script setup lang="tsx">
-import { onMounted, ref, watch } from 'vue'
-import { useUserStore } from '@/composables/useUserStore'
-import { useAuthStore } from '@/composables/useAuthStore'
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue'
 import AppLogo from '@/components/AppLogo.vue'
 import AppMenu from '@/components/AppMenu.vue'
-import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue'
-import { PageExpose } from '@/types'
+import { useAuthStore } from '@/composables/useAuthStore'
+import { useUserStore } from '@/composables/useUserStore'
+import { PageExpose } from '@/core/types'
+import { onMounted, ref, watch } from 'vue'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()

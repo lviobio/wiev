@@ -1,11 +1,17 @@
 <template>
-  <n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="64" :collapsed-icon-size="24" :options="menuOptions" />
+  <n-menu
+    v-model:value="activeKey"
+    :collapsed="collapsed"
+    :collapsed-width="64"
+    :collapsed-icon-size="24"
+    :options="menuOptions"
+  />
 </template>
 
 <script setup lang="tsx">
 import { Component, h, ref, watch } from 'vue'
 import { MenuOption, NIcon } from 'naive-ui'
-import { Home24Filled, SignOut24Filled } from '@vicons/fluent'
+import { Home24Filled, SignOut24Filled, News28Filled } from '@vicons/fluent'
 import { RouterLink, useRoute } from 'vue-router'
 
 defineProps<{
@@ -36,6 +42,11 @@ const menuOptions: MenuOption[] = [
     label: renderLabel('Home', 'home'),
     key: 'home',
     icon: renderIcon(Home24Filled),
+  },
+  {
+    label: renderLabel('Posts', 'posts.index'),
+    key: 'posts',
+    icon: renderIcon(News28Filled),
   },
   {
     label: renderLabel('Logout', 'logout'),

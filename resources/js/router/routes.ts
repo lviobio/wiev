@@ -1,3 +1,4 @@
+import { postRoutes } from '@/modules/post/routes'
 import { RouteRecordRaw } from 'vue-router'
 
 export const createRoutes = (): RouteRecordRaw[] => {
@@ -15,7 +16,8 @@ export const createRoutes = (): RouteRecordRaw[] => {
           path: '/logout',
           name: 'logout',
           component: () => import('@/pages/PageLogout.vue'),
-        }
+        },
+        ...postRoutes,
       ],
     },
     {
@@ -33,6 +35,6 @@ export const createRoutes = (): RouteRecordRaw[] => {
           component: () => import('@/pages/PageSignUp.vue'),
         },
       ],
-    }
+    },
   ]
 }

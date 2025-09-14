@@ -1,9 +1,9 @@
-import { ref } from 'vue'
-import { User } from '@/types'
-import { useAxios } from '@/composables/useAxios'
 import { useAuthStore } from '@/composables/useAuthStore'
-import { useRouter } from 'vue-router'
+import { useAxios } from '@/composables/useAxios'
+import { User } from '@/core/types'
 import { useMessage } from 'naive-ui'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const user = ref<User | null>(null)
 
@@ -16,7 +16,7 @@ export const useUserStore = () => {
   const authorize = async (data: object) => {
     const response = await axios.post<string>('/sign-in', data)
 
-    if (response.ok) {
+    if (response.status === 200) {
       authStore.authorizeByToken(response.data)
 
       await router.push({ name: 'home' })
@@ -26,7 +26,7 @@ export const useUserStore = () => {
   }
 
   const register = async (data: object) => {
-    const response = await axios.post<{data: User}>('/sign-up', data)
+    const response = await axios.post<{ data: User }>('/sign-up', data)
 
     if (response.status === 200) {
       message.success('Registered successfully')
@@ -36,7 +36,7 @@ export const useUserStore = () => {
   }
 
   const getCurrentUser = async () => {
-    const response = await axios.get<{data: User}>('/user')
+    const response = await axios.get<{ data: User }>('/user')
 
     user.value = response.data.data
   }

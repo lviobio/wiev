@@ -1,7 +1,7 @@
-import axios, { AxiosError } from 'axios'
 import { useAuthStore } from '@/composables/useAuthStore'
-import { useNotification } from 'naive-ui'
+import axios from 'axios'
 import { format } from 'date-fns'
+import { useNotification } from 'naive-ui'
 
 export const useAxios = () => {
   const authStore = useAuthStore()
@@ -19,27 +19,32 @@ export const useAxios = () => {
     return config
   })
 
-  instance.interceptors.response.use((response) => {
-    response.ok = true
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        authStore.logout()
 
-    return response
-  }, (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      authStore.logout()
+        window.location.reload()
+      }
 
-      window.location.reload()
-    }
+      if (
+        error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
+        'message' in error.response.data
+      ) {
+        notification.error({
+          title: 'Error',
+          content: error.response.data.message as string,
+          meta: format(new Date(), 'dd.MM.yyyy HH:mm'),
+          duration: 5000,
+        })
+      }
 
-    if (error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
-      notification.error({
-        title: 'Error',
-        content: error.response.data.message as string,
-        meta: format(new Date(), 'dd.MM.yyyy HH:mm'),
-      })
-    }
-
-    return Promise.resolve(error)
-  })
+      return Promise.reject(error)
+    },
+  )
 
   return instance
 }
