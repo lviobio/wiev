@@ -1,11 +1,11 @@
 <template>
-  <n-breadcrumb>
-    <n-breadcrumb-item v-for="breadcrumb in computedBreadcrumbs" :key="toValue(breadcrumb.title)">
-      <router-link :to="breadcrumb.route">
+  <NBreadcrumb>
+    <NBreadcrumbItem v-for="breadcrumb in computedBreadcrumbs" :key="toValue(breadcrumb.title)">
+      <RouterLink :to="breadcrumb.route">
         {{ breadcrumb.title }}
-      </router-link>
-    </n-breadcrumb-item>
-  </n-breadcrumb>
+      </RouterLink>
+    </NBreadcrumbItem>
+  </NBreadcrumb>
 </template>
 
 <script setup lang="ts">

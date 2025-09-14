@@ -1,5 +1,5 @@
 <template>
-  <n-menu
+  <NMenu
     v-model:value="activeKey"
     :collapsed="collapsed"
     :collapsed-width="64"

@@ -1,7 +1,7 @@
 <template>
-  <n-space vertical>
-    <n-layout has-sider>
-      <n-layout-sider
+  <NSpace vertical>
+    <NLayout has-sider>
+      <NLayoutSider
         class="min-h-screen !bg-gray-50"
         bordered
         collapse-mode="width"
@@ -14,8 +14,8 @@
       >
         <AppLogo class="my-4 justify-center text-xl" :collapsed="collapsed" />
         <AppMenu :collapsed="collapsed" />
-      </n-layout-sider>
-      <n-layout>
+      </NLayoutSider>
+      <NLayout>
         <RouterView v-slot="{ Component }">
           <div class="flex flex-col gap-4 px-4 py-4">
             <AppBreadcrumbs
@@ -26,9 +26,9 @@
             <component :is="Component" ref="currentComponent" />
           </div>
         </RouterView>
-      </n-layout>
-    </n-layout>
-  </n-space>
+      </NLayout>
+    </NLayout>
+  </NSpace>
 </template>
 
 <script setup lang="tsx">

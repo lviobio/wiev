@@ -3,27 +3,27 @@
     <h1 class="text-xl leading-tight font-bold tracking-tight text-gray-900 md:text-2xl">
       Registration
     </h1>
-    <n-form ref="formRef" :model="form" :rules="rules" @submit.prevent="handleSubmit">
-      <n-form-item :show-feedback="true" label="Enter your name" path="first_name">
-        <n-input
+    <NForm ref="formRef" :model="form" :rules="rules" @submit.prevent="handleSubmit">
+      <NFormItem :show-feedback="true" label="Enter your name" path="first_name">
+        <NInput
           v-model:value="form.first_name"
           :input-props="{
             autocomplete: 'given-name',
           }"
           placeholder="Name"
         />
-      </n-form-item>
-      <n-form-item :show-feedback="true" label="Enter your surname" path="last_name">
-        <n-input
+      </NFormItem>
+      <NFormItem :show-feedback="true" label="Enter your surname" path="last_name">
+        <NInput
           v-model:value="form.last_name"
           :input-props="{
             autocomplete: 'family-name',
           }"
           placeholder="Surname"
         />
-      </n-form-item>
-      <n-form-item :show-feedback="true" label="Enter email" path="email">
-        <n-input
+      </NFormItem>
+      <NFormItem :show-feedback="true" label="Enter email" path="email">
+        <NInput
           v-model:value="form.email"
           :input-props="{
             type: 'email',
@@ -31,9 +31,9 @@
           }"
           placeholder="Email"
         />
-      </n-form-item>
-      <n-form-item :show-feedback="true" label="Enter password" path="password">
-        <n-input
+      </NFormItem>
+      <NFormItem :show-feedback="true" label="Enter password" path="password">
+        <NInput
           v-model:value="form.password"
           :input-props="{
             autocomplete: 'new-password',
@@ -41,9 +41,9 @@
           type="password"
           placeholder="Password"
         />
-      </n-form-item>
-      <n-form-item :show-feedback="true" label="Confirm password" path="password_confirmation">
-        <n-input
+      </NFormItem>
+      <NFormItem :show-feedback="true" label="Confirm password" path="password_confirmation">
+        <NInput
           v-model:value="form.password_confirmation"
           :input-props="{
             autocomplete: 'new-password',
@@ -51,18 +51,18 @@
           type="password"
           placeholder="Confirm password"
         />
-      </n-form-item>
-      <n-form-item :show-label="false" path="agreement">
-        <n-checkbox v-model:checked="form.agreement"> I agree to the privacy policy </n-checkbox>
-      </n-form-item>
-      <n-button type="primary" attr-type="submit" class="mt-6"> Register </n-button>
+      </NFormItem>
+      <NFormItem :show-label="false" path="agreement">
+        <NCheckbox v-model:checked="form.agreement"> I agree to the privacy policy </NCheckbox>
+      </NFormItem>
+      <NButton type="primary" attr-type="submit" class="mt-6"> Register </NButton>
       <p class="mt-6 text-sm font-light text-gray-500">
         Already have an account?
-        <router-link :to="{ name: 'sign-in' }" class="text-primary-600 font-medium hover:underline">
+        <RouterLink :to="{ name: 'sign-in' }" class="text-primary-600 font-medium hover:underline">
           Sign in to the account
-        </router-link>
+        </RouterLink>
       </p>
-    </n-form>
+    </NForm>
   </div>
 </template>
 

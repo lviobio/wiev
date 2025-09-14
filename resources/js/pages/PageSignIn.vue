@@ -3,9 +3,9 @@
     <h1 class="text-xl leading-tight font-bold tracking-tight text-gray-900 md:text-2xl">
       Sign in to account
     </h1>
-    <n-form ref="formRef" :model="form" :rules="rules" @submit.prevent="handleSubmit">
-      <n-form-item label="Enter email" path="email">
-        <n-input
+    <NForm ref="formRef" :model="form" :rules="rules" @submit.prevent="handleSubmit">
+      <NFormItem label="Enter email" path="email">
+        <NInput
           id="email"
           v-model:value="form.email"
           :input-props="{
@@ -14,9 +14,9 @@
           }"
           placeholder="Email"
         />
-      </n-form-item>
-      <n-form-item label="Enter password" path="password">
-        <n-input
+      </NFormItem>
+      <NFormItem label="Enter password" path="password">
+        <NInput
           id="password"
           v-model:value="form.password"
           :input-props="{
@@ -25,15 +25,15 @@
           type="password"
           placeholder="Password"
         />
-      </n-form-item>
-      <n-button type="primary" attr-type="submit" class="mt-6"> Sign in </n-button>
+      </NFormItem>
+      <NButton type="primary" attr-type="submit" class="mt-6"> Sign in </NButton>
       <p class="mt-6 text-sm font-light text-gray-500">
         Don't have an account?
-        <router-link :to="{ name: 'sign-up' }" class="text-primary-600 font-medium hover:underline">
+        <RouterLink :to="{ name: 'sign-up' }" class="text-primary-600 font-medium hover:underline">
           Sign up
-        </router-link>
+        </RouterLink>
       </p>
-    </n-form>
+    </NForm>
   </div>
 </template>
 

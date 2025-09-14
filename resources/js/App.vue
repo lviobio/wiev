@@ -1,11 +1,11 @@
 <template>
-  <n-config-provider preflight-style-disabled :theme="theme">
-    <n-message-provider>
-      <n-notification-provider>
+  <NConfigProvider preflight-style-disabled :theme="theme">
+    <NMessageProvider>
+      <NNotificationProvider>
         <RouterView />
-      </n-notification-provider>
-    </n-message-provider>
-  </n-config-provider>
+      </NNotificationProvider>
+    </NMessageProvider>
+  </NConfigProvider>
 </template>
 
 <script setup lang="ts">

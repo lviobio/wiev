@@ -1,5 +1,5 @@
 <template>
-  <router-link
+  <RouterLink
     :to="{ name: 'home' }"
     class="flex items-center gap-2 text-2xl font-semibold text-gray-900"
   >
@@ -9,7 +9,7 @@
     <!--      alt="Logo"-->
     <!--    >-->
     <span v-show="!collapsed">{{ name }}</span>
-  </router-link>
+  </RouterLink>
 </template>
 
 <script setup lang="ts">
