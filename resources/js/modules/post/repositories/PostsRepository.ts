@@ -1,91 +1,63 @@
+import {
+  DefaultIndexQueryContract,
+  DefaultStoreQueryContract,
+  sendAxiosGetRequest,
+  sendAxiosPostRequest,
+} from '@/core/api/simple-repository-helpers-v1/main'
 import { FilterTrashed } from '@/core/filters/trashed'
-import { PaginatedData, PaginationComposable } from '@/core/pagination/base'
-import { AxiosInstance, AxiosRequestConfig } from 'axios'
+import { PaginatedData } from '@/core/pagination/base'
+import { AxiosInstance } from 'axios'
 import { Post, PostIdentifier } from '../types'
 
+/** Index */
 export interface PostIndexFilters {
   search?: string
   trashed?: FilterTrashed
 }
 
-interface HasSignalContract {
-  signal?: AbortSignal
-}
-
-interface HasParamsContract<T> {
-  params: T
-}
-
-interface HasPaginationContract {
-  pagination?: PaginationComposable
-}
-
-type OptionsContract = HasSignalContract | HasParamsContract<unknown> | HasPaginationContract
-
 interface PostIndexQuery
-  extends HasParamsContract<{
-      filters: PostIndexFilters
-    }>,
-    HasSignalContract,
-    HasPaginationContract {}
+  extends DefaultIndexQueryContract<{
+    filters: PostIndexFilters
+  }> {}
 
-// interface PostIndexQueryResult {}
+type PostIndexQueryResult = PaginatedData<Post>
 
-type ListResult = PaginatedData<Post>
+/** Store */
+export interface PostStoreData {
+  title: string
+  content: string
+}
+
+interface PostStoreQuery extends DefaultStoreQueryContract<PostStoreData> {}
+
+type PostStoreQueryResult = Post
 
 interface PostsRepository {
-  index(options: PostIndexQuery): Promise<ListResult>
+  index(options: PostIndexQuery): Promise<PostIndexQueryResult>
   destroy(id: PostIdentifier): Promise<void>
 }
 
-function buildAxiosGetConfigFromOptions(options: OptionsContract, addDataToParams = false) {
-  const config: AxiosRequestConfig = {}
-  const data: any = {}
-
-  if ('signal' in options) {
-    config.signal = options.signal
-  }
-
-  if ('params' in options) {
-    Object.assign(data, options.params)
-  }
-
-  if ('pagination' in options && options.pagination) {
-    data.page = options.pagination.meta.current_page
-    if (options.pagination.perPageAvailable) {
-      data.per_page = options.pagination.meta.per_page
-    }
-  }
-
-  if (addDataToParams) {
-    config.params = data
-  }
-
-  return {
-    config,
-    data,
-  }
-}
-
-function sendAxiosGetRequest<T>(axios: AxiosInstance, url: string, options: OptionsContract) {
-  return axios.get<T>(url, buildAxiosGetConfigFromOptions(options, true).config)
-}
-
 class PostsApiRepository implements PostsRepository {
-  private readonly api: AxiosInstance
+  private readonly axios: AxiosInstance
 
   constructor() {
-    this.api = useAxios()
+    this.axios = useAxios()
   }
 
-  async index(options: PostIndexQuery): Promise<ListResult> {
-    const { data } = await sendAxiosGetRequest<ListResult>(this.api, 'posts', options)
+  async index(options: PostIndexQuery): Promise<PostIndexQueryResult> {
+    const { data } = await sendAxiosGetRequest<PostIndexQueryResult>(this.axios, 'posts', options)
+
+    return data
+  }
+
+  async store(options: PostStoreQuery): Promise<PostStoreQueryResult> {
+    const { data } = await sendAxiosPostRequest<Post>(this.axios, 'posts', options)
 
     return data
   }
 
   async destroy(id: PostIdentifier): Promise<void> {
-    await this.api.delete(`posts/${id}`)
+    await this.axios.delete(`posts/${id}`)
   }
 }
 

@@ -22,7 +22,7 @@ export function usePostsList() {
 
     return repository
       .index({
-        params: {
+        data: {
           filters: filters.value,
         },
         pagination,
