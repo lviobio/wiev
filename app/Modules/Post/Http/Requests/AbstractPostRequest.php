@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Http\Requests\Posts;
+namespace App\Modules\Post\Http\Requests;
 
 use App\Http\Requests\FormRequest;
-use App\Models\Post;
+use App\Modules\Post\Models\Post;
 use Illuminate\Auth\Access\Response;
 
 abstract class AbstractPostRequest extends FormRequest

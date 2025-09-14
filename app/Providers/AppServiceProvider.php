@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Authorization\Policies\PostPolicy;
-use App\Models\Post;
+use App\Modules\Post\Authorization\PostPolicy;
+use App\Modules\Post\Models\Post;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 

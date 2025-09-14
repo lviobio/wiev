@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Http\Resources;
+namespace App\Modules\Post\Http\Resources;
 
-use App\Models\Post;
+use App\Http\Resources\JsonResource;
+use App\Modules\Post\Models\Post;
 use Illuminate\Http\Request;
 
 /**

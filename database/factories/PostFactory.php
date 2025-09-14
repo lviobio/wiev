@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Post;
 use App\Models\User;
+use App\Modules\Post\Models\Post;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 

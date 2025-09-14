@@ -1,12 +1,17 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Modules\Post\Models;
 
+use App\Models\BaseModel;
+use App\Models\User;
+use Database\Factories\PostFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[UseFactory(PostFactory::class)]
 class Post extends BaseModel
 {
     use HasFactory;

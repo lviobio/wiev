@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Http\Requests\Posts;
+namespace App\Modules\Post\Http\Requests;
 
-use App\Models\Post;
+use App\Modules\Post\Models\Post;
 
 abstract class AbstractPostInteractRequest extends AbstractPostRequest
 {

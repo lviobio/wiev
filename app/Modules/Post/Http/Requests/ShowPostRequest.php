@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Http\Requests\Posts;
+namespace App\Modules\Post\Http\Requests;
 
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;

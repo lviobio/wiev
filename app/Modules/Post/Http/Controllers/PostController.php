@@ -1,15 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Modules\Post\Http\Controllers;
 
-use App\Http\Requests\Posts\DestroyPostRequest;
-use App\Http\Requests\Posts\IndexPostRequest;
-use App\Http\Requests\Posts\ShowPostRequest;
-use App\Http\Requests\Posts\StorePostRequest;
-use App\Http\Requests\Posts\UpdatePostRequest;
-use App\Http\Resources\PostResource;
-use App\Models\Post;
+use App\Http\Controllers\Controller;
+use App\Modules\Post\Http\Requests\DestroyPostRequest;
+use App\Modules\Post\Http\Requests\IndexPostRequest;
+use App\Modules\Post\Http\Requests\ShowPostRequest;
+use App\Modules\Post\Http\Requests\StorePostRequest;
+use App\Modules\Post\Http\Requests\UpdatePostRequest;
+use App\Modules\Post\Http\Resources\PostResource;
+use App\Modules\Post\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;

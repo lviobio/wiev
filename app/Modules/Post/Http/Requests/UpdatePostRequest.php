@@ -1,23 +1,24 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Http\Requests\Posts;
+namespace App\Modules\Post\Http\Requests;
 
-use App\Models\Post;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
 
-class StorePostRequest extends AbstractPostRequest
+class UpdatePostRequest extends AbstractPostInteractRequest
 {
     public function authorize(): Response
     {
-        return Gate::inspect('store', Post::class);
+        $this->model = $this->findModel();
+
+        return Gate::inspect('update', $this->model);
     }
 
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
         ];

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Authorization\Policies;
+namespace App\Modules\Post\Authorization;
 
 use App\Authorization\Response;
 use App\Models\User;
