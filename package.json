@@ -22,6 +22,8 @@
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
         "typescript-eslint": "^8.23.0",
+        "unplugin-auto-import": "^20.1.0",
+        "unplugin-vue-components": "^29.0.0",
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
