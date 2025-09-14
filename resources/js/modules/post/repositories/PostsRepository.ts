@@ -1,4 +1,3 @@
-import { useAxios } from '@/composables/useAxios'
 import { FilterTrashed } from '@/core/filters/trashed'
 import { PaginatedData, PaginationComposable } from '@/core/pagination/base'
 import { AxiosInstance, AxiosRequestConfig } from 'axios'

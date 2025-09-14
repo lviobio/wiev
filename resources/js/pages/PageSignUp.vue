@@ -1,6 +1,8 @@
 <template>
   <div class="space-y-4 p-6 sm:p-8 md:space-y-6">
-    <h1 class="text-xl leading-tight font-bold tracking-tight text-gray-900 md:text-2xl">Registration</h1>
+    <h1 class="text-xl leading-tight font-bold tracking-tight text-gray-900 md:text-2xl">
+      Registration
+    </h1>
     <n-form ref="formRef" :model="form" :rules="rules" @submit.prevent="handleSubmit">
       <n-form-item :show-feedback="true" label="Enter your name" path="first_name">
         <n-input
@@ -56,7 +58,9 @@
       <n-button type="primary" attr-type="submit" class="mt-6"> Register </n-button>
       <p class="mt-6 text-sm font-light text-gray-500">
         Already have an account?
-        <router-link :to="{ name: 'sign-in' }" class="text-primary-600 font-medium hover:underline"> Sign in to the account </router-link>
+        <router-link :to="{ name: 'sign-in' }" class="text-primary-600 font-medium hover:underline">
+          Sign in to the account
+        </router-link>
       </p>
     </n-form>
   </div>

@@ -11,7 +11,7 @@
 <script setup lang="tsx">
 import { Component, h, ref, watch } from 'vue'
 import { MenuOption, NIcon } from 'naive-ui'
-import { Home24Filled, SignOut24Filled, News28Filled } from '@vicons/fluent'
+import { Home24Filled, News28Filled, SignOut24Filled } from '@vicons/fluent'
 import { RouterLink, useRoute } from 'vue-router'
 
 defineProps<{

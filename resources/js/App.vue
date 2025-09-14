@@ -1,8 +1,5 @@
 <template>
-  <n-config-provider
-    preflight-style-disabled
-    :theme="theme"
-  >
+  <n-config-provider preflight-style-disabled :theme="theme">
     <n-message-provider>
       <n-notification-provider>
         <RouterView />
@@ -12,8 +9,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { GlobalTheme, lightTheme } from 'naive-ui'
+import { ref } from 'vue'
 
 const theme = ref<GlobalTheme | null>(lightTheme)
 </script>

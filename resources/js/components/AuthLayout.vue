@@ -1,8 +1,8 @@
 <template>
   <section class="bg-gray-50">
-    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto min-h-screen">
+    <div class="mx-auto flex min-h-screen flex-col items-center justify-center px-6 py-8">
       <AppLogo class="mb-6" />
-      <div class="w-full bg-white rounded-lg shadow sm:max-w-md">
+      <div class="w-full rounded-lg bg-white shadow sm:max-w-md">
         <RouterView />
       </div>
     </div>
