@@ -77,3 +77,33 @@ declare global {
   const watchPostEffect: typeof import('vue')['watchPostEffect']
   const watchSyncEffect: typeof import('vue')['watchSyncEffect']
 }
+
+// for vue template auto import
+import { UnwrapRef } from 'vue'
+declare module 'vue' {
+  interface GlobalComponents {}
+  interface ComponentCustomProperties {
+    readonly computed: UnwrapRef<typeof import('vue')['computed']>
+    readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly inject: UnwrapRef<typeof import('vue')['inject']>
+    readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
+    readonly onMounted: UnwrapRef<typeof import('vue')['onMounted']>
+    readonly provide: UnwrapRef<typeof import('vue')['provide']>
+    readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
+    readonly ref: UnwrapRef<typeof import('vue')['ref']>
+    readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
+    readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useAuthStore: UnwrapRef<typeof import('./resources/js/composables/useAuthStore')['useAuthStore']>
+    readonly useAxios: UnwrapRef<typeof import('./resources/js/composables/useAxios')['useAxios']>
+    readonly useDialog: UnwrapRef<typeof import('naive-ui')['useDialog']>
+    readonly useLoadingBar: UnwrapRef<typeof import('naive-ui')['useLoadingBar']>
+    readonly useMessage: UnwrapRef<typeof import('naive-ui')['useMessage']>
+    readonly useNotification: UnwrapRef<typeof import('naive-ui')['useNotification']>
+    readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
+    readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
+    readonly useUserStore: UnwrapRef<typeof import('./resources/js/composables/useUserStore')['useUserStore']>
+    readonly watch: UnwrapRef<typeof import('vue')['watch']>
+    readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
+  }
+}

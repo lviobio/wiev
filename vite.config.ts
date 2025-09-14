@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
       }),
       AutoImport({
         dts: './auto-imports.d.ts',
+        vueTemplate: true,
         dirs: ['resources/js/utils/**', 'resources/js/composables/**'],
         imports: [
           {
@@ -52,6 +53,7 @@ export default defineConfig(({ mode }) => {
               'nextTick',
               'provide',
               'inject',
+              'toValue',
               'watch',
               'watchEffect',
               'ref',
