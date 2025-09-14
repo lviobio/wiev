@@ -40,11 +40,11 @@ jobs:
       - name: Check typescript
         run: npm run check
 
-      - name: Build Assets
-        run: npm run build
-
       - name: Check frontend code formatting with Prettier
         run: npm run format:check
+
+      - name: Build Assets
+        run: npm run build
 
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
