@@ -18,7 +18,7 @@ const columns: DataTableColumns<Post> = [
   {
     title: 'Content',
     key: 'content',
-    ellipsis: { lineClamp: 2, tooltip: true },
+    ellipsis: { tooltip: true },
     render(row) {
       return row.content ?? ''
     },
