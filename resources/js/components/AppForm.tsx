@@ -47,20 +47,19 @@ export const AppForm = defineComponent({
     const exposed: AppFormInst = {
       validate: (callback?, shouldRuleBeApplied?) => {
         isValidating.value = true
-        return new Promise((resolve) => {
-          const component = componentRef.value
+        const component = componentRef.value
 
-          if (!component) {
-            throw new Error('formRef is not defined')
-          }
+        if (!component) {
+          throw new Error('formRef is not defined')
+        }
 
-          component.validate(async function (errors, extra) {
+        component
+          .validate(async function (errors, extra) {
             await callback?.(errors, extra)
-            resolve(extra)
-
-            isValidating.value = false
           }, shouldRuleBeApplied)
-        })
+          .finally(() => {
+            isValidating.value = false
+          })
       },
       failValidation: (message: string, messages: ValidationMessages) => {
         wrapperRef.value?.setValidationErrors(messages)

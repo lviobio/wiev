@@ -13,14 +13,16 @@ export interface HasPaginationContract {
   pagination?: PaginationComposable
 }
 
-export interface DefaultIndexQueryContract<TData>
+export interface DefaultListQueryContract<TData>
   extends HasDataContract<TData>,
     HasSignalContract,
     HasPaginationContract {}
 
-export interface DefaultStoreQueryContract<TData>
+export interface DefaultCreateQueryContract<TData>
   extends HasDataContract<TData>,
     HasSignalContract {}
+
+export interface DefaultCreateQueryResultContract<TData> extends HasDataContract<TData> {}
 
 export type OptionsContract = HasSignalContract | HasDataContract<unknown> | HasPaginationContract
 

@@ -61,6 +61,8 @@ export default defineConfig(({ mode }) => {
               'reactive',
               'computed',
               'useAttrs',
+              'useTemplateRef',
+              'defineAsyncComponent',
               'onMounted',
             ],
             'naive-ui': ['useDialog', 'useMessage', 'useNotification', 'useLoadingBar'],

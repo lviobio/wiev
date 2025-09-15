@@ -1,14 +1,20 @@
+import UI from '@/modules/post/ui'
 import { RouteRecordRaw } from 'vue-router'
 
 export const postRoutes: RouteRecordRaw[] = [
   {
     path: 'posts',
-    component: () => import('@/modules/post/PostsLayout.vue'),
+    component: () => import('@/modules/post/PostLayout.vue'),
     children: [
       {
         path: '',
         name: 'posts.index',
-        component: () => import('@/modules/post/ui/pages/PostsIndex.vue'),
+        component: UI.List.Page,
+      },
+      {
+        path: 'create',
+        name: 'posts.create',
+        component: UI.Create.Page,
       },
     ],
   },

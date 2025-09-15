@@ -40,7 +40,7 @@ const columns: DataTableColumns<Post> = [
         <NFlex>
           <NPopconfirm
             onPositiveClick={() =>
-              repository.destroy(row.id).then(() => {
+              repository.delete(row.id).then(() => {
                 reload()
                 message.success(`Post ${row.id} deleted successfully`)
               })

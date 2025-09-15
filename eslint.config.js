@@ -35,7 +35,9 @@ export default defineConfigWithVueTs(
         'PascalCase',
         {
           registeredComponentsOnly: false,
-          ignores: [],
+          ignores: [
+            '/\\w\\.\\w/', // Ignore components with namespace
+          ],
         },
       ],
     },

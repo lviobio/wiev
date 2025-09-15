@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import PostsList from '../components/PostsList.vue'
+import { List } from '../'
 </script>
 
 <template>
-  <PostsList />
+  <NFlex>
+    <List.Component />
+  </NFlex>
 </template>
 
 <style scoped></style>

@@ -1,5 +1,5 @@
 import { useBasePagination } from '@/core/pagination/base'
-import { PostIndexFilters, usePostsRepository } from '@/modules/post/repositories/PostsRepository'
+import { PostListFilters, usePostRepository } from '@/modules/post/repositories/PostRepository'
 import { Post } from '@/modules/post/types'
 import { watchDebounced } from '@vueuse/core'
 import { ref } from 'vue'
@@ -7,13 +7,13 @@ import { ref } from 'vue'
 export function usePostsList() {
   const items = ref<Post[]>([])
   const loading = ref(false)
-  const filters = ref<PostIndexFilters>({
+  const filters = ref<PostListFilters>({
     search: '',
     trashed: null,
   })
   let abortController: AbortController
 
-  const repository = usePostsRepository()
+  const repository = usePostRepository()
 
   const load = async () => {
     abortController?.abort()
@@ -21,7 +21,7 @@ export function usePostsList() {
     loading.value = true
 
     return repository
-      .index({
+      .list({
         data: {
           filters: filters.value,
         },

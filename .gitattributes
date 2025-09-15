@@ -6,5 +6,7 @@
 *.md diff=markdown
 *.php diff=php
 
+auto-imports.d.ts -text
+
 CHANGELOG.md export-ignore
 README.md export-ignore

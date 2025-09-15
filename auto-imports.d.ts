@@ -66,6 +66,7 @@ declare global {
   const useLoadingBar: typeof import('naive-ui')['useLoadingBar']
   const useMessage: typeof import('naive-ui')['useMessage']
   const useModel: typeof import('vue')['useModel']
+  const useNaiveForm: typeof import('./resources/js/composables/useNaiveForm')['useNaiveForm']
   const useNotification: typeof import('naive-ui')['useNotification']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
@@ -84,6 +85,7 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
+    readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
@@ -99,9 +101,11 @@ declare module 'vue' {
     readonly useDialog: UnwrapRef<typeof import('naive-ui')['useDialog']>
     readonly useLoadingBar: UnwrapRef<typeof import('naive-ui')['useLoadingBar']>
     readonly useMessage: UnwrapRef<typeof import('naive-ui')['useMessage']>
+    readonly useNaiveForm: UnwrapRef<typeof import('./resources/js/composables/useNaiveForm')['useNaiveForm']>
     readonly useNotification: UnwrapRef<typeof import('naive-ui')['useNotification']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
+    readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useUserStore: UnwrapRef<typeof import('./resources/js/composables/useUserStore')['useUserStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
