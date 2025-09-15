@@ -3,8 +3,11 @@ import {
   DefaultCreateQueryResultContract,
   DefaultFindQueryResultContract,
   DefaultListQueryContract,
+  DefaultUpdateQueryContract,
+  DefaultUpdateQueryResultContract,
   sendAxiosGetRequest,
   sendAxiosPostRequest,
+  sendAxiosPutRequest,
 } from '@/core/api/simple-repository-helpers-v1/main'
 import { FilterTrashed } from '@/core/filters/trashed'
 import { PaginatedData } from '@/core/pagination/base'
@@ -31,9 +34,18 @@ export interface PostCreateData {
 }
 
 type PostCreateQuery = DefaultCreateQueryContract<PostCreateData>
-
 type PostCreateQueryResult = DefaultCreateQueryResultContract<Post>
 
+/** Update */
+export interface PostUpdateData {
+  title: string
+  content: string
+}
+
+type PostUpdateQuery = DefaultUpdateQueryContract<PostUpdateData>
+type PostUpdateQueryResult = DefaultUpdateQueryResultContract<Post>
+
+/** Other */
 type PostFindResult = DefaultFindQueryResultContract<Post>
 type PostDeleteResult = void
 
@@ -41,6 +53,7 @@ export interface PostRepository {
   list(options: PostListQuery): Promise<PostListQueryResult>
   find(id: PostIdentifier): Promise<PostFindResult>
   create(options: PostCreateQuery): Promise<PostCreateQueryResult>
+  update(id: PostIdentifier, options: PostUpdateQuery): Promise<PostUpdateQueryResult>
   delete(id: PostIdentifier): Promise<PostDeleteResult>
 }
 
@@ -65,6 +78,16 @@ class PostApiRepository implements PostRepository {
 
   async create(options: PostCreateQuery) {
     const { data } = await sendAxiosPostRequest<PostCreateQueryResult>(this.axios, 'posts', options)
+
+    return data
+  }
+
+  async update(id: PostIdentifier, options: PostUpdateQuery) {
+    const { data } = await sendAxiosPutRequest<PostUpdateQueryResult>(
+      this.axios,
+      `posts/${id}`,
+      options,
+    )
 
     return data
   }

@@ -25,6 +25,11 @@ const { data } = await repository.find(id)
       <span>ID: {{ data.id }}</span>
     </template>
     <div>{{ data.content }}</div>
+    <template #action>
+      <RouterLink :to="{ name: 'posts.edit', params: { id: data.id } }">
+        <NButton size="small">Edit</NButton>
+      </RouterLink>
+    </template>
   </NThing>
 </template>
 

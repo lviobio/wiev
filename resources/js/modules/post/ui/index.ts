@@ -14,8 +14,15 @@ export const Show = {
   Component: defineAsyncComponent(() => import('./components/PostShow.vue')),
 }
 
+export const Edit = {
+  Page: () => import('./pages/PostEditPage.vue'),
+  Component: defineAsyncComponent(() => import('./components/PostEdit/PostEdit.vue')),
+  ComponentForm: defineAsyncComponent(() => import('./components/PostEdit/PostEditForm.vue')),
+}
+
 export default {
   List,
   Create,
   Show,
+  Edit,
 }

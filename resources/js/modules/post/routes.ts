@@ -1,5 +1,13 @@
+import { PostIdentifier } from '@/modules/post/types'
 import UI from '@/modules/post/ui'
 import { RouteRecordRaw } from 'vue-router'
+
+export function showRoute(id: PostIdentifier) {
+  return {
+    name: 'posts.show',
+    params: { id },
+  }
+}
 
 export const postRoutes: RouteRecordRaw[] = [
   {
@@ -20,6 +28,11 @@ export const postRoutes: RouteRecordRaw[] = [
         path: ':id',
         name: 'posts.show',
         component: UI.Show.Page,
+      },
+      {
+        path: ':id/edit',
+        name: 'posts.edit',
+        component: UI.Edit.Page,
       },
     ],
   },

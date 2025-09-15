@@ -22,8 +22,13 @@ export interface DefaultCreateQueryContract<TData>
   extends HasDataContract<TData>,
     HasSignalContract {}
 
+export interface DefaultUpdateQueryContract<TData>
+  extends HasDataContract<TData>,
+    HasSignalContract {}
+
 export interface DefaultCreateQueryResultContract<TData> extends HasDataContract<TData> {}
 export interface DefaultFindQueryResultContract<TData> extends HasDataContract<TData> {}
+export interface DefaultUpdateQueryResultContract<TData> extends HasDataContract<TData> {}
 
 export type OptionsContract = HasSignalContract | HasDataContract<unknown> | HasPaginationContract
 
@@ -95,4 +100,14 @@ export function sendAxiosPostRequest<T>(
   const { config, data } = buildAxiosPostConfigFromOptions(options)
 
   return axios.post<T>(url, data, config)
+}
+
+export function sendAxiosPutRequest<T>(
+  axios: AxiosInstance,
+  url: string,
+  options: OptionsContract,
+) {
+  const { config, data } = buildAxiosPostConfigFromOptions(options)
+
+  return axios.put<T>(url, data, config)
 }
