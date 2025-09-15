@@ -16,6 +16,11 @@ export const postRoutes: RouteRecordRaw[] = [
         name: 'posts.create',
         component: UI.Create.Page,
       },
+      {
+        path: ':id',
+        name: 'posts.show',
+        component: UI.Show.Page,
+      },
     ],
   },
 ]

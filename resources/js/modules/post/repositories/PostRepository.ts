@@ -1,6 +1,7 @@
 import {
   DefaultCreateQueryContract,
   DefaultCreateQueryResultContract,
+  DefaultFindQueryResultContract,
   DefaultListQueryContract,
   sendAxiosGetRequest,
   sendAxiosPostRequest,
@@ -33,7 +34,7 @@ type PostCreateQuery = DefaultCreateQueryContract<PostCreateData>
 
 type PostCreateQueryResult = DefaultCreateQueryResultContract<Post>
 
-type PostFindResult = Post
+type PostFindResult = DefaultFindQueryResultContract<Post>
 type PostDeleteResult = void
 
 export interface PostRepository {
@@ -57,7 +58,7 @@ class PostApiRepository implements PostRepository {
   }
 
   async find(id: PostIdentifier) {
-    const { data } = await this.axios.get<Post>(`posts/${id}`)
+    const { data } = await this.axios.get<PostFindResult>(`posts/${id}`)
 
     return data
   }

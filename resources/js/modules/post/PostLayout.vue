@@ -17,7 +17,7 @@ defineExpose<PageExpose>({
 <template>
   <NCard title="Posts">
     <template #header-extra>
-      <RouterLink :to="{ name: 'posts.create' }" v-if="route.name !== 'posts.create'">
+      <RouterLink :to="{ name: 'posts.create' }" v-if="route.name === 'posts.index'">
         <NButton type="primary">Create</NButton>
       </RouterLink>
     </template>

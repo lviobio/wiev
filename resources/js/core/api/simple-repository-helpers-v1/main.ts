@@ -23,6 +23,7 @@ export interface DefaultCreateQueryContract<TData>
     HasSignalContract {}
 
 export interface DefaultCreateQueryResultContract<TData> extends HasDataContract<TData> {}
+export interface DefaultFindQueryResultContract<TData> extends HasDataContract<TData> {}
 
 export type OptionsContract = HasSignalContract | HasDataContract<unknown> | HasPaginationContract
 

@@ -23,7 +23,9 @@
               :breadcrumbs="currentComponent.breadcrumbs"
             />
 
-            <component :is="Component" ref="currentComponent" />
+            <Suspense>
+              <component :is="Component" ref="currentComponent" />
+            </Suspense>
           </div>
         </RouterView>
       </NLayout>

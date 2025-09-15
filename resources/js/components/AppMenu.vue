@@ -11,8 +11,9 @@
 <script setup lang="tsx">
 import { Component, h, ref, watch } from 'vue'
 import { MenuOption, NIcon } from 'naive-ui'
-import { Home24Filled, News28Filled, SignOut24Filled } from '@vicons/fluent'
+import { Home24Filled, SignOut24Filled } from '@vicons/fluent'
 import { RouterLink, useRoute } from 'vue-router'
+import PostsIcon from '@/modules/post/icon'
 
 defineProps<{
   collapsed: boolean
@@ -46,7 +47,7 @@ const menuOptions: MenuOption[] = [
   {
     label: renderLabel('Posts', 'posts.index'),
     key: 'posts',
-    icon: renderIcon(News28Filled),
+    icon: renderIcon(PostsIcon),
   },
   {
     label: renderLabel('Logout', 'logout'),

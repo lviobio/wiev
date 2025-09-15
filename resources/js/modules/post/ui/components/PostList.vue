@@ -3,8 +3,9 @@ import { trashedOptions } from '@/core/filters/trashed'
 import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
 import { usePostsList } from '../../composables/usePostsList'
 import { Post } from '../../types'
-import { DataTableColumns, NButton, NDataTable, NFlex, NPopconfirm, useMessage } from 'naive-ui'
+import { DataTableColumns, NA, NButton, NDataTable, NFlex, NPopconfirm, useMessage } from 'naive-ui'
 import AppDateTime from '@/components/AppDateTime.vue'
+import { RouterLink } from 'vue-router'
 
 const message = useMessage()
 
@@ -13,7 +14,18 @@ const { items, loading, load, reload, filters, pagination, repository } = usePos
 const dataTablePagination = useNaiveUiPagination(pagination)
 
 const columns: DataTableColumns<Post> = [
-  { title: 'ID', key: 'id', width: 80 },
+  {
+    title: 'ID',
+    key: 'id',
+    width: 80,
+    render(row) {
+      return (
+        <RouterLink to={{ name: 'posts.show', params: { id: row.id } }}>
+          <NA>{row.id}</NA>
+        </RouterLink>
+      )
+    },
+  },
   { title: 'Title', key: 'title' },
   {
     title: 'Content',
