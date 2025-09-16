@@ -6,6 +6,7 @@ import { Post } from '../../types'
 import { DataTableColumns, NA, NButton, NDataTable, NFlex, NPopconfirm, useMessage } from 'naive-ui'
 import AppDateTime from '@/components/AppDateTime.vue'
 import { RouterLink } from 'vue-router'
+import { postRouteGenerator } from '@/modules/post/routes'
 
 const message = useMessage()
 
@@ -20,7 +21,7 @@ const columns: DataTableColumns<Post> = [
     width: 80,
     render(row) {
       return (
-        <RouterLink to={{ name: 'posts.show', params: { id: row.id } }}>
+        <RouterLink to={postRouteGenerator.show(row.id)}>
           <NA>{row.id}</NA>
         </RouterLink>
       )

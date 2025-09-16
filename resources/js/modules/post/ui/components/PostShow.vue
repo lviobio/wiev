@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import Icon from '@/modules/post/icon'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
+import { postRouteGenerator } from '@/modules/post/routes'
 import { PostIdentifier } from '@/modules/post/types'
 
 const { repository, id } = defineProps<{
@@ -26,7 +27,7 @@ const { data } = await repository.find(id)
     </template>
     <div>{{ data.content }}</div>
     <template #action>
-      <RouterLink :to="{ name: 'posts.edit', params: { id: data.id } }">
+      <RouterLink :to="postRouteGenerator.edit(data.id)">
         <NButton size="small">Edit</NButton>
       </RouterLink>
     </template>

@@ -2,11 +2,18 @@ import { PostIdentifier } from '@/modules/post/types'
 import UI from '@/modules/post/ui'
 import { RouteRecordRaw } from 'vue-router'
 
-export function showRoute(id: PostIdentifier) {
-  return {
+export const postRouteGenerator = {
+  show: (id: PostIdentifier) => ({
     name: 'posts.show',
     params: { id },
-  }
+  }),
+  edit: (id: PostIdentifier) => ({
+    name: 'posts.edit',
+    params: { id },
+  }),
+  create: () => ({
+    name: 'posts.create',
+  }),
 }
 
 export const postRoutes: RouteRecordRaw[] = [

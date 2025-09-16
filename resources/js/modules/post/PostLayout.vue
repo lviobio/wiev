@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PageExpose } from '@/core/types'
+import { postRouteGenerator } from '@/modules/post/routes'
 
 const route = useRoute()
 
@@ -17,7 +18,7 @@ defineExpose<PageExpose>({
 <template>
   <NCard title="Posts">
     <template #header-extra>
-      <RouterLink :to="{ name: 'posts.create' }" v-if="route.name === 'posts.index'">
+      <RouterLink :to="postRouteGenerator.create()" v-if="route.name === 'posts.index'">
         <NButton type="primary">Create</NButton>
       </RouterLink>
     </template>
