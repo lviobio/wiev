@@ -12,8 +12,8 @@
 import { Component, h, ref, watch } from 'vue'
 import { MenuOption, NIcon } from 'naive-ui'
 import { Home24Filled, SignOut24Filled } from '@vicons/fluent'
-import { RouterLink, useRoute } from 'vue-router'
-import PostsIcon from '@/modules/post/icon'
+import { RouteLocationRaw, RouterLink, useRoute } from 'vue-router'
+import { postModule } from '@/modules/post'
 
 defineProps<{
   collapsed: boolean
@@ -30,8 +30,8 @@ const setActiveKey = () => {
 watch(() => route.name, setActiveKey)
 setActiveKey()
 
-const renderLabel = (text: string, name: string) => {
-  return () => <RouterLink to={{ name: name }}>{text}</RouterLink>
+const renderLabel = (text: string, route: RouteLocationRaw) => {
+  return () => <RouterLink to={route}>{text}</RouterLink>
 }
 
 const renderIcon = (icon: Component) => {
@@ -40,17 +40,17 @@ const renderIcon = (icon: Component) => {
 
 const menuOptions: MenuOption[] = [
   {
-    label: renderLabel('Home', 'home'),
+    label: renderLabel('Home', { name: 'home' }),
     key: 'home',
     icon: renderIcon(Home24Filled),
   },
   {
-    label: renderLabel('Posts', 'posts.index'),
+    label: renderLabel('Posts', postModule.routeGenerator.index()),
     key: 'posts',
-    icon: renderIcon(PostsIcon),
+    icon: renderIcon(postModule.icon),
   },
   {
-    label: renderLabel('Logout', 'logout'),
+    label: renderLabel('Logout', { name: 'logout' }),
     key: 'logout',
     icon: renderIcon(SignOut24Filled),
   },
