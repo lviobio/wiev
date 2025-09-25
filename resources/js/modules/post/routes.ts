@@ -1,3 +1,4 @@
+import { ModuleRouteGenerator } from '@/modules/_shared/interface'
 import { PostIdentifier } from '@/modules/post/types'
 import UI from '@/modules/post/ui'
 import { RouteRecordRaw } from 'vue-router'
@@ -9,7 +10,7 @@ export const postRouteNames = {
   edit: 'posts.edit',
 }
 
-export const postRouteGenerator = {
+export const postRouteGenerator: ModuleRouteGenerator = {
   index: () => ({
     name: postRouteNames.index,
   }),

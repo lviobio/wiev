@@ -1,5 +1,5 @@
 import { Ref } from 'vue'
-import { RouteLocation } from 'vue-router'
+import { RouteLocationRaw } from 'vue-router'
 
 export type DateTimeType = number
 export type DateTimeNullableType = DateTimeType | null
@@ -11,7 +11,7 @@ export interface User {
 
 export interface Breadcrumb {
   title: string | Ref<string>
-  route: RouteLocation | { name: string }
+  route: RouteLocationRaw | { name: string }
 }
 
 export interface PageExpose {
