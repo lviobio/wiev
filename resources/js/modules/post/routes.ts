@@ -1,4 +1,5 @@
 import { ModuleRouteGenerator } from '@/modules/_shared/interface'
+import { routeParamsFallthrough } from '@/modules/_shared/routeParamsFallthrough'
 import { PostIdentifier } from '@/modules/post/types'
 import UI from '@/modules/post/ui'
 import { RouteRecordRaw } from 'vue-router'
@@ -35,22 +36,22 @@ export const postRoutes: RouteRecordRaw[] = [
       {
         path: '',
         name: postRouteNames.index,
-        component: UI.List.Page,
+        component: routeParamsFallthrough(UI.List.Page),
       },
       {
         path: 'create',
         name: postRouteNames.create,
-        component: UI.Create.Page,
+        component: routeParamsFallthrough(UI.Create.Page),
       },
       {
         path: ':id',
         name: postRouteNames.show,
-        component: UI.Show.Page,
+        component: routeParamsFallthrough(UI.Show.Page),
       },
       {
         path: ':id/edit',
         name: postRouteNames.edit,
-        component: UI.Edit.Page,
+        component: routeParamsFallthrough(UI.Edit.Page),
       },
     ],
   },

@@ -2,19 +2,25 @@
 import { usePostRepository } from '@/modules/post/repositories/PostRepository'
 import { postRouteGenerator } from '@/modules/post/routes'
 import { Edit } from '@/modules/post/ui'
+import { z } from 'zod'
+import { toValidNumber } from 'zod-valid'
 
 const repository = usePostRepository()
-const route = useRoute()
 
-const id = computed(() => Number(route.params.id))
+const propsSchema = z.object({
+  id: toValidNumber({ allow: 'none', preserve: false }),
+})
+
+const _ = defineProps<{ params: unknown }>()
+const props = propsSchema.parse(_.params)
 </script>
 
 <template>
   <NFlex>
     <Edit.Component
       :repository="repository"
-      :id="id"
-      @updated="$router.push(postRouteGenerator.show(id))"
+      :id="props.id"
+      @updated="$router.push(postRouteGenerator.show(props.id))"
     />
   </NFlex>
 </template>
