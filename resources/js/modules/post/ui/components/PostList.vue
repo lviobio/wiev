@@ -5,14 +5,23 @@ import { usePostsList } from '../../composables/usePostsList'
 import { Post } from '../../types'
 import { DataTableColumns, NA, NButton, NDataTable, NFlex, NPopconfirm, useMessage } from 'naive-ui'
 import AppDateTime from '@/components/AppDateTime.vue'
-import { RouterLink } from 'vue-router'
-import { postRouteGenerator } from '@/modules/post/routes'
+import { useDesktopWindows } from '@/core/windows/useDesktopWindows'
+import { Show } from '@/modules/post/ui'
+import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 
 const message = useMessage()
+const appNavigator = useAppNavigator()
+const windows = useDesktopWindows()
 
 const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
 
 const dataTablePagination = useNaiveUiPagination(pagination)
+
+const openPostWindow = windows.openable({
+  title: (p) => `Post #${p.id}`,
+  component: Show.Page,
+  width: 600,
+})
 
 const columns: DataTableColumns<Post> = [
   {
@@ -20,10 +29,17 @@ const columns: DataTableColumns<Post> = [
     key: 'id',
     width: 80,
     render(row) {
+      // open in a window-like modal instead of navigating
       return (
-        <RouterLink to={postRouteGenerator.show(row.id)}>
+        <span
+          onClick={() =>
+            openPostWindow({
+              id: row.id,
+            })
+          }
+        >
           <NA>{row.id}</NA>
-        </RouterLink>
+        </span>
       )
     },
   },
@@ -51,6 +67,18 @@ const columns: DataTableColumns<Post> = [
     render(row) {
       return (
         <NFlex>
+          <NButton
+            size="small"
+            type="info"
+            onClick={() =>
+              appNavigator.openOrNavigate({
+                component: Show.Page,
+                params: { id: row.id },
+              })
+            }
+          >
+            Open
+          </NButton>
           <NPopconfirm
             onPositiveClick={() =>
               repository.delete(row.id).then(() => {

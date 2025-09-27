@@ -1,8 +1,9 @@
 <script setup lang="tsx">
+import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import Icon from '@/modules/post/icon'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
-import { postRouteGenerator } from '@/modules/post/routes'
 import { PostIdentifier } from '@/modules/post/types'
+import { Edit, List } from '@/modules/post/ui'
 
 const { repository, id } = defineProps<{
   id: PostIdentifier
@@ -10,6 +11,23 @@ const { repository, id } = defineProps<{
 }>()
 
 const { data } = await repository.find(id)
+
+const appNavigator = useAppNavigator()
+
+function onEdit() {
+  appNavigator.openOrNavigate({
+    component: Edit.Page,
+    params: { id: data.id },
+    title: `Edit Post #${data.id}`,
+  })
+}
+
+function onBack() {
+  appNavigator.openOrNavigate({
+    component: List.Page,
+    title: `Posts`,
+  })
+}
 </script>
 
 <template>
@@ -27,9 +45,10 @@ const { data } = await repository.find(id)
     </template>
     <div>{{ data.content }}</div>
     <template #action>
-      <RouterLink :to="postRouteGenerator.edit(data.id)">
-        <NButton size="small">Edit</NButton>
-      </RouterLink>
+      <NFlex>
+        <NButton size="small" @click="onEdit">Edit</NButton>
+        <NButton size="small" @click="onBack">Back</NButton>
+      </NFlex>
     </template>
   </NThing>
 </template>
