@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { List } from '../'
+import { List } from '@/modules/post/ui/components'
 </script>
 
 <template>

@@ -46,6 +46,9 @@ jobs:
       - name: Run typescript check
         run: npm run ts:check
 
+      - name: Run dependency-cruiser check
+        run: npm run dependency-cruiser:check
+
       - name: Build Assets
         run: npm run build
 

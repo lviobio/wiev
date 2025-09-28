@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
-import { postRouteGenerator, postRouteNames } from '@/modules/post/routes'
+import { postRouteGenerator, postRouteNames } from '@/modules/post/router/names'
 
-const route = useRoute()
+const route = useRoute() // TODO: replace with appNavigator.getCurrentPage()
+const appNavigator = useAppNavigator()
 
 defineExpose<PageExpose>({
   title: 'Posts',
@@ -13,14 +15,26 @@ defineExpose<PageExpose>({
     },
   ],
 })
+
+const handleOpenListInNewWindow = () =>
+  appNavigator.navigate({
+    name: postRouteNames.index,
+    title: `Posts`,
+    windowed: true,
+  })
 </script>
 
 <template>
   <NCard title="Posts">
     <template #header-extra>
-      <RouterLink :to="postRouteGenerator.create()" v-if="route.name === postRouteNames.index">
-        <NButton type="primary">Create</NButton>
-      </RouterLink>
+      <NFlex>
+        <NButton v-if="route.name === postRouteNames.index" @click="handleOpenListInNewWindow">
+          Open list in new window
+        </NButton>
+        <RouterLink :to="postRouteGenerator.create()" v-if="route.name === postRouteNames.index">
+          <NButton type="primary">Create</NButton>
+        </RouterLink>
+      </NFlex>
     </template>
     <RouterView v-slot="{ Component }">
       <component :is="Component" />

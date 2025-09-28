@@ -1,8 +1,9 @@
-import { postRoutes } from '@/modules/post/routes'
+import { attachComponentRouteResolvers } from '@/core/navigator/routeResolver'
+import { postRoutes } from '@/modules/post/router/routes'
 import { RouteRecordRaw } from 'vue-router'
 
-export const createRoutes = (): RouteRecordRaw[] => {
-  return [
+export const createRoutes = () => {
+  const routes = [
     {
       path: '/',
       component: () => import('@/components/AppLayout.vue'),
@@ -36,5 +37,10 @@ export const createRoutes = (): RouteRecordRaw[] => {
         },
       ],
     },
-  ]
+  ] as const satisfies readonly RouteRecordRaw[]
+
+  // Attach route resolvers to async components for window-aware navigation
+  return attachComponentRouteResolvers(
+    routes as unknown as RouteRecordRaw[],
+  ) as unknown as typeof routes
 }

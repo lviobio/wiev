@@ -26,6 +26,10 @@ down:
 check:
 	@echo Running TypeScript check.
 	@docker compose exec vite npm run check
+fix:
+	@echo Running ESLint fix \& Prettier format
+	@docker compose exec vite npm run format
+	@docker compose exec vite npm run lint
 
 db-import:
 	@echo Importing DB from file $(INPUT_ARGS)

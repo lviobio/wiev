@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePostRepository } from '@/modules/post/repositories/PostRepository'
-import { Create } from '@/modules/post/ui'
+import { Create } from '@/modules/post/ui/components'
 
 const repository = usePostRepository()
 </script>

@@ -3,8 +3,7 @@ import AppForm from '@/components/AppForm'
 import { useNaiveForm } from '@/composables/useNaiveForm'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
 import { PostIdentifier } from '@/modules/post/types'
-import { Create } from '@/modules/post/ui'
-import { PostEditFormData } from './PostEditForm.vue'
+import Form, { PostEditFormData } from './PostEditForm.vue'
 
 const message = useMessage()
 
@@ -46,7 +45,7 @@ const handleSubmit = () =>
 <template>
   <NFlex vertical>
     <AppForm ref="formRef" :model="formModel">
-      <Create.ComponentForm v-model="formModel" />
+      <Form v-model="formModel" />
 
       <NButton @click="handleSubmit" :loading="formLoading">Submit</NButton>
     </AppForm>

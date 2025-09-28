@@ -1,28 +1,27 @@
 <script setup lang="ts">
+import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { usePostRepository } from '@/modules/post/repositories/PostRepository'
-import { postRouteGenerator } from '@/modules/post/routes'
-import { Edit } from '@/modules/post/ui'
-import { z } from 'zod'
-import { toValidNumber } from 'zod-valid'
+import { postRouteNames } from '@/modules/post/router/names'
+import { Edit } from '@/modules/post/ui/components'
+import { postEditPageSchema as propsSchema, PostEditPageSchema as PropsSchema } from './schemas'
 
 const repository = usePostRepository()
 
-const propsSchema = z.object({
-  id: toValidNumber({ allow: 'none', preserve: false }),
-})
-
-const _ = defineProps<{ params: unknown }>()
+const _ = defineProps<{ params: PropsSchema }>()
 const props = propsSchema.parse(_.params)
+
+const appNavigator = useAppNavigator()
+
+const onUpdated = () =>
+  appNavigator.navigate({
+    name: postRouteNames.show,
+    params: { id: props.id },
+    title: `Post #${props.id}`,
+  })
 </script>
 
 <template>
-  <NFlex>
-    <Edit.Component
-      :repository="repository"
-      :id="props.id"
-      @updated="$router.push(postRouteGenerator.show(props.id))"
-    />
-  </NFlex>
+  <NFlex><Edit.Component :repository="repository" :id="props.id" @updated="onUpdated" /> </NFlex>
 </template>
 
 <style scoped></style>
