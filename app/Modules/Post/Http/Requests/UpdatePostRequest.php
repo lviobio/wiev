@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Http\Requests;
 
+use App\Support\Validation\ImageRule;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
 
@@ -21,6 +22,7 @@ class UpdatePostRequest extends AbstractPostInteractRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
+            'cover' => ['nullable', ...ImageRule::make()->toArray()]
         ];
     }
 }

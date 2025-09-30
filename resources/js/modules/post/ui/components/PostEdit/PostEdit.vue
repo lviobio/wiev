@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import AppForm from '@/components/AppForm'
 import { useNaiveForm } from '@/composables/useNaiveForm'
+import { formatUrlToUploadFileInfo } from '@/core/helpers'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
 import { PostIdentifier } from '@/modules/post/types'
 import Form, { PostEditFormData } from './PostEditForm.vue'
@@ -21,13 +22,17 @@ const { data } = await repository.find(id)
 const { formRef, formModel, formValidate, formLoading } = useNaiveForm<PostEditFormData>({
   title: data.title,
   content: data.content ?? '',
+  cover: formatUrlToUploadFileInfo(data.cover),
 })
 
 const handleSubmit = () =>
   formValidate(() =>
     repository
       .update(id, {
-        data: formModel.value,
+        data: {
+          ...formModel.value,
+          cover: formModel.value.cover?.file ?? undefined,
+        },
       })
       .then(
         (result) => {

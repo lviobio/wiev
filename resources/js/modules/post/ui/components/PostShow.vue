@@ -33,9 +33,10 @@ function onBack() {
 <template>
   <NThing>
     <template #avatar>
-      <NIcon :size="32">
+      <NIcon :size="32" v-if="!data.cover">
         <Icon />
       </NIcon>
+      <NImage :width="32" v-else :src="data.cover" />
     </template>
     <template #header>
       <span>{{ data.title }}</span>

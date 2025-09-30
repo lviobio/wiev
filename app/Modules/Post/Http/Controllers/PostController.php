@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace App\Modules\Post\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Media;
+use App\Modules\Post\Data\PostCreateData;
+use App\Modules\Post\Data\PostUpdateData;
 use App\Modules\Post\Http\Requests\DestroyPostRequest;
 use App\Modules\Post\Http\Requests\IndexPostRequest;
 use App\Modules\Post\Http\Requests\ShowPostRequest;
@@ -11,12 +14,20 @@ use App\Modules\Post\Http\Requests\StorePostRequest;
 use App\Modules\Post\Http\Requests\UpdatePostRequest;
 use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
+use App\Modules\Post\Services\PostService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class PostController extends Controller
 {
+    public function __construct(
+        private readonly PostService $postService,
+    )
+    {
+    }
+
     public function index(IndexPostRequest $request): AnonymousResourceCollection
     {
         $query = Post::query()
@@ -54,7 +65,9 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request): PostResource
     {
-        $model = Post::create($request->validated());
+        $model = $this->postService->create(PostCreateData::from($request->validated() + [
+                'author' => $request->user(),
+            ]));
 
         return $this->resource($model);
     }
@@ -62,7 +75,9 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request): PostResource
     {
         $model = $request->model;
-        $model->update($request->validated());
+        $this->postService->update($model, PostUpdateData::from($request->validated() + [
+                'operatingUser' => $request->user(),
+            ]));
 
         return $this->resource($model);
     }
@@ -83,7 +98,8 @@ class PostController extends Controller
     private function eagerLoad(Post|Builder $model): Post|Builder
     {
         $query = $model->with([
-            'authorUser'
+            'authorUser',
+            'media' => fn(Builder|MorphMany|Media $q) => $q->whereCollectionName(Post::MEDIA_COLLECTION_COVER),
         ]);
 
         if (!$model instanceof Builder) {

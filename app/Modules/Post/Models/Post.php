@@ -10,12 +10,19 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[UseFactory(PostFactory::class)]
-class Post extends BaseModel
+class Post extends BaseModel implements HasMedia
 {
     use HasFactory;
     use SoftDeletes;
+    use InteractsWithMedia;
+
+    public const string
+        MEDIA_COLLECTION_COVER = 'cover',
+        MEDIA_COLLECTION_COVER_CONVERSION_THUMB = 'thumb';
 
     protected $fillable = [
         'title',
@@ -27,6 +34,19 @@ class Post extends BaseModel
     protected $casts = [
         'published_at' => 'datetime',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection(self::MEDIA_COLLECTION_COVER)
+            ->singleFile()
+            ->registerMediaConversions(function () {
+                $this
+                    ->addMediaConversion(self::MEDIA_COLLECTION_COVER_CONVERSION_THUMB)
+                    ->width(50)
+                    ->height(50);
+            });
+    }
 
     public function authorUser(): BelongsTo
     {

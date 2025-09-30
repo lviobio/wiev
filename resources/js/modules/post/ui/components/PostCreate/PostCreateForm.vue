@@ -1,7 +1,10 @@
 <script setup lang="tsx">
+import { UploadFileInfo } from 'naive-ui'
+
 export interface PostCreateFormData {
   title: string
   content: string
+  cover?: UploadFileInfo
 }
 
 const model = defineModel<PostCreateFormData>({ required: true })
@@ -14,6 +17,9 @@ const model = defineModel<PostCreateFormData>({ required: true })
     </NFormItem>
     <NFormItem label="Content" path="content">
       <NInput v-model:value="model.content" />
+    </NFormItem>
+    <NFormItem label="Cover" path="cover">
+      <AppIllustrationInput v-model:image="model.cover" />
     </NFormItem>
   </NFlex>
 </template>

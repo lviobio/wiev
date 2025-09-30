@@ -68,7 +68,7 @@ function buildAxiosGetConfigFromOptions(options: OptionsContract, addDataToParam
   }
 }
 
-function buildAxiosPostConfigFromOptions(options: OptionsContract) {
+function buildAxiosFormDataConfigFromOptions(options: OptionsContract, method: string) {
   const config: AxiosRequestConfig = {}
   const data: any = {}
 
@@ -76,9 +76,15 @@ function buildAxiosPostConfigFromOptions(options: OptionsContract) {
   handleHasDataContract(options, data)
   handleHasPaginationContract(options, data)
 
+  const formData = buildFormData(data, new FormData())
+
+  if (method !== 'POST') {
+    formData.append('_method', method)
+  }
+
   return {
     config,
-    data,
+    data: formData,
   }
 }
 
@@ -97,7 +103,7 @@ export function sendAxiosPostRequest<T>(
   url: string,
   options: OptionsContract,
 ) {
-  const { config, data } = buildAxiosPostConfigFromOptions(options)
+  const { config, data } = buildAxiosFormDataConfigFromOptions(options, 'POST')
 
   return axios.post<T>(url, data, config)
 }
@@ -107,7 +113,37 @@ export function sendAxiosPutRequest<T>(
   url: string,
   options: OptionsContract,
 ) {
-  const { config, data } = buildAxiosPostConfigFromOptions(options)
+  const { config, data } = buildAxiosFormDataConfigFromOptions(options, 'PUT')
 
-  return axios.put<T>(url, data, config)
+  return axios.post<T>(url, data, config)
+}
+
+function buildFormData<T extends object>(
+  source: T,
+  formData?: FormData,
+  namespace?: string,
+): FormData {
+  formData = formData || new FormData()
+  for (const property in source) {
+    const isPropertyExist = property in source
+
+    if (!isPropertyExist) {
+      continue
+    }
+
+    const contextProperty = source[property]
+
+    if (contextProperty === undefined) {
+      continue
+    }
+
+    const formKey = namespace ? `${namespace}[${property}]` : property
+
+    if (typeof contextProperty === 'object' && !(contextProperty instanceof File)) {
+      buildFormData<any>(contextProperty, formData, formKey)
+    } else {
+      formData.append(formKey, contextProperty as string | File)
+    }
+  }
+  return formData
 }

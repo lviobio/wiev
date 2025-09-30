@@ -18,6 +18,7 @@ class PostResource extends JsonResource
             'id' => $this->whenHas('id'),
             'title' => $this->whenHas('title'),
             'content' => $this->whenHas('content'),
+            'cover' => $this->whenHasMediaToUrl(Post::MEDIA_COLLECTION_COVER),
             $this->mergeWhenHasDeletedAt(),
             $this->mergeWhenHasTimestamps(),
         ];

@@ -31,6 +31,7 @@ type PostListQueryResult = PaginatedData<Post>
 export interface PostCreateData {
   title: string
   content: string
+  cover?: File
 }
 
 type PostCreateQuery = DefaultCreateQueryContract<PostCreateData>
@@ -40,6 +41,7 @@ type PostCreateQueryResult = DefaultCreateQueryResultContract<Post>
 export interface PostUpdateData {
   title: string
   content: string
+  cover?: File
 }
 
 type PostUpdateQuery = DefaultUpdateQueryContract<PostUpdateData>

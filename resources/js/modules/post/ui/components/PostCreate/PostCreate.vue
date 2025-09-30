@@ -19,13 +19,17 @@ const { repository } = defineProps<{
 const { formRef, formModel, formValidate, formLoading } = useNaiveForm<PostCreateFormData>({
   title: '',
   content: '',
+  cover: undefined,
 })
 
 const handleSubmit = () =>
   formValidate(() =>
     repository
       .create({
-        data: formModel.value,
+        data: {
+          ...formModel.value,
+          cover: formModel.value.cover?.file ?? undefined,
+        },
       })
       .then(
         (result) => {

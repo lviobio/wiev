@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Resources\Json\JsonResource as BaseJsonResource;
 use Illuminate\Http\Resources\MergeValue;
+use Illuminate\Http\Resources\MissingValue;
+use Spatie\MediaLibrary\HasMedia;
 
 /**
  * @property Model|SoftDeletes $resource
@@ -53,5 +55,20 @@ abstract class JsonResource extends BaseJsonResource
             'created_at' => $this->whenHasToTimestamp('created_at'),
             'updated_at' => $this->whenHasToTimestamp('updated_at'),
         ]);
+    }
+
+    protected function whenHasMediaToUrl(string $collection = 'default'): mixed
+    {
+        if (!$this->resource instanceof HasMedia) {
+            return new MissingValue;
+        }
+
+        $media = $this->resource->getMedia($collection);
+
+        if ($media->isNotEmpty()) {
+            return $media->first()->getUrl();
+        }
+
+        return new MissingValue;
     }
 }
