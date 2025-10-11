@@ -7,7 +7,7 @@ const mgr = useDesktopWindows()
 </script>
 
 <template>
-  <div class="pointer-events-none fixed inset-0 z-[3]">
+  <div class="windows-host pointer-events-none fixed inset-0 z-[3]">
     <template v-for="w in mgr.windows" :key="w.windowId">
       <DesktopWindow
         :title="w.title"
