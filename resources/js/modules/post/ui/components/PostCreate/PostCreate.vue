@@ -1,10 +1,13 @@
 <script setup lang="tsx">
 import AppForm from '@/components/AppForm'
 import { useNaiveForm } from '@/composables/useNaiveForm'
+import { createEmptyObjectFromSchema, prepareFormData } from '@/core/utils/form-schemas'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
-import Form, {
-  type PostCreateFormData,
-} from '@/modules/post/ui/components/PostCreate/PostCreateForm.vue'
+import Form from '@/modules/post/ui/components/PostCreate/PostCreateForm.vue'
+import {
+  PostCreateFormData,
+  postCreateFormSchema,
+} from '@/modules/post/ui/components/PostCreate/index'
 
 const message = useMessage()
 
@@ -16,20 +19,15 @@ const { repository } = defineProps<{
   repository: PostRepository
 }>()
 
-const { formRef, formModel, formValidate, formLoading } = useNaiveForm<PostCreateFormData>({
-  title: '',
-  content: '',
-  cover: undefined,
-})
+const { formRef, formModel, formValidate, formLoading } = useNaiveForm<PostCreateFormData>(
+  createEmptyObjectFromSchema(postCreateFormSchema),
+)
 
 const handleSubmit = () =>
   formValidate(() =>
     repository
       .create({
-        data: {
-          ...formModel.value,
-          cover: formModel.value.cover?.file ?? undefined,
-        },
+        data: prepareFormData(formModel.value),
       })
       .then(
         (result) => {

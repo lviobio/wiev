@@ -6,6 +6,7 @@ namespace App\Modules\Post\Services;
 use App\Modules\Post\Data\PostCreateData;
 use App\Modules\Post\Data\PostUpdateData;
 use App\Modules\Post\Models\Post;
+use Spatie\LaravelData\Optional;
 
 class PostService
 {
@@ -27,8 +28,12 @@ class PostService
     {
         $model->update($data->except('cover', 'operatingUser')->toArray());
 
-        if ($data->cover) {
-            $model->addMedia($data->cover)->toMediaCollection(Post::MEDIA_COLLECTION_COVER);
+        if (!$data->cover instanceof Optional) {
+            if ($data->cover) {
+                $model->addMedia($data->cover)->toMediaCollection(Post::MEDIA_COLLECTION_COVER);
+            } else {
+                $model->clearMediaCollection(Post::MEDIA_COLLECTION_COVER);
+            }
         }
 
         $model->save();

@@ -12,6 +12,7 @@ import {
 import { FilterTrashed } from '@/core/filters/trashed'
 import { PaginatedData } from '@/core/pagination/base'
 import { AxiosInstance } from 'axios'
+import { z } from 'zod'
 import { Post, PostIdentifier } from '../types'
 
 /** List */
@@ -27,22 +28,22 @@ interface PostListQuery
 
 type PostListQueryResult = PaginatedData<Post>
 
+export const postFormSchema = z.object({
+  title: z.string(),
+  content: z.string().nullable(),
+  cover: z.custom<File>().nullish(),
+})
+
+type PostFormSchema = z.infer<typeof postFormSchema>
+
 /** Create */
-export interface PostCreateData {
-  title: string
-  content: string
-  cover?: File
-}
+type PostCreateData = PostFormSchema
 
 type PostCreateQuery = DefaultCreateQueryContract<PostCreateData>
 type PostCreateQueryResult = DefaultCreateQueryResultContract<Post>
 
 /** Update */
-export interface PostUpdateData {
-  title: string
-  content: string
-  cover?: File
-}
+type PostUpdateData = PostFormSchema
 
 type PostUpdateQuery = DefaultUpdateQueryContract<PostUpdateData>
 type PostUpdateQueryResult = DefaultUpdateQueryResultContract<Post>
@@ -102,3 +103,35 @@ class PostApiRepository implements PostRepository {
 export function usePostRepository(): PostRepository {
   return new PostApiRepository()
 }
+
+// resources/js/modules/post/repositories/PostRepository.ts
+
+// Схема формы (с UploadFileInfo)
+
+// export const postFormSchema = z.object({
+//   title: z.string(),
+//   content: z.string().nullable(),
+//   cover: zFormFile,
+//   // cover: z.codec(z.string().nullish(), z.custom<UploadFileInfo>().optional(), {
+//   //   decode: (value) => {
+//   //     console.log('decode', value, urlToUploadFileInfo.parse(value))
+//   //
+//   //     return urlToUploadFileInfo.parse(value)
+//   //   },
+//   //   encode: (value) => value?.file,
+//   // }),
+// })
+
+// /**
+//  * Идея: Cover превращать в объект с двумя полями: {url: string, file?: File}. Когда с бэка в cover приходит строка - преобразуем её в этот объект с помощью zod'a
+//  */
+
+// Схема для API (с File)
+// export const postDataSchema2 = formDataWithFile({
+//   title: z.string(),
+//   content: z.string(),
+//   cover: z.custom<File>().optional(),
+// })
+//
+// export type PostFormData2 = z.infer<typeof postFormSchema2>
+// export type PostCreateData2 = z.infer<typeof postDataSchema2>

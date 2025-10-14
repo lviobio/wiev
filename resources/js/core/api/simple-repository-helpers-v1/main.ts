@@ -139,7 +139,9 @@ function buildFormData<T extends object>(
 
     const formKey = namespace ? `${namespace}[${property}]` : property
 
-    if (typeof contextProperty === 'object' && !(contextProperty instanceof File)) {
+    if (contextProperty === null) {
+      formData.append(formKey, '')
+    } else if (typeof contextProperty === 'object' && !(contextProperty instanceof File)) {
       buildFormData<any>(contextProperty, formData, formKey)
     } else {
       formData.append(formKey, contextProperty as string | File)

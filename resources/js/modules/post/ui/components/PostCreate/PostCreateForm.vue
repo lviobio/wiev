@@ -1,11 +1,5 @@
 <script setup lang="tsx">
-import { UploadFileInfo } from 'naive-ui'
-
-export interface PostCreateFormData {
-  title: string
-  content: string
-  cover?: UploadFileInfo
-}
+import { PostCreateFormData } from '@/modules/post/ui/components/PostCreate'
 
 const model = defineModel<PostCreateFormData>({ required: true })
 </script>

@@ -12,10 +12,13 @@
 </template>
 
 <script setup lang="ts">
+import { RemovableUploadFileInfo } from '@/core/utils/form-schemas'
 import { UploadFileInfo } from 'naive-ui'
 import { computed } from 'vue'
 
-const image = defineModel<UploadFileInfo | undefined>('image', { required: true })
+const image = defineModel<RemovableUploadFileInfo | undefined>('image')
+
+const initiallySet = Boolean(image.value)
 
 const imageAsArray = computed(() => {
   if (image.value) {
@@ -28,7 +31,7 @@ const updateImage = (value: UploadFileInfo[]) => {
   if (value[0]) {
     image.value = value[0]
   } else {
-    image.value = undefined
+    image.value = initiallySet ? null : undefined
   }
 }
 </script>
