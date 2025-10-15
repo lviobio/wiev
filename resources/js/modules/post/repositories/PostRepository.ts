@@ -17,7 +17,8 @@ import { Post, PostIdentifier } from '../types'
 
 /** List */
 export interface PostListFilters {
-  search?: string
+  search: string | null
+  title: string | null
   trashed?: FilterTrashed
 }
 

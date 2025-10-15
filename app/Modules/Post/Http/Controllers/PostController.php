@@ -42,6 +42,9 @@ class PostController extends Controller
                     ->orWhereLike('content', '%' . $filters['search'] . '%')
                 );
             }
+            if (!empty($filters['title'])) {
+                $query->whereLike('title', '%' . $filters['title'] . '%');
+            }
 
             if (!empty($filters['trashed'])) {
                 match ($filters['trashed']) {

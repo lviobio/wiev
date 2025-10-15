@@ -18,6 +18,7 @@ class IndexPostRequest extends AbstractPostRequest
     {
         return [
             'filters.search' => ['nullable', 'string', 'max:255'],
+            'filters.title' => ['nullable', 'string', 'max:255'],
             ...self::basePaginationRules(
                 withTrashedFilter: true,
             ),

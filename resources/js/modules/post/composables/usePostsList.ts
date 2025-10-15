@@ -8,7 +8,8 @@ export function usePostsList() {
   const items = ref<Post[]>([])
   const loading = ref(false)
   const filters = ref<PostListFilters>({
-    search: '',
+    search: null,
+    title: null,
     trashed: null,
   })
   let abortController: AbortController

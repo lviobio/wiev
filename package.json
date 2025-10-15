@@ -49,6 +49,7 @@
         "typescript": "^5.9.2",
         "vite": "^7.1.5",
         "vue": "^3.5.21",
+        "vue-component-type-helpers": "^3.0.6",
         "vue-router": "^4.5.1",
         "zod": "^4.1.11",
         "zod-valid": "^2.0.1"

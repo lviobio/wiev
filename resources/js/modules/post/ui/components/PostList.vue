@@ -3,7 +3,18 @@ import { trashedOptions } from '@/core/filters/trashed'
 import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
 import { usePostsList } from '../../composables/usePostsList'
 import { Post } from '../../types'
-import { DataTableColumns, NA, NButton, NDataTable, NFlex, NPopconfirm, useMessage } from 'naive-ui'
+import {
+  DataTableColumns,
+  DataTableInst,
+  InputInst,
+  NA,
+  NButton,
+  NCard,
+  NFlex,
+  NInput,
+  NPopconfirm,
+  useMessage,
+} from 'naive-ui'
 import AppDateTime from '@/components/AppDateTime.vue'
 import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { postRouteNames } from '@/modules/post/router/names'
@@ -21,7 +32,7 @@ const openPostWindow = appNavigator.delayedNavigate({
   windowed: true,
 })
 
-const columns: DataTableColumns<Post> = [
+const columns = [
   {
     title: 'ID',
     key: 'id',
@@ -35,7 +46,66 @@ const columns: DataTableColumns<Post> = [
       )
     },
   },
-  { title: 'Title', key: 'title' },
+  {
+    title: 'Title',
+    key: 'title',
+    filter: true,
+    renderFilterMenu: ({ hide }) => {
+      const originalValue = computed(() => filters.value.title)
+      const localValue = ref(originalValue.value)
+
+      function confirm() {
+        filters.value.title = localValue.value
+
+        hide()
+      }
+
+      function clear() {
+        filters.value.title = null
+
+        hide()
+      }
+
+      const inputRef = ref<InputInst>()
+
+      nextTick(() => {
+        inputRef.value?.focus()
+      })
+
+      return (
+        <NCard size="small">
+          {{
+            default: () => (
+              <div>
+                <NInput
+                  ref={inputRef}
+                  onKeyup={(e) => {
+                    if (e.key === 'Enter') {
+                      confirm()
+                    }
+                  }}
+                  value={localValue.value}
+                  onUpdate:value={(newValue) => (localValue.value = newValue || null)}
+                  autofocus
+                  clearable
+                />
+              </div>
+            ),
+            action: () => (
+              <div class="flex justify-end gap-2">
+                <NButton size="tiny" onClick={clear}>
+                  Clear
+                </NButton>
+                <NButton size="tiny" type="primary" onClick={confirm}>
+                  Confirm
+                </NButton>
+              </div>
+            ),
+          }}
+        </NCard>
+      )
+    },
+  },
   {
     title: 'Content',
     key: 'content',
@@ -92,16 +162,37 @@ const columns: DataTableColumns<Post> = [
       )
     },
   },
-]
+] satisfies DataTableColumns<Post>
+
+const tableRef = useTemplateRef<DataTableInst>('tableRef')
+
+const appliedFilters = computed(() => {
+  return Object.keys(filters.value).filter(
+    (key) => filters.value[key as keyof typeof filters.value] !== null,
+  )
+})
 
 load()
 </script>
 
 <template>
   <NFlex>
-    <NGrid :x-gap="12" :cols="3">
-      <NGi span="2">
-        <NInput v-model:value="filters.search" placeholder="Search" />
+    <NGrid :x-gap="12" :y-gap="12" :cols="3">
+      <NGi span="1">
+        <NInput
+          :value="filters.search"
+          @update:value="filters.search = $event || null"
+          placeholder="Search"
+          clearable
+        />
+      </NGi>
+      <NGi span="1">
+        <NInput
+          :value="filters.title"
+          @update:value="filters.title = $event || null"
+          placeholder="Title"
+          clearable
+        />
       </NGi>
       <NGi>
         <NSelect
@@ -112,12 +203,14 @@ load()
         />
       </NGi>
     </NGrid>
-    <NDataTable
+    <AppDataTable
+      ref="tableRef"
       :columns="columns"
       :data="items"
       :loading="loading"
       size="small"
       :pagination="dataTablePagination"
+      :applied-filters="appliedFilters"
       remote
       striped
     />
