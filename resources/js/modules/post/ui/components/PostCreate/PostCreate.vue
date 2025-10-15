@@ -7,7 +7,7 @@ import Form from '@/modules/post/ui/components/PostCreate/PostCreateForm.vue'
 import {
   PostCreateFormData,
   postCreateFormSchema,
-} from '@/modules/post/ui/components/PostCreate/index'
+} from '@/modules/post/ui/components/PostCreate/form'
 
 const message = useMessage()
 

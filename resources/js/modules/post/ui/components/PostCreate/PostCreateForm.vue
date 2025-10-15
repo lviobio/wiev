@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { PostCreateFormData } from '@/modules/post/ui/components/PostCreate'
+import { PostCreateFormData } from '@/modules/post/ui/components/PostCreate/form'
 
 const model = defineModel<PostCreateFormData>({ required: true })
 </script>

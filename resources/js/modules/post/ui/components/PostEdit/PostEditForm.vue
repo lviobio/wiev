@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { PostEditFormData } from '@/modules/post/ui/components/PostEdit'
+import type { PostEditFormData } from '@/modules/post/ui/components/PostEdit/form'
 
 const model = defineModel<PostEditFormData>({ required: true })
 </script>

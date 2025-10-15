@@ -4,7 +4,7 @@ import { useNaiveForm } from '@/composables/useNaiveForm'
 import { prepareFormData } from '@/core/utils/form-schemas'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
 import { PostIdentifier } from '@/modules/post/types'
-import { PostEditFormData, postEditFormSchema } from '@/modules/post/ui/components/PostEdit/index'
+import { PostEditFormData, postEditFormSchema } from '@/modules/post/ui/components/PostEdit/form'
 import Form from './PostEditForm.vue'
 
 const message = useMessage()
