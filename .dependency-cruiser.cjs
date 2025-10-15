@@ -187,10 +187,10 @@ module.exports = {
     },
 
     /* Which modules to exclude */
-    // exclude : {
-    //   /* path: an array of regular expressions in strings to match against */
-    //   path: '',
-    // },
+    exclude: {
+      /* path: an array of regular expressions in strings to match against */
+      path: 'resources/js/router/routes.ts',
+    },
 
     /* Which modules to exclusively include (array of regular expressions in strings)
        dependency-cruiser will skip everything not matching this pattern
