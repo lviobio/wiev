@@ -1,5 +1,10 @@
 import { useBasePagination } from '@/core/pagination/base'
-import { PostListFilters, usePostRepository } from '@/modules/post/repositories/PostRepository'
+import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
+import {
+  PostListFilters,
+  postListFiltersSchema,
+  usePostRepository,
+} from '@/modules/post/repositories/PostRepository'
 import { Post } from '@/modules/post/types'
 import { watchDebounced } from '@vueuse/core'
 import { ref } from 'vue'
@@ -7,11 +12,7 @@ import { ref } from 'vue'
 export function usePostsList() {
   const items = ref<Post[]>([])
   const loading = ref(false)
-  const filters = ref<PostListFilters>({
-    search: null,
-    title: null,
-    trashed: null,
-  })
+  const filters = ref<PostListFilters>(createEmptyObjectFromSchema(postListFiltersSchema))
   let abortController: AbortController
 
   const repository = usePostRepository()

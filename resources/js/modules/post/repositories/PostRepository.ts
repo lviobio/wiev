@@ -9,18 +9,20 @@ import {
   sendAxiosPostRequest,
   sendAxiosPutRequest,
 } from '@/core/api/simple-repository-helpers-v1/main'
-import { FilterTrashed } from '@/core/filters/trashed'
+import { zFilterTrashed } from '@/core/filters/trashed'
 import { PaginatedData } from '@/core/pagination/base'
 import { AxiosInstance } from 'axios'
 import { z } from 'zod'
 import { Post, PostIdentifier } from '../types'
 
+export const postListFiltersSchema = z.object({
+  search: z.string().nullable(),
+  title: z.string().nullable(),
+  trashed: zFilterTrashed,
+})
+
 /** List */
-export interface PostListFilters {
-  search: string | null
-  title: string | null
-  trashed?: FilterTrashed
-}
+export type PostListFilters = z.infer<typeof postListFiltersSchema>
 
 interface PostListQuery
   extends DefaultListQueryContract<{
