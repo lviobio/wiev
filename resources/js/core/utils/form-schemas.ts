@@ -16,6 +16,45 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
   for (const key in shape) {
     const field = shape[key] as unknown as z.ZodType<any>
 
+    // Проверяем наличие default значения через ZodDefault.
+    // Используем parse с undefined для получения default значения через публичный API
+    let hasDefault = false
+    let currentType: z.ZodType<any> = field
+
+    while (
+      currentType instanceof z.ZodOptional ||
+      currentType instanceof z.ZodNullable ||
+      currentType instanceof z.ZodDefault
+    ) {
+      if (currentType instanceof z.ZodDefault) {
+        hasDefault = true
+        break
+      }
+      currentType = currentType.unwrap() as z.ZodType<any>
+    }
+
+    if (hasDefault) {
+      // Используем parse для получения default значения
+      result[key] = field.parse(undefined)
+      continue
+    }
+
+    // Проверяем, является ли поле nullable
+    let isNullable = false
+    let checkType: z.ZodType<any> = field
+    while (checkType instanceof z.ZodOptional || checkType instanceof z.ZodNullable) {
+      if (checkType instanceof z.ZodNullable) {
+        isNullable = true
+      }
+      checkType = checkType.unwrap() as z.ZodType<any>
+    }
+
+    // Если поле nullable, используем null как дефолт
+    if (isNullable) {
+      result[key] = null
+      continue
+    }
+
     // Получаем базовый тип, "разворачивая" optional/nullable
     let baseType: z.ZodType<any> = field
     while (baseType instanceof z.ZodOptional || baseType instanceof z.ZodNullable) {

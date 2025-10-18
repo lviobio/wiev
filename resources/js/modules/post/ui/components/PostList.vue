@@ -9,7 +9,6 @@ import {
   InputInst,
   NA,
   NButton,
-  NCard,
   NFlex,
   NInput,
   NPopconfirm,
@@ -18,6 +17,8 @@ import {
 import AppDateTime from '@/components/AppDateTime.vue'
 import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { postRouteNames } from '@/modules/post/router/names'
+import { TableFilter } from '@/components/AppDataTable.vue'
+import { Search24Regular } from '@vicons/fluent'
 
 const message = useMessage()
 const appNavigator = useAppNavigator()
@@ -36,7 +37,7 @@ const columns = [
   {
     title: 'ID',
     key: 'id',
-    width: 80,
+    width: 50,
     render(row) {
       // open in a window-like modal instead of navigating
       return (
@@ -50,61 +51,6 @@ const columns = [
     title: 'Title',
     key: 'title',
     filter: true,
-    renderFilterMenu: ({ hide }) => {
-      const originalValue = computed(() => filters.value.title)
-      const localValue = ref(originalValue.value)
-
-      function confirm() {
-        filters.value.title = localValue.value
-
-        hide()
-      }
-
-      function clear() {
-        filters.value.title = null
-
-        hide()
-      }
-
-      const inputRef = ref<InputInst>()
-
-      nextTick(() => {
-        inputRef.value?.focus()
-      })
-
-      return (
-        <NCard size="small">
-          {{
-            default: () => (
-              <div>
-                <NInput
-                  ref={inputRef}
-                  onKeyup={(e) => {
-                    if (e.key === 'Enter') {
-                      confirm()
-                    }
-                  }}
-                  value={localValue.value}
-                  onUpdate:value={(newValue) => (localValue.value = newValue || null)}
-                  autofocus
-                  clearable
-                />
-              </div>
-            ),
-            action: () => (
-              <div class="flex justify-end gap-2">
-                <NButton size="tiny" onClick={clear}>
-                  Clear
-                </NButton>
-                <NButton size="tiny" type="primary" onClick={confirm}>
-                  Confirm
-                </NButton>
-              </div>
-            ),
-          }}
-        </NCard>
-      )
-    },
   },
   {
     title: 'Content',
@@ -166,43 +112,70 @@ const columns = [
 
 const tableRef = useTemplateRef<DataTableInst>('tableRef')
 
-const appliedFilters = computed(() => {
-  return Object.keys(filters.value).filter(
-    (key) => filters.value[key as keyof typeof filters.value] !== null,
-  )
-})
+const tableFilters = [
+  {
+    key: 'title',
+    title: 'Title',
+    getIndicator() {
+      return `Title: ${filters.value.title}`
+    },
+    active: computed(() => {
+      return filters.value.title !== null
+    }),
+    reset() {
+      filters.value.title = null
+    },
+    make({ after }) {
+      const originalValue = computed(() => filters.value.title)
+      const localValue = ref(originalValue.value)
+
+      function confirm() {
+        filters.value.title = localValue.value
+
+        after()
+      }
+
+      function clear() {
+        filters.value.title = null
+
+        after()
+      }
+
+      return {
+        input: () => {
+          const inputRef = ref<InputInst>()
+
+          nextTick(() => {
+            inputRef.value?.focus()
+          })
+
+          return (
+            <NInput
+              ref={inputRef}
+              onKeyup={(e) => {
+                if (e.key === 'Enter') {
+                  confirm()
+                }
+              }}
+              value={localValue.value}
+              onUpdate:value={(newValue) => (localValue.value = newValue || null)}
+              autofocus
+              clearable
+            />
+          )
+        },
+        confirm,
+        clear,
+      }
+    },
+  },
+] satisfies TableFilter[]
 
 load()
 </script>
 
 <template>
   <NFlex>
-    <NGrid :x-gap="12" :y-gap="12" :cols="3">
-      <NGi span="1">
-        <NInput
-          :value="filters.search"
-          @update:value="filters.search = $event || null"
-          placeholder="Search"
-          clearable
-        />
-      </NGi>
-      <NGi span="1">
-        <NInput
-          :value="filters.title"
-          @update:value="filters.title = $event || null"
-          placeholder="Title"
-          clearable
-        />
-      </NGi>
-      <NGi>
-        <NSelect
-          v-model:value="filters.trashed"
-          placeholder="Without Trashed"
-          :options="trashedOptions"
-          clearable
-        />
-      </NGi>
-    </NGrid>
     <AppDataTable
       ref="tableRef"
       :columns="columns"
@@ -210,10 +183,43 @@ load()
       :loading="loading"
       size="small"
       :pagination="dataTablePagination"
-      :applied-filters="appliedFilters"
+      :filters="tableFilters"
       remote
       striped
-    />
+    >
+      <template #header>
+        <NGrid :x-gap="12" :y-gap="12" :cols="3">
+          <NGi>
+            <NSelect
+              v-model:value="filters.trashed"
+              placeholder="Without Trashed"
+              :options="trashedOptions"
+              clearable
+            />
+          </NGi>
+          <NGi span="1">
+            <NInput
+              :value="filters.title"
+              @update:value="filters.title = $event || null"
+              placeholder="Title"
+              clearable
+            />
+          </NGi>
+          <NGi span="1">
+            <NInput
+              :value="filters.search"
+              @update:value="filters.search = $event || null"
+              placeholder="Search"
+              clearable
+            >
+              <template #prefix>
+                <NIcon><Search24Regular /></NIcon>
+              </template>
+            </NInput>
+          </NGi>
+        </NGrid>
+      </template>
+    </AppDataTable>
   </NFlex>
 </template>
 
