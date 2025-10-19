@@ -40,12 +40,13 @@ import AppMenu from '@/components/AppMenu.vue'
 import { useAuthStore } from '@/composables/useAuthStore'
 import { useUserStore } from '@/composables/useUserStore'
 import { PageExpose } from '@/core/types'
+import { useStorage } from '@vueuse/core'
 import { onMounted, ref, watch } from 'vue'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
-const collapsed = ref(false)
+const collapsed = useStorage('menu-collapsed', false)
 const currentComponent = ref()
 
 watch(currentComponent, (component: PageExpose | null) => {
