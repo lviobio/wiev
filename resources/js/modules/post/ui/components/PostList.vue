@@ -6,19 +6,21 @@ import { Post } from '../../types'
 import {
   DataTableColumns,
   DataTableInst,
-  InputInst,
   NA,
   NButton,
   NFlex,
-  NInput,
   NPopconfirm,
   useMessage,
 } from 'naive-ui'
 import AppDateTime from '@/components/AppDateTime.vue'
 import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { postRouteNames } from '@/modules/post/router/names'
-import { TableFilter } from '@/components/AppDataTable.vue'
 import { Search24Regular } from '@vicons/fluent'
+import {
+  DateRangeFilter,
+  makeDataTableFiltering,
+  TextFilter,
+} from '@/components/AppDataTable/filters'
 
 const message = useMessage()
 const appNavigator = useAppNavigator()
@@ -33,7 +35,7 @@ const openPostWindow = appNavigator.delayedNavigate({
   windowed: true,
 })
 
-const columns = [
+const columns: DataTableColumns<Post> = [
   {
     title: 'ID',
     key: 'id',
@@ -50,7 +52,6 @@ const columns = [
   {
     title: 'Title',
     key: 'title',
-    filter: true,
   },
   {
     title: 'Content',
@@ -64,6 +65,7 @@ const columns = [
     title: 'Created',
     key: 'created_at',
     width: 200,
+    filter: true,
     render(row) {
       return <AppDateTime value={row.created_at} />
     },
@@ -108,68 +110,14 @@ const columns = [
       )
     },
   },
-] satisfies DataTableColumns<Post>
+]
 
 const tableRef = useTemplateRef<DataTableInst>('tableRef')
 
-const tableFilters = [
-  {
-    key: 'title',
-    title: 'Title',
-    getIndicator() {
-      return `Title: ${filters.value.title}`
-    },
-    active: computed(() => {
-      return filters.value.title !== null
-    }),
-    reset() {
-      filters.value.title = null
-    },
-    make({ after }) {
-      const originalValue = computed(() => filters.value.title)
-      const localValue = ref(originalValue.value)
-
-      function confirm() {
-        filters.value.title = localValue.value
-
-        after()
-      }
-
-      function clear() {
-        filters.value.title = null
-
-        after()
-      }
-
-      return {
-        input: () => {
-          const inputRef = ref<InputInst>()
-
-          nextTick(() => {
-            inputRef.value?.focus()
-          })
-
-          return (
-            <NInput
-              ref={inputRef}
-              onKeyup={(e) => {
-                if (e.key === 'Enter') {
-                  confirm()
-                }
-              }}
-              value={localValue.value}
-              onUpdate:value={(newValue) => (localValue.value = newValue || null)}
-              autofocus
-              clearable
-            />
-          )
-        },
-        confirm,
-        clear,
-      }
-    },
-  },
-] satisfies TableFilter[]
+const filtering = makeDataTableFiltering(filters, [
+  TextFilter.make('title', 'Title').withPlaceholder('Search by title').toTableFilter(),
+  DateRangeFilter.make('created_at', 'Created').toTableFilter(),
+])
 
 load()
 </script>
@@ -183,7 +131,7 @@ load()
       :loading="loading"
       size="small"
       :pagination="dataTablePagination"
-      :filters="tableFilters"
+      :filtering="filtering"
       remote
       striped
     >

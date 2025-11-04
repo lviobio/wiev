@@ -4,45 +4,87 @@ import { z, ZodObject, ZodRawShape } from 'zod'
 export type RemovableUploadFileInfo = UploadFileInfo | null
 
 /**
+ * Символ для хранения ссылки на оригинальную схему в объекте
+ */
+export const SCHEMA_SYMBOL = Symbol('schema')
+
+/**
+ * Тип объекта с обязательной схемой
+ */
+export type WithSchema<T extends ZodRawShape> = z.infer<ZodObject<T>> & {
+  [SCHEMA_SYMBOL]: ZodObject<T>
+}
+
+/**
+ * Тип объекта с необязательной схемой
+ */
+export type MaybeWithSchema<T extends ZodRawShape> = z.infer<ZodObject<T>> & {
+  [SCHEMA_SYMBOL]?: ZodObject<T>
+}
+
+export type RefMaybeWithSchema<S> = Ref<S & { [SCHEMA_SYMBOL]?: any }>
+
+/**
+ * Получить оригинальную схему из объекта, созданного через createEmptyObjectFromSchema.
+ * Возвращает undefined если схемы нет
+ */
+export function getSchemaFromObject<T extends ZodRawShape>(obj: WithSchema<T>): ZodObject<T>
+export function getSchemaFromObject(obj: any): ZodObject<any> | undefined
+export function getSchemaFromObject(obj: any): ZodObject<any> | undefined {
+  return obj?.[SCHEMA_SYMBOL]
+}
+
+/**
  * Создает объект с пустыми значениями на основе Zod схемы
  * Полезно для инициализации форм
  */
 export function createEmptyObjectFromSchema<T extends ZodRawShape>(
   schema: ZodObject<T>,
-): z.infer<ZodObject<T>> {
+  useDefaults = true,
+): WithSchema<T> {
   const shape = schema.shape
   const result: any = {}
+
+  // Сохраняем ссылку на оригинальную схему (markRaw делает её non-reactive)
+  result[SCHEMA_SYMBOL] = markRaw(schema)
 
   for (const key in shape) {
     const field = shape[key] as unknown as z.ZodType<any>
 
-    // Проверяем наличие default значения через ZodDefault.
-    // Используем parse с undefined для получения default значения через публичный API
-    let hasDefault = false
-    let currentType: z.ZodType<any> = field
+    if (useDefaults) {
+      // Проверяем наличие default значения через ZodDefault.
+      // Используем parse с undefined для получения default значения через публичный API
+      let hasDefault = false
+      let currentType: z.ZodType<any> = field
 
-    while (
-      currentType instanceof z.ZodOptional ||
-      currentType instanceof z.ZodNullable ||
-      currentType instanceof z.ZodDefault
-    ) {
-      if (currentType instanceof z.ZodDefault) {
-        hasDefault = true
-        break
+      while (
+        currentType instanceof z.ZodOptional ||
+        currentType instanceof z.ZodNullable ||
+        currentType instanceof z.ZodDefault
+      ) {
+        if (currentType instanceof z.ZodDefault) {
+          hasDefault = true
+          break
+        }
+        currentType = currentType.unwrap() as z.ZodType<any>
       }
-      currentType = currentType.unwrap() as z.ZodType<any>
-    }
 
-    if (hasDefault) {
-      // Используем parse для получения default значения
-      result[key] = field.parse(undefined)
-      continue
+      if (hasDefault) {
+        // Используем parse для получения default значения
+        result[key] = field.parse(undefined)
+        continue
+      }
     }
 
     // Проверяем, является ли поле nullable
+    // Важно: разворачиваем ZodDefault тоже, чтобы добраться до внутреннего типа
     let isNullable = false
     let checkType: z.ZodType<any> = field
-    while (checkType instanceof z.ZodOptional || checkType instanceof z.ZodNullable) {
+    while (
+      checkType instanceof z.ZodOptional ||
+      checkType instanceof z.ZodNullable ||
+      checkType instanceof z.ZodDefault
+    ) {
       if (checkType instanceof z.ZodNullable) {
         isNullable = true
       }
@@ -55,9 +97,13 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
       continue
     }
 
-    // Получаем базовый тип, "разворачивая" optional/nullable
+    // Получаем базовый тип, "разворачивая" optional/nullable/default
     let baseType: z.ZodType<any> = field
-    while (baseType instanceof z.ZodOptional || baseType instanceof z.ZodNullable) {
+    while (
+      baseType instanceof z.ZodOptional ||
+      baseType instanceof z.ZodNullable ||
+      baseType instanceof z.ZodDefault
+    ) {
       baseType = baseType.unwrap() as z.ZodType<any>
     }
 
@@ -71,7 +117,7 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
     } else if (baseType instanceof z.ZodArray) {
       result[key] = []
     } else if (baseType instanceof z.ZodObject) {
-      result[key] = createEmptyObjectFromSchema(baseType)
+      result[key] = createEmptyObjectFromSchema(baseType, useDefaults)
     } else if (baseType instanceof z.ZodDate) {
       result[key] = null
     } else if (field instanceof z.ZodOptional || field instanceof z.ZodNullable) {
@@ -83,7 +129,7 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
     }
   }
 
-  return result as z.infer<ZodObject<T>>
+  return result
 }
 
 // Схема для преобразования URL в UploadFileInfo для формы

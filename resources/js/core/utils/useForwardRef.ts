@@ -2,7 +2,7 @@ import { ComponentPublicInstance, getCurrentInstance } from 'vue'
 
 export function useForwardRef<ExposedMethods extends Record<string, any>>() {
   const currentInstance = getCurrentInstance()
-  const elRef = ref<ExposedMethods>()
+  const elRef = shallowRef<ExposedMethods>()
 
   function forwardRef(el: Element | ComponentPublicInstance | null) {
     if (currentInstance) {
