@@ -118,8 +118,6 @@ const filtering = makeDataTableFiltering(filters, [
   TextFilter.make('title', 'Title').withPlaceholder('Search by title').toTableFilter(),
   DateRangeFilter.make('created_at', 'Created').toTableFilter(),
 ])
-
-load()
 </script>
 
 <template>
@@ -129,6 +127,7 @@ load()
       :columns="columns"
       :data="items"
       :loading="loading"
+      :loader="load"
       size="small"
       :pagination="dataTablePagination"
       :filtering="filtering"

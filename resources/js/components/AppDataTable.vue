@@ -22,8 +22,8 @@ import { ComponentSlots } from 'vue-component-type-helpers'
 export interface AppDataTableProps<RowData, FS extends Record<string, unknown>>
   extends /* @vue-ignore */ DataTableProps {
   loading: boolean
+  loader?: () => Promise<void>
   columns: DataTableColumns<RowData>
-  load?: () => Promise<void>
   filtering?: TableFiltering<FS>
 }
 
@@ -60,6 +60,10 @@ const slots = defineSlots<
 >()
 
 const typedSlot = (name: string | number) => name as keyof typeof slots
+
+onMounted(() => {
+  props.loader?.()
+})
 </script>
 
 <template>
@@ -96,7 +100,7 @@ const typedSlot = (name: string | number) => name as keyof typeof slots
           <NEmpty size="large">
             <div class="flex flex-col items-center justify-center gap-1">
               <p>No data</p>
-              <NButton size="small">Reload</NButton>
+              <NButton size="small" v-if="props.loader" @click="props.loader">Reload</NButton>
             </div>
           </NEmpty>
         </template>
