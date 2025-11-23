@@ -37,14 +37,12 @@
 import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue'
 import AppLogo from '@/components/AppLogo.vue'
 import AppMenu from '@/components/AppMenu.vue'
-import { useAuthStore } from '@/composables/useAuthStore'
-import { useUserStore } from '@/composables/useUserStore'
+import { injectLoginData } from '@/core/auth'
+import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
+import { loginRouteGenerator } from '@/modules/app/authentication/router/names'
 import { useStorage } from '@vueuse/core'
-import { onMounted, ref, watch } from 'vue'
-
-const authStore = useAuthStore()
-const userStore = useUserStore()
+import { ref, watch } from 'vue'
 
 const collapsed = useStorage('menu-collapsed', false)
 const currentComponent = ref()
@@ -55,9 +53,11 @@ watch(currentComponent, (component: PageExpose | null) => {
     : import.meta.env.VITE_APP_NAME
 })
 
-onMounted(() => {
-  if (authStore.loggedIn.value) {
-    userStore.getCurrentUser()
-  }
-})
+const appNavigator = useAppNavigator()
+
+const loginData = injectLoginData()
+
+if (!loginData.value) {
+  await appNavigator.navigate(loginRouteGenerator.index())
+}
 </script>

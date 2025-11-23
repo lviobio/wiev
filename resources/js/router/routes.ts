@@ -1,4 +1,5 @@
 import { attachComponentRouteResolvers } from '@/core/navigator/routeResolver'
+import { authenticationRoutes } from '@/modules/app/authentication/router/routes'
 import { postRoutes } from '@/modules/post/router/routes'
 import { RouteRecordRaw } from 'vue-router'
 
@@ -21,22 +22,7 @@ export const createRoutes = () => {
         ...postRoutes,
       ],
     },
-    {
-      path: '/',
-      component: () => import('@/components/AuthLayout.vue'),
-      children: [
-        {
-          path: '/sign-in',
-          name: 'sign-in',
-          component: () => import('@/pages/PageSignIn.vue'),
-        },
-        {
-          path: '/sign-up',
-          name: 'sign-up',
-          component: () => import('@/pages/PageSignUp.vue'),
-        },
-      ],
-    },
+    ...authenticationRoutes,
   ] as const satisfies readonly RouteRecordRaw[]
 
   // Attach route resolvers to async components for window-aware navigation

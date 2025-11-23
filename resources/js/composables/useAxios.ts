@@ -1,20 +1,20 @@
-import { useAuthStore } from '@/composables/useAuthStore'
+import { injectLoginData } from '@/core/auth'
 import { AxiosUtils, UnauthorizedHttpException } from '@/core/errors/axios'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { useNotification } from 'naive-ui'
 
 export const useAxios = () => {
-  const authStore = useAuthStore()
+  const loginData = injectLoginData()
   const notification = useNotification()
 
   const instance = axios.create({
-    baseURL: '/api',
+    baseURL: '/api/v1',
   })
 
   instance.interceptors.request.use((config) => {
-    if (authStore.token.value) {
-      config.headers.Authorization = `Bearer ${authStore.token.value}`
+    if (loginData.value) {
+      config.headers.Authorization = `Bearer ${loginData.value.getToken()}`
     }
 
     return config
@@ -26,8 +26,7 @@ export const useAxios = () => {
       const error = AxiosUtils.toSpecificException(_)
 
       if (error instanceof UnauthorizedHttpException) {
-        authStore.logout()
-        window.location.reload()
+        //TODO: logout & redirect
 
         return
       }

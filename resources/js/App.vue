@@ -2,12 +2,14 @@
   <NConfigProvider preflight-style-disabled :theme="theme">
     <NMessageProvider>
       <NNotificationProvider>
-        <AppSuspense>
-          <RouterView />
-        </AppSuspense>
-        <AppSuspense>
-          <DesktopWindowsHost />
-        </AppSuspense>
+        <AppAuthProvider>
+          <AppSuspense>
+            <RouterView />
+          </AppSuspense>
+          <AppSuspense>
+            <DesktopWindowsHost />
+          </AppSuspense>
+        </AppAuthProvider>
       </NNotificationProvider>
     </NMessageProvider>
   </NConfigProvider>

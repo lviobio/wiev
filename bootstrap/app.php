@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->shouldRenderJsonWhen(function (Request $request): bool {
+            return Str::startsWith($request->path(), 'api/');
+        });
+
         $exceptions->renderable(function (NotFoundHttpException $e, Request $request): ?JsonResponse {
             $previous = $e->getPrevious();
             if ($previous instanceof ModelNotFoundException) {
