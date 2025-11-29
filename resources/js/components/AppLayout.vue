@@ -16,7 +16,7 @@
         <AppMenu :collapsed="collapsed" />
       </NLayoutSider>
       <NLayout>
-        <RouterView v-slot="{ Component }">
+        <RouterViewCustom v-slot="{ Component }">
           <div class="flex flex-col gap-4 px-4 py-4">
             <AppBreadcrumbs
               v-if="currentComponent && currentComponent.breadcrumbs"
@@ -27,7 +27,7 @@
               <component :is="Component" ref="currentComponent" />
             </AppSuspense>
           </div>
-        </RouterView>
+        </RouterViewCustom>
       </NLayout>
     </NLayout>
   </NSpace>

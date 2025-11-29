@@ -1,9 +1,9 @@
 <template>
   <div class="flex min-h-screen flex-col items-center justify-center gap-16">
     <div v-if="!isLoggedIn">
-      <RouterView v-slot="{ Component }">
+      <RouterViewCustom v-slot="{ Component }">
         <component :is="Component" @success="goHome" />
-      </RouterView>
+      </RouterViewCustom>
     </div>
     <div v-else>You already logged in, redirecting...</div>
   </div>

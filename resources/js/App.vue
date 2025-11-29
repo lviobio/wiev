@@ -4,7 +4,7 @@
       <NNotificationProvider>
         <AppAuthProvider>
           <AppSuspense>
-            <RouterView />
+            <RouterViewCustom />
           </AppSuspense>
           <AppSuspense>
             <DesktopWindowsHost />
