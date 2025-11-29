@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import { logout } from '@/core/auth'
 import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
 import { loginRouteGenerator } from '@/modules/app/authentication/router/names'
@@ -21,7 +22,7 @@ defineExpose<PageExpose>({
 const appNavigator = useAppNavigator()
 
 onMounted(() => {
-  authStore.logout()
+  logout()
 
   appNavigator.navigate(loginRouteGenerator.index())
 })

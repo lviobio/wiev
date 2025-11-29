@@ -17,3 +17,9 @@ export const loginInjectKey: InjectionKey<LoginDataProvided> = Symbol()
 export function injectLoginData(): LoginDataProvided {
   return inject(loginInjectKey, () => ref(null), true)
 }
+
+export function logout() {
+  const loginData = injectLoginData()
+
+  loginData.value = null
+}
