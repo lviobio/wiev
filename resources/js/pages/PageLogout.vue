@@ -3,8 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '@/composables/useAuthStore'
+import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
+import { loginRouteGenerator } from '@/modules/app/authentication/router/names'
 import { onMounted } from 'vue'
 
 defineExpose<PageExpose>({
@@ -17,11 +18,11 @@ defineExpose<PageExpose>({
   ],
 })
 
-const authStore = useAuthStore()
+const appNavigator = useAppNavigator()
 
 onMounted(() => {
   authStore.logout()
 
-  window.location.reload()
+  appNavigator.navigate(loginRouteGenerator.index())
 })
 </script>

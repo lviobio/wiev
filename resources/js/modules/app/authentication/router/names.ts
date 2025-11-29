@@ -1,7 +1,7 @@
 import { ModuleRouteGenerator } from '@/modules/_shared/interface'
 
 export const loginRouteNames = {
-  index: 'login.index' as const,
+  index: 'auth.login.index' as const,
 }
 
 export const loginRouteGenerator = {
