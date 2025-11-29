@@ -1,5 +1,5 @@
 <template>
-  <NSpace vertical>
+  <NSpace vertical v-if="loginData">
     <NLayout has-sider>
       <NLayoutSider
         class="min-h-screen !bg-gray-50"
@@ -58,6 +58,6 @@ const appNavigator = useAppNavigator()
 const loginData = injectLoginData()
 
 if (!loginData.value) {
-  await appNavigator.navigate(loginRouteGenerator.index())
+  appNavigator.navigate(loginRouteGenerator.index())
 }
 </script>
