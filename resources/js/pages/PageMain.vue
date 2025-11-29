@@ -8,16 +8,16 @@
 </template>
 
 <script setup lang="ts">
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
 
-const appNavigator = useAppNavigator()
+const router = useRouter()
 
 const test = () => {
-  appNavigator.navigate({
+  router.push({
     name: 'posts.index',
-    title: 'Posts',
-    windowed: true,
+    windowed: {
+      title: 'Posts',
+    },
   })
 }
 

@@ -3,7 +3,7 @@ import { getOriginalRouter } from '@/core/navigator/customRouter'
 import { DesktopWindowKeySymbol } from '@/core/navigator/windows/symbols'
 import { useDesktopWindows } from '@/core/navigator/windows/useDesktopWindows'
 import { inject } from 'vue'
-import { RouteLocation, Router, routerKey } from 'vue-router'
+import { Router, routerKey } from 'vue-router'
 
 export default defineComponent({
   setup(_, { slots }) {
@@ -12,8 +12,8 @@ export default defineComponent({
     const injectedKey = inject(DesktopWindowKeySymbol, null)
 
     const push: Router['push'] = async (to) => {
-      const targetLocation: RouteLocation = router.resolve(to)
-      console.log({ targetLocation })
+      // const targetLocation: RouteLocation = router.resolve(to)
+      // console.log({ targetLocation })
 
       if (typeof to === 'object') {
         if (to.path === undefined) {

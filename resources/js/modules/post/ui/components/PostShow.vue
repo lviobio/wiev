@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import Icon from '@/modules/post/icon'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
 import { postRouteNames } from '@/modules/post/router/names'
@@ -12,10 +11,10 @@ const { repository, id } = defineProps<{
 
 const { data } = await repository.find(id)
 
-const appNavigator = useAppNavigator()
+const router = useRouter()
 
 function onEdit() {
-  appNavigator.navigate({
+  router.push({
     name: postRouteNames.edit,
     params: { id: data.id },
     title: `Edit Post #${data.id}`,
@@ -23,7 +22,7 @@ function onEdit() {
 }
 
 function onBack() {
-  appNavigator.navigate({
+  router.push({
     name: postRouteNames.index,
     title: `Posts`,
   })

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { usePostRepository } from '@/modules/post/repositories/PostRepository'
 import { postRouteNames } from '@/modules/post/router/names'
 import { Edit } from '@/modules/post/ui/components'
@@ -10,10 +9,10 @@ const repository = usePostRepository()
 const _ = defineProps<{ params: PropsSchema }>()
 const props = propsSchema.parse(_.params)
 
-const appNavigator = useAppNavigator()
+const router = useRouter()
 
 const onUpdated = () =>
-  appNavigator.navigate({
+  router.push({
     name: postRouteNames.show,
     params: { id: props.id },
     title: `Post #${props.id}`,

@@ -11,16 +11,15 @@
 
 <script setup lang="ts">
 import { injectLoginData } from '@/core/auth'
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 
 const loginData = injectLoginData()
 
 const isLoggedIn = !!loginData.value
 
-const appNavigator = useAppNavigator()
+const router = useRouter()
 
 function goHome() {
-  appNavigator.navigate({ name: 'home' })
+  router.push({ name: 'home' })
 }
 
 onMounted(() => {

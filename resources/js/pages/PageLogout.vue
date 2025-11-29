@@ -4,10 +4,11 @@
 
 <script setup lang="ts">
 import { logout } from '@/core/auth'
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
 import { loginRouteGenerator } from '@/modules/app/authentication/router/names'
 import { onMounted } from 'vue'
+
+const router = useRouter()
 
 defineExpose<PageExpose>({
   title: 'Logging out',
@@ -19,11 +20,9 @@ defineExpose<PageExpose>({
   ],
 })
 
-const appNavigator = useAppNavigator()
-
 onMounted(() => {
   logout()
 
-  appNavigator.navigate(loginRouteGenerator.index())
+  router.push(loginRouteGenerator.index())
 })
 </script>

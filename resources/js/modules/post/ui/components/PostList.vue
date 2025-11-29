@@ -13,7 +13,6 @@ import {
   useMessage,
 } from 'naive-ui'
 import AppDateTime from '@/components/AppDateTime.vue'
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { postRouteNames } from '@/modules/post/router/names'
 import { Search24Regular } from '@vicons/fluent'
 import {
@@ -23,17 +22,22 @@ import {
 } from '@/components/AppDataTable/filters'
 
 const message = useMessage()
-const appNavigator = useAppNavigator()
+const router = useRouter()
 
 const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
 
 const dataTablePagination = useNaiveUiPagination(pagination)
 
-const openPostWindow = appNavigator.delayedNavigate({
-  name: postRouteNames.show,
-  title: (p) => `Post #${p.id}`,
-  windowed: true,
-})
+const openPostWindow = (
+  params: { id: number }, //params: ParamOf<typeof postRouteNames.show>
+) =>
+  router.push({
+    name: postRouteNames.show,
+    params,
+    windowed: {
+      title: (p) => `Post #${p.id}`,
+    },
+  })
 
 const columns: DataTableColumns<Post> = [
   {
@@ -81,7 +85,7 @@ const columns: DataTableColumns<Post> = [
             size="small"
             type="info"
             onClick={() =>
-              appNavigator.navigate({
+              router.push({
                 name: postRouteNames.show,
                 params: { id: row.id },
               })

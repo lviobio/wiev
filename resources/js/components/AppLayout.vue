@@ -38,7 +38,6 @@ import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue'
 import AppLogo from '@/components/AppLogo.vue'
 import AppMenu from '@/components/AppMenu.vue'
 import { injectLoginData } from '@/core/auth'
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
 import { loginRouteGenerator } from '@/modules/app/authentication/router/names'
 import { useStorage } from '@vueuse/core'
@@ -46,6 +45,7 @@ import { ref, watch } from 'vue'
 
 const collapsed = useStorage('menu-collapsed', false)
 const currentComponent = ref()
+const router = useRouter()
 
 watch(currentComponent, (component: PageExpose | null) => {
   document.title = component
@@ -53,11 +53,9 @@ watch(currentComponent, (component: PageExpose | null) => {
     : import.meta.env.VITE_APP_NAME
 })
 
-const appNavigator = useAppNavigator()
-
 const loginData = injectLoginData()
 
 if (!loginData.value) {
-  appNavigator.navigate(loginRouteGenerator.index())
+  router.push(loginRouteGenerator.index())
 }
 </script>

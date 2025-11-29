@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { useAppNavigator } from '@/core/navigator/useAppNavigator'
 import { PageExpose } from '@/core/types'
 import { postRouteGenerator, postRouteNames } from '@/modules/post/router/names'
 
+const router = useRouter()
 const route = useRoute() // TODO: replace with appNavigator.getCurrentPage()
-const appNavigator = useAppNavigator()
 
 defineExpose<PageExpose>({
   title: 'Posts',
@@ -17,10 +16,11 @@ defineExpose<PageExpose>({
 })
 
 const handleOpenListInNewWindow = () =>
-  appNavigator.navigate({
+  router.push({
     name: postRouteNames.index,
-    title: `Posts`,
-    windowed: true,
+    windowed: {
+      title: 'Posts',
+    },
   })
 </script>
 
