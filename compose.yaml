@@ -57,7 +57,7 @@ services:
       - main
 
   vite:
-    image: node:alpine
+    image: node:24-alpine
     entrypoint: /bin/sh
     restart: unless-stopped
     ports:
@@ -72,7 +72,7 @@ services:
       - NODE_OPTIONS=--max-old-space-size=4096
 
   db:
-    image: postgres:latest
+    image: postgres:18-alpine
     restart: unless-stopped
     ports:
       - "${EXPOSE_DB_PORT:-7002}:5432"
