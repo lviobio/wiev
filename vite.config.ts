@@ -15,7 +15,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: env.EXPOSE_VITE_PORT,
       hmr: {
-        host: 'localhost',
+        host: env.VITE_HMR_HOST ?? 'localhost',
+        protocol: env.VITE_HMR_PROTOCOL,
+        clientPort: env.VITE_HMR_CLIENT_PORT,
       },
     },
     plugins: [
