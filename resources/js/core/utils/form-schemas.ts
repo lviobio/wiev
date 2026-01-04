@@ -37,11 +37,14 @@ export function getSchemaFromObject(obj: any): ZodObject<any> | undefined {
 /**
  * Создает объект с пустыми значениями на основе Zod схемы
  * Полезно для инициализации форм
+ *
+ * Для возвращаемого значения используем MaybeWithSchema а не WithSchema, чтобы
+ * не было ошибок типизации при трансформациях
  */
 export function createEmptyObjectFromSchema<T extends ZodRawShape>(
   schema: ZodObject<T>,
   useDefaults = true,
-): WithSchema<T> {
+): MaybeWithSchema<T> {
   const shape = schema.shape
   const result: any = {}
 
