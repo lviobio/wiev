@@ -20,11 +20,17 @@ import {
   makeDataTableFiltering,
   TextFilter,
 } from '@/components/AppDataTable/filters'
+import { usePostListContext } from '@/modules/post/composables/usePostListData'
+import { syncRef } from '@vueuse/core'
 
 const message = useMessage()
 const router = useRouter()
 
 const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
+
+const context = usePostListContext().get()
+
+syncRef(context.filters, filters)
 
 const dataTablePagination = useNaiveUiPagination(pagination)
 

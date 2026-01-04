@@ -6,6 +6,7 @@ import {
 } from '@/modules/post/repositories/PostRepository'
 import { Post } from '@/modules/post/types'
 import { watchDebounced } from '@vueuse/core'
+import { debounce } from 'lodash'
 import { ref } from 'vue'
 
 export function usePostsList() {
@@ -16,7 +17,7 @@ export function usePostsList() {
 
   const repository = usePostRepository()
 
-  const load = async () => {
+  const load = debounce(async () => {
     abortController?.abort()
     abortController = new AbortController()
     loading.value = true
@@ -36,7 +37,7 @@ export function usePostsList() {
       .finally(() => {
         loading.value = false
       })
-  }
+  }, 10)
 
   async function reload() {
     await load()
