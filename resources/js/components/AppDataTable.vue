@@ -22,7 +22,7 @@ import { ComponentSlots } from 'vue-component-type-helpers'
 export interface AppDataTableProps<RowData, FS extends Record<string, unknown>>
   extends /* @vue-ignore */ DataTableProps {
   loading: boolean
-  loader?: () => Promise<void>
+  loader?: () => Promise<void> | undefined
   columns: DataTableColumns<RowData>
   filtering?: TableFiltering<FS>
 }
