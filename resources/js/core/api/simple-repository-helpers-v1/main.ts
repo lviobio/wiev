@@ -14,17 +14,13 @@ export interface HasPaginationContract {
 }
 
 export interface DefaultListQueryContract<TData>
-  extends HasDataContract<TData>,
-    HasSignalContract,
-    HasPaginationContract {}
+  extends HasDataContract<TData>, HasSignalContract, HasPaginationContract {}
 
 export interface DefaultCreateQueryContract<TData>
-  extends HasDataContract<TData>,
-    HasSignalContract {}
+  extends HasDataContract<TData>, HasSignalContract {}
 
 export interface DefaultUpdateQueryContract<TData>
-  extends HasDataContract<TData>,
-    HasSignalContract {}
+  extends HasDataContract<TData>, HasSignalContract {}
 
 export interface DefaultCreateQueryResultContract<TData> extends HasDataContract<TData> {}
 export interface DefaultFindQueryResultContract<TData> extends HasDataContract<TData> {}

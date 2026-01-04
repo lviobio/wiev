@@ -19,8 +19,10 @@ import { ComponentSlots } from 'vue-component-type-helpers'
  * Vue-ignore is used to ignore the error that is thrown by the TypeScript compiler
  * @see {https://github.com/tusen-ai/naive-ui/issues/4810}
  */
-export interface AppDataTableProps<RowData, FS extends Record<string, unknown>>
-  extends /* @vue-ignore */ DataTableProps {
+export interface AppDataTableProps<
+  RowData,
+  FS extends Record<string, unknown>,
+> extends /* @vue-ignore */ DataTableProps {
   loading: boolean
   loader?: () => Promise<void> | undefined
   columns: DataTableColumns<RowData>

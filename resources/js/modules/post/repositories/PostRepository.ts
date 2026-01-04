@@ -28,10 +28,9 @@ export const postListFiltersSchema = z.object({
 /** List */
 export type PostListFilters = z.infer<typeof postListFiltersSchema>
 
-interface PostListQuery
-  extends DefaultListQueryContract<{
-    filters: PostListFilters
-  }> {}
+interface PostListQuery extends DefaultListQueryContract<{
+  filters: PostListFilters
+}> {}
 
 type PostListQueryResult = PaginatedData<Post>
 
