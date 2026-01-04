@@ -1,24 +1,33 @@
 <template>
-  <NConfigProvider preflight-style-disabled :theme="theme">
-    <NMessageProvider>
-      <NNotificationProvider>
-        <AppAuthProvider>
-          <AppSuspense>
-            <RouterViewCustom />
-          </AppSuspense>
-          <AppSuspense>
-            <DesktopWindowsHost />
-          </AppSuspense>
-        </AppAuthProvider>
-      </NNotificationProvider>
-    </NMessageProvider>
-  </NConfigProvider>
+  <AppProviderStack :stack="providerStack">
+    <AppSuspense>
+      <RouterViewCustom />
+    </AppSuspense>
+    <AppSuspense>
+      <DesktopWindowsHost />
+    </AppSuspense>
+  </AppProviderStack>
 </template>
 
 <script setup lang="ts">
+import AppAuthProvider from '@/components/AppAuthProvider.vue'
+import { defineProviderStack } from '@/components/AppProviderStack.vue'
 import DesktopWindowsHost from '@/core/navigator/windows/DesktopWindowsHost.vue'
-import { GlobalTheme, lightTheme } from 'naive-ui'
+import {
+  GlobalTheme,
+  lightTheme,
+  NConfigProvider,
+  NMessageProvider,
+  NNotificationProvider,
+} from 'naive-ui'
 import { ref } from 'vue'
 
 const theme = ref<GlobalTheme | null>(lightTheme)
+
+const providerStack = defineProviderStack([
+  { component: NConfigProvider, props: { preflightStyleDisabled: true, theme: theme } },
+  NMessageProvider,
+  NNotificationProvider,
+  AppAuthProvider,
+])
 </script>
