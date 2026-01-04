@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import {
+  contextStorageCollectionInjectKey,
+  contextStorageCollectionItemInjectKey,
+} from '@/core/context-storage/injectionSymbols'
 import { NCard } from 'naive-ui'
-import { onBeforeUnmount, ref } from 'vue'
+import { inject, onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps<{
   title: string
@@ -43,13 +47,40 @@ onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onMove)
   window.removeEventListener('mouseup', onUp)
 })
+
+const collection = inject(contextStorageCollectionInjectKey)!
+const item = inject(contextStorageCollectionItemInjectKey)!
+
+const activate = () => {
+  collection.setActive(item)
+}
+
+const onFocus = (e: MouseEvent) => {
+  emit('focus')
+
+  let shouldActivate = true
+
+  const target = e.target as HTMLElement | null
+
+  if (target?.closest('.n-card-header__close')) {
+    shouldActivate = false
+  }
+
+  if (shouldActivate) {
+    activate()
+  }
+}
+
+onMounted(() => {
+  activate()
+})
 </script>
 
 <template>
   <div
     class="pointer-events-auto fixed shadow"
     :style="{ top: y + 'px', left: x + 'px', zIndex: z, width: (width ?? 800) + 'px' }"
-    @mousedown="emit('focus')"
+    @mousedown="onFocus"
   >
     <NCard
       size="small"

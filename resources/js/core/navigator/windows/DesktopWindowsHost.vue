@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DesktopWindow from '@/components/DesktopWindow.vue'
+import ContextStorageProvider from '@/core/context-storage/components/ContextStorageProvider.vue'
 import WindowContext from '@/core/navigator/windows/WindowContext.vue'
 import { useDesktopWindows } from './useDesktopWindows'
 
@@ -9,23 +10,25 @@ const mgr = useDesktopWindows()
 <template>
   <div class="windows-host pointer-events-none fixed inset-0 z-[3]">
     <template v-for="w in mgr.windows" :key="w.windowId">
-      <DesktopWindow
-        :title="w.title"
-        :x="w.x"
-        :y="w.y"
-        :z="w.z"
-        :width="w.width"
-        @focus="mgr.bringToFront(w.windowId)"
-        @update:x="(v) => mgr.updateX(w.windowId, v)"
-        @update:y="(v) => mgr.updateY(w.windowId, v)"
-        @close="() => mgr.close(w.windowId)"
-      >
-        <WindowContext :key-val="w.windowId">
-          <AppCustomRouter>
-            <component :is="w.component" v-bind="w.props" />
-          </AppCustomRouter>
-        </WindowContext>
-      </DesktopWindow>
+      <ContextStorageProvider :item-key="`window-${w.windowId}`">
+        <DesktopWindow
+          :title="w.title"
+          :x="w.x"
+          :y="w.y"
+          :z="w.z"
+          :width="w.width"
+          @focus="mgr.bringToFront(w.windowId)"
+          @update:x="(v) => mgr.updateX(w.windowId, v)"
+          @update:y="(v) => mgr.updateY(w.windowId, v)"
+          @close="() => mgr.close(w.windowId)"
+        >
+          <WindowContext :key-val="w.windowId">
+            <AppCustomRouter>
+              <component :is="w.component" v-bind="w.props" />
+            </AppCustomRouter>
+          </WindowContext>
+        </DesktopWindow>
+      </ContextStorageProvider>
     </template>
   </div>
 </template>

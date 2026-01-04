@@ -1,17 +1,27 @@
 <template>
   <AppProviderStack :stack="providerStack">
-    <AppSuspense>
-      <RouterViewCustom />
-    </AppSuspense>
-    <AppSuspense>
-      <DesktopWindowsHost />
-    </AppSuspense>
+    <ContextStorageCollection :handlers="[ContextStorageQueryHandler]">
+      <AppSuspense>
+        <ContextStorageProvider item-key="main">
+          <ContextStorageActivator>
+            <RouterViewCustom />
+          </ContextStorageActivator>
+        </ContextStorageProvider>
+      </AppSuspense>
+      <AppSuspense>
+        <DesktopWindowsHost />
+      </AppSuspense>
+    </ContextStorageCollection>
   </AppProviderStack>
 </template>
 
 <script setup lang="ts">
 import AppAuthProvider from '@/components/AppAuthProvider.vue'
 import { defineProviderStack } from '@/components/AppProviderStack.vue'
+import ContextStorageActivator from '@/core/context-storage/components/ContextStorageActivator.vue'
+import ContextStorageCollection from '@/core/context-storage/components/ContextStorageCollection.vue'
+import ContextStorageProvider from '@/core/context-storage/components/ContextStorageProvider.vue'
+import { ContextStorageQueryHandler } from '@/core/context-storage/handlers/query'
 import DesktopWindowsHost from '@/core/navigator/windows/DesktopWindowsHost.vue'
 import {
   GlobalTheme,
