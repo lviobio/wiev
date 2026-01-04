@@ -4,7 +4,6 @@ import {
   RegisterBaseOptions,
 } from '@/core/context-storage/handlers'
 import { deserializeParams, serializeParams } from '@/core/context-storage/handlers/query-helpers'
-import { contextStorageQueryHandlerInjectKey } from '@/core/context-storage/injectionSymbols'
 import { contextStorageQueryHandler } from '@/core/context-storage/symbols'
 import { cloneDeep, isEqual, merge, pick } from 'lodash'
 import { getCurrentInstance, Ref, toValue, UnwrapNestedRefs, watch, WatchHandle } from 'vue'
@@ -116,7 +115,7 @@ export function useContextStorageQueryHandler<T extends Record<string, unknown>>
   options?: RegisterQueryHandlerBaseOptions<T>,
 ) {
   const handler = inject<InstanceType<typeof ContextStorageQueryHandler>>(
-    contextStorageQueryHandlerInjectKey,
+    contextStorageQueryHandler,
   )
 
   if (!handler) {
