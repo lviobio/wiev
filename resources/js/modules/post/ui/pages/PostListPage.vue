@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { useContextStorageQueryHandler } from '@/core/context-storage/handlers/query'
-import { transform } from '@/core/context-storage/handlers/query-transform-helpers'
 import { FilterTrashedValues } from '@/core/filters/trashed'
 import { usePostListContext } from '@/modules/post/composables/usePostListData'
 import { List } from '@/modules/post/ui/components'
 import { get } from 'lodash'
+import { transform, useContextStorageQueryHandler } from 'vue-context-storage'
 
 const context = usePostListContext()
 context.init()

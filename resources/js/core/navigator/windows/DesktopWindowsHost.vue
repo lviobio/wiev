@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DesktopWindow from '@/components/DesktopWindow.vue'
-import ContextStorageProvider from '@/core/context-storage/components/ContextStorageProvider.vue'
 import WindowContext from '@/core/navigator/windows/WindowContext.vue'
+import { ContextStorageProvider } from 'vue-context-storage'
 import { useDesktopWindows } from './useDesktopWindows'
 
 const mgr = useDesktopWindows()

@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { NCard } from 'naive-ui'
+import { inject, onBeforeUnmount, ref } from 'vue'
 import {
   contextStorageCollectionInjectKey,
   contextStorageCollectionItemInjectKey,
-} from '@/core/context-storage/injectionSymbols'
-import { NCard } from 'naive-ui'
-import { inject, onBeforeUnmount, ref } from 'vue'
+} from 'vue-context-storage'
 
 const props = defineProps<{
   title: string
