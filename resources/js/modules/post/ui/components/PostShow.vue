@@ -22,10 +22,12 @@ function onEdit() {
 }
 
 function onBack() {
-  router.push({
-    name: postRouteNames.index,
-    title: `Posts`,
-  })
+  setTimeout(() => {
+    router.push({
+      name: postRouteNames.index,
+      title: `Posts`,
+    })
+  }, 1000)
 }
 </script>
 
@@ -47,7 +49,7 @@ function onBack() {
     <template #action>
       <NFlex>
         <NButton size="small" @click="onEdit">Edit</NButton>
-        <NButton size="small" @click="onBack">Back</NButton>
+        <NButton size="small" @click="onBack">Back delayed+1s</NButton>
       </NFlex>
     </template>
   </NThing>

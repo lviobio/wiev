@@ -1,6 +1,8 @@
+import { getOriginalRouter } from '@/core/navigator/customRouter'
 import { propsSchemaKey } from '@/core/navigator/windows/withPropsSchema'
 import type { AsyncComponentLoader } from 'vue'
 import { Component, defineAsyncComponent, markRaw, reactive, readonly } from 'vue'
+import type { RouteLocationAsRelativeGeneric } from 'vue-router'
 import type { infer as ZodInfer, ZodType } from 'zod'
 
 export type DesktopWindowItem = {
@@ -11,6 +13,7 @@ export type DesktopWindowItem = {
   z: number
   width: number
   visible: boolean
+  route: ShallowRef<RouteLocationAsRelativeGeneric | undefined>
   component: Component
   props?: Record<string, any>
 }
@@ -21,19 +24,31 @@ const state = reactive({
 })
 
 function genKey() {
-  return Date.now() + Math.random()
+  return Date.now() + Math.ceil(Math.random() * 10000)
 }
 
 export function useDesktopWindows() {
+  const router = getOriginalRouter()
   // --- Option types for open() ---
 
-  type OpenBase = {
-    title: string | ((p: any) => string)
-    component: Component | AsyncComponentLoader<Component>
+  type OpenCommon = {
+    title?: string | ((p: any) => string)
     width?: number
     x?: number
     y?: number
   }
+
+  type OpenWithComponent = OpenCommon & {
+    component: Component | AsyncComponentLoader<Component>
+    route?: never
+  }
+
+  type OpenWithRoute = OpenCommon & {
+    route: RouteLocationAsRelativeGeneric
+    component?: never
+  }
+
+  type OpenBase = OpenWithComponent | OpenWithRoute
 
   // Title helper (supports string or (params)=>string)
   function computeTitle<T>(title: string | ((p: T) => string), params: T | undefined): string {
@@ -42,37 +57,56 @@ export function useDesktopWindows() {
       : title
   }
 
+  // Resolve component from route name
+  function resolveComponentFromRoute(to: RouteLocationAsRelativeGeneric): Component | null {
+    const record = router.getRoutes().find((r) => r.name === to.name)
+    if (!record) return Promise.reject('Route not found')
+    return (record as any).components?.default ?? (record as any).component
+  }
+
   // Shared item creation
   function openInternal<T>(opts: OpenBase, params: T | undefined, typedProps: boolean): number {
     const offset = state.windows.length * 24
-    const comp = toRenderable(opts.component)
+
+    let comp: Component
+    if ('route' in opts && opts.route !== undefined) {
+      const resolved = resolveComponentFromRoute(opts.route)
+      if (!resolved) throw new Error(`Route "${String(opts.route.name)}" not found`)
+      comp = toRenderable(resolved)
+    } else {
+      comp = toRenderable((opts as OpenWithComponent).component)
+    }
+
     const item: DesktopWindowItem = {
       windowId: genKey(),
-      title: computeTitle<T>(opts.title, params ?? (opts as any).props?.params),
+      title: computeTitle<T>(opts.title ?? '', params ?? (opts as any).props?.params),
       x: (opts.x ?? 80) + offset,
       y: (opts.y ?? 80) + offset,
       z: ++state.nextZ,
       width: opts.width ?? 800,
       visible: true,
+      route: shallowRef(opts.route),
       component: markRaw(comp),
       props: typedProps ? ({ params } as any) : ((params as any) ?? (opts as any).props ?? {}),
     }
+    // console.log('new window', item, typedProps)
     state.windows.push(item)
     return item.windowId
   }
-  type OpenWithSchema<S extends ZodType> = OpenBase & { props: { params: ZodInfer<S> } }
+  type OpenWithSchema<S extends ZodType> = OpenWithComponent & { props: { params: ZodInfer<S> } }
   type ComponentOrLoaderWithSchema<S extends ZodType> =
     | (Component & { [K in typeof propsSchemaKey]: S })
     | (AsyncComponentLoader<Component> & { [K in typeof propsSchemaKey]: S })
 
   type OpenWithComponentSchema<S extends ZodType, C extends ComponentOrLoaderWithSchema<S>> = Omit<
-    OpenBase,
+    OpenWithComponent,
     'component'
   > & {
     component: C
     props: { params: ZodInfer<S> }
   }
   type OpenUntyped = OpenBase & { props?: Record<string, any> }
+  type OpenWithRouteUntyped = OpenWithRoute & { props?: Record<string, any> }
 
   // Helper: normalize component/loader into a renderable Component
   function toRenderable(comp: Component | AsyncComponentLoader<Component>): Component {
@@ -106,14 +140,17 @@ export function useDesktopWindows() {
   function open<S extends ZodType, C extends ComponentOrLoaderWithSchema<S>>(
     opts: OpenWithComponentSchema<S, C>,
   ): number
-  // Overload 2: Generic fallback (untyped props)
+  // Overload 2: Generic fallback (untyped props) for component
   function open(opts: OpenUntyped): number
+  // Overload 3: Route-based (untyped props)
+  function open(opts: OpenWithRouteUntyped): number
   // Impl
   function open(
     opts:
       | OpenWithSchema<ZodType>
       | OpenWithComponentSchema<ZodType, ComponentOrLoaderWithSchema<ZodType>>
-      | OpenUntyped,
+      | OpenUntyped
+      | OpenWithRouteUntyped,
   ): number {
     // Typed path (schema provided via component)
     const anyOpts: any = opts
@@ -123,6 +160,10 @@ export function useDesktopWindows() {
       anyOpts.props?.params !== undefined
     ) {
       return openInternal<any>(opts as OpenBase, anyOpts.props.params, true)
+    }
+    // Typed path (explicit typed route.props object without component schema)
+    if ((opts as any).route?.params !== undefined) {
+      return openInternal<any>(opts as OpenBase, (opts as any).route.params, true)
     }
     // Typed path (explicit typed props object without component schema)
     if ((opts as any).props?.params !== undefined) {
@@ -175,23 +216,50 @@ export function useDesktopWindows() {
       openInternal<any>(base, params, !!(base as any).component?.[propsSchemaKey])
   }
 
-  function replace(
-    windowId: number,
-    component: Component | AsyncComponentLoader<Component>,
-    props?: Record<string, any>,
-    title?: string,
-  ) {
-    console.log('replacing', props)
-    const w = state.windows.find((w) => w.windowId === windowId)
+  type ReplaceWithComponent = {
+    component: Component | AsyncComponentLoader<Component>
+    route?: never
+    props?: Record<string, any>
+    title?: string
+  }
+
+  type ReplaceWithRoute = {
+    route: RouteLocationAsRelativeGeneric
+    component?: never
+    props?: Record<string, any>
+    title?: string
+  }
+
+  type ReplaceOpts = ReplaceWithComponent | ReplaceWithRoute
+
+  function replace(windowId: number, opts: ReplaceOpts) {
+    console.log('replacing', opts)
+    const w = get(windowId)
     if (!w) return
-    w.component = markRaw(toRenderable(component))
-    if (props !== undefined) w.props = props
-    if (title !== undefined) w.title = title
+
+    if ('route' in opts && opts.route !== undefined) {
+      const resolved = resolveComponentFromRoute(opts.route)
+      if (!resolved) throw new Error(`Route "${String(opts.route.name)}" not found`)
+      w.component = markRaw(toRenderable(resolved))
+      w.route = opts.route
+      if (opts.route.params !== undefined) w.props = { params: opts.route.params }
+    } else {
+      w.component = markRaw(toRenderable((opts as ReplaceWithComponent).component))
+      w.route = undefined
+      if (opts.props !== undefined) w.props = opts.props
+    }
+
+    if (opts.title !== undefined) w.title = opts.title
     w.z = ++state.nextZ
+  }
+
+  function get(windowId: number): DesktopWindowItem | undefined {
+    return toRaw(state).windows.find((w) => w.windowId === windowId) as DesktopWindowItem
   }
 
   return {
     windows: readonly(state.windows),
+    get,
     open,
     close,
     bringToFront,

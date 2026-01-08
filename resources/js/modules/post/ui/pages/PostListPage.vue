@@ -13,6 +13,8 @@ const data = ref({
   filters: contextData.filters,
 })
 
+const router = useRouter()
+
 useContextStorageQueryHandler(data, {
   transform: (deserialized) => {
     return {
@@ -33,6 +35,14 @@ useContextStorageQueryHandler(data, {
     }
   },
 })
+
+const redirectDelayed = () => {
+  setTimeout(() => {
+    router.push(postRouteGenerator.show(1))
+  }, 1500)
+}
+// console.log(router.currentRoute.value)
+// console.log(router.resolve({ name: 'posts.index' }))
 </script>
 
 <template>

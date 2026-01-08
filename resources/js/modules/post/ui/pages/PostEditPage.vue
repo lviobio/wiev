@@ -10,6 +10,7 @@ const _ = defineProps<{ params: PropsSchema }>()
 const props = propsSchema.parse(_.params)
 
 const router = useRouter()
+const route = useRoute()
 
 const onUpdated = () =>
   router.push({
@@ -20,7 +21,13 @@ const onUpdated = () =>
 </script>
 
 <template>
-  <NFlex><Edit.Component :repository="repository" :id="props.id" @updated="onUpdated" /> </NFlex>
+  <p>route: {{ route.name }}</p>
+  <p>router.currentRoute: {{ router.currentRoute.value.name }}</p>
+  <p>$route: {{ $route.name }}</p>
+  <p>$router.currentRoute: {{ $router.currentRoute.value.name }}</p>
+  <NFlex>
+    <Edit.Component :repository="repository" :id="props.id" @updated="onUpdated" />
+  </NFlex>
 </template>
 
 <style scoped></style>

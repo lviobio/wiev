@@ -1,8 +1,6 @@
-// Extend ImportMeta interface for Vite...
-// noinspection ES6UnusedImports
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { RouteLocationOptions, Router } from 'vue-router'
+import 'vue-router'
 
+// Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
   interface ImportMetaEnv {
     readonly VITE_APP_NAME: string
@@ -24,6 +22,16 @@ declare module 'vue-router' {
   interface RouteLocationOptions {
     title?: string | ((params: any) => string)
     windowed?: boolean | WindowOptions
+    contextKey?: string
+  }
+  interface Router {
+    contextKey?: string
+    custom?: true
+    callWithContextKey<T>(contextKey: string, fn: () => T): T;
+  }
+  interface RouteMeta {
+    //TODO: add callback support, to verify resolved route
+    windowRoot?: boolean
   }
   // interface Router {
   //   pushable(location: RouteLocationOptions): (ParamsOf<typeof location.name>) => Router['push']

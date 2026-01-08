@@ -1,10 +1,7 @@
 <script setup lang="ts">
+import { useDesktopContext } from '@/core/navigator/useDesktopContext'
 import { NCard } from 'naive-ui'
-import { inject, onBeforeUnmount, ref } from 'vue'
-import {
-  contextStorageCollectionInjectKey,
-  contextStorageCollectionItemInjectKey,
-} from 'vue-context-storage'
+import { onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps<{
   title: string
@@ -48,11 +45,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('mouseup', onUp)
 })
 
-const collection = inject(contextStorageCollectionInjectKey)!
-const item = inject(contextStorageCollectionItemInjectKey)!
+const desktopContext = useDesktopContext()
 
 const activate = () => {
-  collection.setActive(item)
+  desktopContext.activate()
 }
 
 const onFocus = (e: MouseEvent) => {

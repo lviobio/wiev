@@ -26,6 +26,7 @@ const handleOpenListInNewWindow = () =>
 
 <template>
   <NCard title="Posts">
+    PostLayout
     <template #header-extra>
       <NFlex>
         <NButton v-if="route.name === postRouteNames.index" @click="handleOpenListInNewWindow">
@@ -36,9 +37,9 @@ const handleOpenListInNewWindow = () =>
         </RouterLink>
       </NFlex>
     </template>
-    <RouterViewCustom v-slot="{ Component }">
+    <RouterView v-slot="{ Component }">
       <component :is="Component" />
-    </RouterViewCustom>
+    </RouterView>
   </NCard>
 </template>
 

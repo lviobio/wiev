@@ -1,10 +1,8 @@
 import { injectLocal, provideLocal } from '@vueuse/core'
-import type { DefineComponent, PropType } from 'vue'
+import type { DefineComponent } from 'vue'
 import { defineComponent } from 'vue'
 
-type ProviderType<T> = DefineComponent<{
-  value: { type: PropType<T>; required: true }
-}>
+type ProviderType<T> = DefineComponent<{}>
 export type ReturnContextType<T> = {
   readonly key: InjectionKey<T>
   get: () => T
@@ -12,7 +10,7 @@ export type ReturnContextType<T> = {
   Provider: ProviderType<T>
 }
 
-export function createContext<T extends Record<string, unknown>>(
+export function createContext<T>(
   key: InjectionKey<T>,
   defaultFactory: () => T,
 ): ReturnContextType<T> {
@@ -36,12 +34,6 @@ export function createContext<T extends Record<string, unknown>>(
 
   const Provider: ProviderType<T> = defineComponent({
     name: 'ContextProvider',
-    props: {
-      value: {
-        type: Object as PropType<T>,
-        required: true,
-      },
-    },
     setup(props, { slots }) {
       init()
       return () => slots.default?.()

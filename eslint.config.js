@@ -29,6 +29,13 @@ export default defineConfigWithVueTs(
       'eqeqeq': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
       'vue/multi-word-component-names': 'error',
       'vue/component-definition-name-casing': ['error', 'PascalCase'],
       'vue/component-name-in-template-casing': [
