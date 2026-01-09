@@ -7,8 +7,6 @@ import { createContext } from '@/core/utils/context'
 import { useDesktopWindows } from './useDesktopWindows'
 
 const mgr = useDesktopWindows()
-
-// const {Provider: WindowKeyProvider} = createContext(DesktopWindowKeySymbol)
 </script>
 
 <template>
@@ -31,9 +29,15 @@ const mgr = useDesktopWindows()
                   @close="() => mgr.close(w.windowId)"
                 >
                   <WindowContext>
-                    <RouterView v-if="w.route" />
-                    <!--                      <component v-else-if="w.component" :is="w.component" v-bind="w.props" />-->
-                    <!--                      <p v-else>No component</p>-->
+                    Route: {{ w.route?.fullPath }}
+                    <template v-if="w.route">
+                      <RouterView />
+                    </template>
+                    <template v-else-if="w.component">
+                      <small>WindowContext - Component</small>
+                      <component :is="w.component" v-bind="w.props" />
+                    </template>
+                    <small v-else>WindowContext - No component or route</small>
                   </WindowContext>
                 </DesktopWindow>
               </DesktopContextInitializer>

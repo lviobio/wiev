@@ -4,11 +4,28 @@ import type { Router, RouterHistory } from 'vue-router'
 
 type HistoryLocation = string
 type HistoryState = Record<string, any>
-type NavigationCallback = (
-  to: HistoryLocation,
-  from: HistoryLocation,
-  information: { delta: number; type: 'pop' | 'push' },
-) => void
+// type NavigationCallback = (
+//   to: HistoryLocation,
+//   from: HistoryLocation,
+//   information: { delta: number; type: 'pop' | 'push' },
+// ) => void
+enum NavigationType {
+  pop = 'pop',
+  push = 'push',
+}
+enum NavigationDirection {
+  back = 'back',
+  forward = 'forward',
+  unknown = '',
+}
+interface NavigationInformation {
+  type: NavigationType
+  direction: NavigationDirection
+  delta: number
+}
+interface NavigationCallback {
+  (to: HistoryLocation, from: HistoryLocation, information: NavigationInformation): void
+}
 
 // Callback for syncing browser URL - set externally
 let syncUrlCallback: (() => void) | null = null
@@ -57,7 +74,7 @@ export function createMultiContextHistory(
 
   function getOrCreateContext(key: string): ContextState {
     if (key === 'main') {
-      return baseHistory
+      throw new Error('main context is not allowed')
     }
 
     if (!contextStates.has(key)) {
@@ -73,7 +90,19 @@ export function createMultiContextHistory(
     return contextStates.get(key)!
   }
 
-  const getCurrentContextKey = () => contextManager.active.value?.key
+  function notifyListeners(
+    contextKey: string,
+    to: HistoryLocation,
+    from: HistoryLocation,
+    information: NavigationInformation,
+  ) {
+    const listeners = contextListeners.get(contextKey)
+    if (listeners) {
+      listeners.forEach((cb) =>
+        multiHistory.callWithContextKey(contextKey, () => cb(to, from, information)),
+      )
+    }
+  }
 
   const isMainContext = (val: string) => val === 'main'
 
@@ -89,17 +118,19 @@ export function createMultiContextHistory(
     callWithContextKey: (contextKey: string, fn: () => void) => void
   } = {
     get base() {
+      console.log('[MultiContextHistory] get base', { currentContextKey })
       return baseHistory.base
     },
 
     get location(): HistoryLocation {
+      console.log('[MultiContextHistory] get location', { currentContextKey })
       return baseHistory.location
       // const ctx = getOrCreateContext(currentContextKey)
       // return ctx.location
     },
 
     get state(): HistoryState {
-      console.log('get state', currentContextKey)
+      console.log('[MultiContextHistory] get state', { currentContextKey })
       return baseHistory.state
       // const ctx = getOrCreateContext(currentContextKey)
       // return ctx.state
@@ -108,13 +139,31 @@ export function createMultiContextHistory(
     push(to, data?): void {
       const contextKey = data?.[desktopContextKeySymbol as any] as string | undefined
 
-      // console.log('data!!', data)
-
       console.log('[MultiContextHistory] push', { to, data, contextKey, currentContextKey })
       if (!contextKey) {
         throw new Error('[MultiContextHistory] push called without contextKey')
       }
-      console.log('[MultiContextHistory] push', to, contextKey)
+      if (isMainContext(contextKey)) {
+        return baseHistory.push(to, data)
+      }
+
+      const ctx = getOrCreateContext(contextKey)
+      const from = ctx.location
+      // Truncate forward history if we're not at the end
+      ctx.stack = ctx.stack.slice(0, ctx.position + 1)
+
+      // Push new entry
+      ctx.stack.push({ location: to, state: data ?? {} })
+      ctx.position = ctx.stack.length - 1
+      ctx.location = to
+      ctx.state = data ?? {}
+
+      notifyListeners(contextKey, to, from, {
+        type: NavigationType.push,
+        direction: NavigationDirection.forward,
+        delta: 1,
+      })
+
       // Если мы не в main контексте - создаём memoryHistory и храним в ней.
       // Изучить как работает history в роутере, связан ли он напрямую с браузером
       // let contextKey: string | undefined
@@ -136,7 +185,9 @@ export function createMultiContextHistory(
       // }
       // if (!to.contextKey)
       // if (typeof to !== 'object') {
-      return baseHistory.push(to, data)
+
+      // return baseHistory.push(to, data)
+
       // }
       // const contextKey = currentContextKey
       // const ctx = getOrCreateContext(contextKey)
@@ -169,8 +220,28 @@ export function createMultiContextHistory(
       if (!contextKey) {
         throw new Error('[MultiContextHistory] replace called without contextKey')
       }
-      console.log('[MultiContextHistory] replace', to, data, currentContextKey)
-      baseHistory.replace(to, data)
+      console.log('[MultiContextHistory] replace', { to, data, contextKey, currentContextKey })
+      if (isMainContext(contextKey)) {
+        return baseHistory.replace(to, data)
+      }
+
+      const ctx = getOrCreateContext(contextKey)
+      const from = ctx.location
+
+      ctx.stack[ctx.position] = {
+        location: to,
+        state: data ?? {},
+      }
+
+      ctx.location = to
+      ctx.state = data ?? {}
+
+      notifyListeners(contextKey, to, from, {
+        type: NavigationType.push,
+        direction: NavigationDirection.forward,
+        delta: 0,
+      })
+
       // if (iss
       // const contextKey = currentContextKey
       // const ctx = getOrCreateContext(contextKey)
@@ -201,10 +272,7 @@ export function createMultiContextHistory(
       if (!currentContextKey) {
         throw new Error('[MultiContextHistory] go called without contextKey')
       }
-      console.log('[MultiContextHistory] go', delta, triggerListeners, {
-        callWithContextKey: currentContextKey,
-      })
-      const contextKey = currentContextKey
+      console.log('[MultiContextHistory] go', { delta, triggerListeners, currentContextKey })
       // const ctx = getOrCreateContext(contextKey)
       // if (isMainContext()) {
       //   baseHistory.go(delta, triggerListeners)
@@ -227,13 +295,27 @@ export function createMultiContextHistory(
       // }
     },
 
-    listen(callback: NavigationCallback): () => void {
+    listen(callback): () => void {
+      const contextKey = currentContextKey ?? 'main'
+      console.log('[MultiContextHistory] listen', { currentContextKey, contextKey })
+
+      if (isMainContext(contextKey)) {
+        return baseHistory.listen(callback)
+      }
+
+      if (!contextListeners.has(contextKey)) {
+        contextListeners.set(contextKey, new Set())
+      }
+      contextListeners.get(contextKey)!.add(callback)
+
+      return () => {
+        contextListeners.get(contextKey)?.delete(callback)
+      }
       // if (!currentContextKey) {
       //   // debugger
       //   // throw new Error('[MultiContextHistory] listen called without contextKey')
       //   console.warn('[MultiContextHistory] listen called without contextKey')
       // }
-      return baseHistory.listen(callback)
       // if (!contextListeners.has(currentContextKey)) {
       //   contextListeners.set(currentContextKey, new Set())
       // }

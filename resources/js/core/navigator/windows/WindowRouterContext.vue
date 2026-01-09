@@ -3,7 +3,6 @@ import { DesktopWindowKeySymbol } from '@/core/navigator/windows/symbols'
 import { useDesktopWindows } from '@/core/navigator/windows/useDesktopWindows'
 import { inject } from 'vue'
 import {
-  MatcherLocation,
   routeLocationKey,
   RouteLocationNormalized,
   RouteLocationNormalizedLoaded,
@@ -36,15 +35,13 @@ export default defineComponent({
     watch(
       window.route,
       (newRoute) => {
-        currentRoute.value = newRoute || {}
+        console.log('window.route changed')
+        currentRoute.value = newRoute || ({} as RouteLocationNormalizedLoadedGeneric)
 
         if (newRoute) {
-          const found = (newRoute as unknown as MatcherLocation).matched.findLastIndex(
-            (m) => m.meta.windowRoot,
-          )
+          const found = newRoute.matched.findLastIndex((m) => m.meta.windowRoot)
 
-          viewDepthRef.value =
-            found !== -1 ? found : (newRoute as unknown as MatcherLocation).matched.length - 1
+          viewDepthRef.value = found !== -1 ? found : newRoute.matched.length - 1
         }
       },
       { immediate: true },
@@ -58,7 +55,7 @@ export default defineComponent({
       console.log('currentRoute changed', currentRoute.value)
     })
 
-    if (window.route) {
+    if (window.route.value) {
       const reactiveRoute = {} as RouteLocationNormalizedLoaded
       for (const key in originalRoute) {
         Object.defineProperty(reactiveRoute, key, {

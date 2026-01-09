@@ -37,18 +37,19 @@ export default defineComponent({
       console.log('[AppCustomRouter] push called', { to, contextKey, injectedKey })
       // const targetLocation: RouteLocation = router.resolve(to)
       // console.log({ targetLocation })
+      const resolved = router.resolve(to)
+
+      let resolvedTitle = ''
 
       if (typeof to === 'object') {
         if (to.path === undefined) {
           const record = router.getRoutes().find((r) => r.name === to.name)
           if (!record) return Promise.reject('Route not found')
-          const resolved = router.resolve(to)
           const component = (record as any).components?.default ?? (record as any).component
 
           const rawTitle =
             (typeof to.windowed === 'object' ? to.windowed.title : undefined) || to.title
-          const resolvedTitle =
-            typeof rawTitle === 'function' ? (rawTitle as any)(to.params) : rawTitle
+          resolvedTitle = typeof rawTitle === 'function' ? (rawTitle as any)(to.params) : rawTitle
 
           if (to.windowed === true || typeof to.windowed === 'object') {
             windows.open({
@@ -59,16 +60,6 @@ export default defineComponent({
             })
             return
           }
-
-          if (injectedKey !== null) {
-            windows.replace(injectedKey, {
-              route: resolved,
-              title: resolvedTitle,
-            })
-            // currentRoute.value = resolved
-
-            return
-          }
         }
 
         if (to.windowed) {
@@ -76,6 +67,16 @@ export default defineComponent({
         }
 
         Object.assign(to, { contextKey })
+      }
+
+      if (injectedKey !== null) {
+        windows.replace(injectedKey, {
+          route: resolved,
+          title: resolvedTitle,
+        })
+        // currentRoute.value = resolved
+
+        return
       }
 
       console.log('[AppCustomRouter] calling original push', to)

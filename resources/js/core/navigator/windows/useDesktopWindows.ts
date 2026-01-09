@@ -2,7 +2,7 @@ import { getOriginalRouter } from '@/core/navigator/customRouter'
 import { propsSchemaKey } from '@/core/navigator/windows/withPropsSchema'
 import type { AsyncComponentLoader } from 'vue'
 import { Component, defineAsyncComponent, markRaw, reactive, readonly } from 'vue'
-import type { RouteLocationAsRelativeGeneric } from 'vue-router'
+import { RouteLocationAsRelativeGeneric, RouteLocationNormalizedLoadedGeneric } from 'vue-router'
 import type { infer as ZodInfer, ZodType } from 'zod'
 
 export type DesktopWindowItem = {
@@ -13,7 +13,7 @@ export type DesktopWindowItem = {
   z: number
   width: number
   visible: boolean
-  route: ShallowRef<RouteLocationAsRelativeGeneric | undefined>
+  route: ShallowRef<RouteLocationNormalizedLoadedGeneric | undefined>
   component: Component
   props?: Record<string, any>
 }
@@ -234,7 +234,7 @@ export function useDesktopWindows() {
 
   function replace(windowId: number, opts: ReplaceOpts) {
     console.log('replacing', opts)
-    const w = get(windowId)
+    const w = state.windows.find((w) => w.windowId === windowId)
     if (!w) return
 
     if ('route' in opts && opts.route !== undefined) {
@@ -243,6 +243,7 @@ export function useDesktopWindows() {
       w.component = markRaw(toRenderable(resolved))
       w.route = opts.route
       if (opts.route.params !== undefined) w.props = { params: opts.route.params }
+      console.log('replaced route', w)
     } else {
       w.component = markRaw(toRenderable((opts as ReplaceWithComponent).component))
       w.route = undefined
