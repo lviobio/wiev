@@ -1,8 +1,5 @@
 <template>
-  <RouterLink
-    :to="{ name: 'home' }"
-    class="flex items-center gap-2 text-2xl font-semibold text-gray-900"
-  >
+  <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-2xl font-semibold">
     <!--    <img-->
     <!--      class="w-8 h-8"-->
     <!--      src="../../images/Logo.png"-->

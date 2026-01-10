@@ -89,6 +89,19 @@ const redirectDelayed = () => {
 
 <template>
   <NFlex>
+    <div>
+      <p>{{ router.contextKey }}</p>
+      <p>{{ $route.name }}</p>
+    </div>
+    <div>
+      <p>{{ $route.query }}</p>
+    </div>
+    <NButton
+      @click="$router.push({ ...postRouteGenerator.index(), query: { 'filters[title]': 'asd' } })"
+      >Test1</NButton
+    >
+    <NButton @click="$router.push({ query: { 'filters[title]': 'zxc' } })">Test2</NButton>
+    <NButton @click="redirectDelayed">redirectDelayed</NButton>
     <List.Component />
   </NFlex>
 </template>
