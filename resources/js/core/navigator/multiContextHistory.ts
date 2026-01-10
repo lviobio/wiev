@@ -361,7 +361,7 @@ export function createMultiContextHistory(
       contextListeners.delete(contextKey)
     },
 
-    callWithContextKey(contextKey: string, fn: () => void): void {
+    callWithContextKey(contextKey: string, fn: () => void) {
       const prev = currentContextKey
       currentContextKey = contextKey
       try {

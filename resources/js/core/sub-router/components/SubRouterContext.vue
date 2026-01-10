@@ -1,22 +1,23 @@
 <script lang="ts">
-import { desktopContextKey } from '@/core/injectionSymbols'
 import { subRouterContextManagerKey } from '@/core/sub-router/injectionSymbols'
-import { inject } from 'vue'
 
 export default defineComponent({
-  setup(_, { slots }) {
-    const contextKey = inject(desktopContextKey)!
-    const subRouterContextManager = inject(subRouterContextManagerKey)
-    if (!subRouterContextManager)
-      throw new Error('[DesktopContextActivator] - SubRouterContextManager not found')
+  props: {
+    contextKey: {
+      type: String,
+      required: true,
+    },
+  },
+  setup({ contextKey }, { slots }) {
+    const manager = inject(subRouterContextManagerKey)!
 
-    const onActivate = () => {
-      if (subRouterContextManager.setActive(contextKey, true)) {
-        console.log('[DesktopContextActivator] activated', contextKey)
-      }
-    }
+    manager.register(contextKey)
 
-    return () => h('div', { onMousedown: onActivate }, slots.default?.())
+    onBeforeUnmount(() => {
+      manager.unregister(contextKey)
+    })
+
+    return () => slots.default?.()
   },
 })
 </script>

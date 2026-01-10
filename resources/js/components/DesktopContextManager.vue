@@ -1,7 +1,36 @@
 <script lang="ts">
-import { desktopContextManager } from '@/core/injectionSymbols'
-import { inject } from 'vue'
-import { contextStorageCollectionInjectKey } from 'vue-context-storage'
+import { subRouterContextManagerKey } from '@/core/sub-router/injectionSymbols'
+import { inject, provide } from 'vue'
+import {
+  CollectionManager,
+  contextStorageCollectionInjectKey,
+  contextStorageCollectionItemInjectKey,
+  contextStorageHandlersInjectKey,
+  useContextStorageCollection,
+} from 'vue-context-storage'
+
+function initContextStorage(contextKey: string) {
+  const contextStorageCollection = inject(contextStorageCollectionInjectKey)
+  if (!contextStorageCollection)
+    throw new Error('[DesktopContextInitializer] ContextStorage collection not found')
+
+  function makeContextStorage(collection: CollectionManager, key: string) {
+    const item = collection.add({
+      key,
+    })
+
+    provide(contextStorageCollectionItemInjectKey, item)
+    provide(contextStorageHandlersInjectKey, item.handlers)
+
+    item.handlers.forEach((handler) => {
+      provide(handler.getInjectionKey(), handler)
+    })
+
+    return item
+  }
+
+  makeContextStorage(contextStorageCollection, contextKey)
+}
 
 export default defineComponent({
   props: {
@@ -10,16 +39,17 @@ export default defineComponent({
       default: () => 'main',
     },
   },
-  setup(props, { slots }) {
-    const contextStorageCollection = inject(contextStorageCollectionInjectKey)
-    if (!contextStorageCollection)
-      throw new Error('[ContextStorage] Context storage collection not found')
+  setup(_, { slots }) {
+    useContextStorageCollection()
 
-    const manager = inject(desktopContextManager)
-    if (!manager) throw new Error('[DesktopContextManager] Manager not found')
+    const subRouterContextManager = inject(subRouterContextManagerKey)
+    if (!subRouterContextManager)
+      throw new Error('[DesktopContextManager] SubRouterContextManager not found')
 
-    manager.setContextStorageCollection(contextStorageCollection)
-    manager.active.value = props.defaultKey
+    subRouterContextManager.onContextInit((key) => {
+      console.log('[DesktopContextManager] Context initialized:', key)
+      initContextStorage(key)
+    })
 
     return () => slots.default?.()
   },

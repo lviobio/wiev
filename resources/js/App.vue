@@ -2,17 +2,15 @@
   <AppProviderStack :stack="providerStack">
     <AppSuspense>
       <DesktopContext context-key="main">
-        <AppCustomRouter>
-          <DesktopContextInitializer>
-            <DesktopContextActivator>
-              <RouterView />
-            </DesktopContextActivator>
-          </DesktopContextInitializer>
-        </AppCustomRouter>
+        <DesktopContextInitializer>
+          <DesktopContextActivator>
+            <RouterView />
+          </DesktopContextActivator>
+        </DesktopContextInitializer>
       </DesktopContext>
     </AppSuspense>
     <AppSuspense>
-      <DesktopWindowsHost />
+      <!--      <DesktopWindowsHost />-->
     </AppSuspense>
   </AppProviderStack>
 </template>
@@ -21,7 +19,6 @@
 import AppAuthProvider from '@/components/AppAuthProvider.vue'
 import { defineProviderStack } from '@/components/AppProviderStack.vue'
 import DesktopContextManager from '@/components/DesktopContextManager.vue'
-import DesktopWindowsHost from '@/core/navigator/windows/DesktopWindowsHost.vue'
 import {
   darkTheme,
   GlobalTheme,
@@ -30,7 +27,7 @@ import {
   NNotificationProvider,
 } from 'naive-ui'
 import { ref } from 'vue'
-import { ContextStorageCollection, ContextStorageQueryHandler } from 'vue-context-storage'
+import { ContextStorageQueryHandler } from 'vue-context-storage'
 
 // ContextStorageQueryHandler.configure({ preserveUnusedKeys: true })
 ContextStorageQueryHandler.configure({ mode: 'push' })
@@ -42,7 +39,6 @@ const providerStack = defineProviderStack([
   NMessageProvider,
   NNotificationProvider,
   AppAuthProvider,
-  ContextStorageCollection,
   DesktopContextManager,
 ])
 </script>

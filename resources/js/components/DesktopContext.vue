@@ -1,5 +1,8 @@
 <script lang="ts">
-import { desktopContextManager } from '@/core/injectionSymbols'
+import { desktopContextKey } from '@/core/injectionSymbols'
+import { subRouterContextManagerKey } from '@/core/sub-router/injectionSymbols'
+import { inject, provide } from 'vue'
+import { contextStorageCollectionInjectKey } from 'vue-context-storage'
 
 export default defineComponent({
   props: {
@@ -9,12 +12,24 @@ export default defineComponent({
     },
   },
   setup({ contextKey }, { slots }) {
-    const manager = inject(desktopContextManager)!
+    const subRouterContextManager = inject(subRouterContextManagerKey)
+    if (!subRouterContextManager)
+      throw new Error('[DesktopContext] - SubRouterContextManager not found')
 
-    manager.register(contextKey)
+    const contextStorageCollection = inject(contextStorageCollectionInjectKey)
+    if (!contextStorageCollection)
+      throw new Error('[DesktopContext] ContextStorage collection not found')
+
+    provide(desktopContextKey, contextKey)
+
+    subRouterContextManager.register(contextKey)
+    const contextStorageItem = contextStorageCollection.add({
+      key: contextKey,
+    })
 
     onBeforeUnmount(() => {
-      manager.unregister(contextKey)
+      subRouterContextManager.unregister(contextKey)
+      contextStorageCollection.remove(contextStorageItem)
     })
 
     return () => slots.default?.()

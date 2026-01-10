@@ -22,12 +22,9 @@ declare module 'vue-router' {
   interface RouteLocationOptions {
     title?: string | ((params: any) => string)
     windowed?: boolean | WindowOptions
-    contextKey?: string
   }
   interface Router {
-    contextKey?: string
     custom?: true
-    callWithContextKey<T>(contextKey: string, fn: () => T): T;
   }
   interface RouteMeta {
     //TODO: add callback support, to verify resolved route

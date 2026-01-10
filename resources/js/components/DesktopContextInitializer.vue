@@ -1,11 +1,21 @@
 <script lang="ts">
-import { useDesktopContext } from '@/core/navigator/useDesktopContext'
+import { desktopContextKey } from '@/core/injectionSymbols'
+import { subRouterContextManagerKey } from '@/core/sub-router/injectionSymbols'
+import { inject } from 'vue'
 
 export default defineComponent({
   setup(_, { slots }) {
-    const { initialize } = useDesktopContext()
+    const subRouterContextManager = inject(subRouterContextManagerKey)
+    if (!subRouterContextManager)
+      throw new Error('[DesktopContext] - SubRouterContextManager not found')
+    const contextKey = inject(desktopContextKey)!
 
-    initialize()
+    subRouterContextManager.initialize(contextKey)
+
+    console.log(
+      '[DesktopContextInitializer] initialized (sub-router & vue-context-storage)',
+      contextKey,
+    )
 
     return () => slots.default?.()
   },

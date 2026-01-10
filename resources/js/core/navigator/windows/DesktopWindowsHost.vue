@@ -3,6 +3,7 @@ import DesktopWindow from '@/components/DesktopWindow.vue'
 import { DesktopWindowKeySymbol } from '@/core/navigator/windows/symbols'
 import WindowContext from '@/core/navigator/windows/WindowContext.vue'
 import WindowRouterContext from '@/core/navigator/windows/WindowRouterContext.vue'
+import SubRouterContext from '@/core/sub-router/components/SubRouterContext.vue'
 import { createContext } from '@/core/utils/context'
 import { useDesktopWindows } from './useDesktopWindows'
 
@@ -13,7 +14,7 @@ const mgr = useDesktopWindows()
   <div class="windows-host pointer-events-none fixed inset-0 z-[3]">
     <template v-for="w in mgr.windows" :key="w.windowId">
       <component :is="createContext(DesktopWindowKeySymbol, () => w.windowId).Provider">
-        <DesktopContext :context-key="`window-${w.windowId}`">
+        <SubRouterContext :context-key="`window-${w.windowId}`">
           <AppCustomRouter>
             <WindowRouterContext>
               <DesktopContextInitializer>
@@ -43,7 +44,7 @@ const mgr = useDesktopWindows()
               </DesktopContextInitializer>
             </WindowRouterContext>
           </AppCustomRouter>
-        </DesktopContext>
+        </SubRouterContext>
       </component>
     </template>
   </div>

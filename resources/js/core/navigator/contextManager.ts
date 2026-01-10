@@ -1,13 +1,14 @@
 import { desktopContextKey, desktopContextManager } from '@/core/injectionSymbols'
 import { App, ComponentCustomProperties, Plugin, provide } from 'vue'
 import {
-  contextStorageCollectionInjectKey,
+  CollectionManager,
+  CollectionManagerItem,
   contextStorageCollectionItemInjectKey,
   contextStorageHandlersInjectKey,
 } from 'vue-context-storage'
 import { routeLocationKey, type Router, routerKey } from 'vue-router'
 
-function makeContextStorage(collection: ContextStorageCollection, key: string) {
+function makeContextStorage(collection: CollectionManager, key: string) {
   const item = collection.add({
     key,
   })
@@ -22,18 +23,13 @@ function makeContextStorage(collection: ContextStorageCollection, key: string) {
   return item
 }
 
-type ContextStorageCollection =
-  typeof contextStorageCollectionInjectKey extends InjectionKey<infer T> ? T : never
-type ContextStorageCollectionItem =
-  typeof contextStorageCollectionItemInjectKey extends InjectionKey<infer T> ? T : never
-
 type ContextInterface =
   | {
       initialized: false
     }
   | {
       initialized: true
-      contextStorageItem: ContextStorageCollectionItem
+      contextStorageItem: CollectionManagerItem
     }
 
 interface ActiveContextInterface {
@@ -56,14 +52,14 @@ export interface DesktopContextManagerInterface {
 export class DesktopContextManagerInstance implements DesktopContextManagerInterface {
   active: ActiveContextInterfaceRef
   private registered: Map<string, ContextInterface>
-  private contextStorageCollection!: ContextStorageCollection
+  private contextStorageCollection!: CollectionManager
 
   constructor() {
     this.active = shallowRef<ActiveContextInterfaceRef>(undefined)
     this.registered = new Map()
   }
 
-  public setContextStorageCollection(collection: ContextStorageCollection) {
+  public setContextStorageCollection(collection: CollectionManager) {
     this.contextStorageCollection = collection
   }
 

@@ -12,6 +12,7 @@ import { PageExpose } from '@/core/types'
 
 const router = useRouter()
 
+console.log('main page', router)
 const test = () => {
   router.push({
     name: 'posts.index',

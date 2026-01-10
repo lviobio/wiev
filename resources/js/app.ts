@@ -1,15 +1,15 @@
+import { router } from '@/router'
 import naive from 'naive-ui'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import '../css/app.css'
 import App from './App.vue'
-import { createAppRouter } from './router'
 
 const app = createApp(App)
-
+console.log({ app })
 const pinia = createPinia()
 
-app.use(createAppRouter())
+app.use(router)
 
 app.use(naive)
 app.use(pinia)
