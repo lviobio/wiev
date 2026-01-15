@@ -24,6 +24,7 @@ declare module 'vue-router' {
     windowed?: boolean | WindowOptions
   }
   interface Router {
+    contextKey?: string
     custom?: true
   }
   interface RouteMeta {

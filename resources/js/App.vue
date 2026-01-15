@@ -1,17 +1,19 @@
 <template>
   <AppProviderStack :stack="providerStack">
-    <AppSuspense>
-      <DesktopContext context-key="main">
-        <DesktopContextInitializer>
-          <DesktopContextActivator>
-            <RouterView />
-          </DesktopContextActivator>
-        </DesktopContextInitializer>
-      </DesktopContext>
-    </AppSuspense>
-    <AppSuspense>
-      <!--      <DesktopWindowsHost />-->
-    </AppSuspense>
+    <DesktopContextManager>
+      <AppSuspense>
+        <DesktopContext context-key="main">
+          <DesktopContextInitializer>
+            <DesktopContextActivator>
+              <RouterView />
+            </DesktopContextActivator>
+          </DesktopContextInitializer>
+        </DesktopContext>
+      </AppSuspense>
+      <AppSuspense>
+        <!--      <DesktopWindowsHost />-->
+      </AppSuspense>
+    </DesktopContextManager>
   </AppProviderStack>
 </template>
 
@@ -39,6 +41,5 @@ const providerStack = defineProviderStack([
   NMessageProvider,
   NNotificationProvider,
   AppAuthProvider,
-  DesktopContextManager,
 ])
 </script>

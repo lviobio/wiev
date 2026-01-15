@@ -6,7 +6,7 @@ import { createRoutes } from './routes'
 // const GUEST_ROUTES = ['sign-in', 'sign-up']
 
 export const router = createSubRouter({
-  history: createWebHistory('app'),
+  history: () => createWebHistory('app'),
   routes: createRoutes(),
 })
 

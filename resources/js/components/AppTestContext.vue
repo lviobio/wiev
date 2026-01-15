@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { FilterTrashedValues } from '@/core/filters/trashed'
 import { usePostListContext } from '@/modules/post/composables/usePostListData'
 import { postRouteGenerator } from '@/modules/post/router/names'
-import { List } from '@/modules/post/ui/components'
+import { Search24Regular } from '@vicons/fluent'
 import { cloneDeep, get, isEqual } from 'lodash'
 import { transform } from 'vue-context-storage'
 
 const context = usePostListContext()
 context.init()
 const contextData = context.get()
+
+const filters = contextData.filters
 
 const data = ref({
   filters: contextData.filters,
@@ -23,16 +24,6 @@ watch(
     data.value.filters = {
       search: transform.asString(get(query, 'filters[search]'), { nullable: true }),
       title: transform.asString(get(query, 'filters[title]'), { nullable: true }),
-      created_at: {
-        from: transform.asNumber(get(query, 'filters[created_at][from]'), {
-          nullable: true,
-        }),
-        to: transform.asNumber(get(query, 'filters[created_at][to]'), { nullable: true }),
-      },
-      trashed: transform.asString(get(query, 'filters[trashed]'), {
-        nullable: true,
-        allowedValues: FilterTrashedValues,
-      }),
     }
   },
   { immediate: true },
@@ -49,9 +40,6 @@ watch(
       query: {
         'filters[search]': filters.search ?? undefined,
         'filters[title]': filters.title ?? undefined,
-        'filters[created_at][from]': filters.created_at.from ?? undefined,
-        'filters[created_at][to]': filters.created_at.to ?? undefined,
-        'filters[trashed]': filters.trashed ?? undefined,
       },
     })
   },
@@ -59,27 +47,6 @@ watch(
     deep: true,
   },
 )
-
-// useContextStorageQueryHandler(data, {
-//   transform: (deserialized) => {
-//     return {
-//       filters: {
-//         search: transform.asString(get(deserialized, 'filters.search'), { nullable: true }),
-//         title: transform.asString(get(deserialized, 'filters.title'), { nullable: true }),
-//         created_at: {
-//           from: transform.asNumber(get(deserialized, 'filters.created_at.from'), {
-//             nullable: true,
-//           }),
-//           to: transform.asNumber(get(deserialized, 'filters.created_at.to'), { nullable: true }),
-//         },
-//         trashed: transform.asString(get(deserialized, 'filters.trashed'), {
-//           nullable: true,
-//           allowedValues: FilterTrashedValues,
-//         }),
-//       },
-//     }
-//   },
-// })
 
 const redirectDelayed = () => {
   setTimeout(() => {
@@ -93,10 +60,11 @@ const redirectDelayed = () => {
 <template>
   <NFlex>
     <div>
-      <p>router.contextKey: {{ router.contextKey }}</p>
+      <p>
+        router.contextKey: {{ router.contextKey }} | $router.contextKey: {{ $router.contextKey }}
+      </p>
       <p>$route.name: {{ $route.name }}</p>
       <p>$route.query: {{ $route.query }}</p>
-      <p>$router.contextKey: {{ $router.contextKey }}</p>
     </div>
     <NButton
       @click="$router.push({ ...postRouteGenerator.index(), query: { 'filters[title]': 'asd' } })"
@@ -104,7 +72,28 @@ const redirectDelayed = () => {
     >
     <NButton @click="$router.push({ query: { 'filters[title]': 'zxc' } })">Test2</NButton>
     <NButton @click="redirectDelayed">redirectDelayed</NButton>
-    <List.Component />
+    <NGrid :x-gap="12" :y-gap="12" :cols="3">
+      <NGi span="1">
+        <NInput
+          :value="filters.title"
+          @update:value="filters.title = $event || null"
+          placeholder="Title"
+          clearable
+        />
+      </NGi>
+      <NGi span="1">
+        <NInput
+          :value="filters.search"
+          @update:value="filters.search = $event || null"
+          placeholder="Search"
+          clearable
+        >
+          <template #prefix>
+            <NIcon><Search24Regular /></NIcon>
+          </template>
+        </NInput>
+      </NGi>
+    </NGrid>
   </NFlex>
 </template>
 

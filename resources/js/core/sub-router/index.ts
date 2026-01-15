@@ -1,13 +1,25 @@
 import { desktopContextKey } from '@/core/injectionSymbols'
 import { SubRouterContextManagerInstance } from '@/core/sub-router/contextManager'
+import { createHistoryWrapper } from '@/core/sub-router/history-wrapper'
 import { subRouterContextManagerKey } from '@/core/sub-router/injectionSymbols'
+import { contextKeySymbol } from '@/core/sub-router/symbols'
 import {
   getCurrentInstance as _getCurrentInstance,
   App,
   ComponentCustomProperties,
   ComponentInternalInstance,
 } from 'vue'
-import { createRouter, routeLocationKey, Router, routerKey, RouterOptions } from 'vue-router'
+import {
+  createRouter,
+  RouteLocationAsPathGeneric,
+  RouteLocationAsRelativeGeneric,
+  routeLocationKey,
+  RouteLocationRaw,
+  Router,
+  RouterHistory,
+  routerKey,
+  RouterOptions,
+} from 'vue-router'
 
 interface SubRouterData {
   currentContextKey: string | undefined
@@ -36,21 +48,50 @@ const getCurrentInstance = () =>
 //   // app._context.provides[routerKey] = app._context.provides[routerKey]
 // }
 
-function getCurrentContextKey() {
-  return getCurrentInstance()?.provides[desktopContextKey]
+export function getCurrentContextKey() {
+  return callWithSubRouterContextKeyData.currentContextKey
 }
 
 function decorateRouterWithContextCalls(router: Router) {
+  /**
+   * Router's push / replace are called in .then of navigate() promise, so this is hack to preserve contextKey
+   */
+  function withContextKeyInState(
+    to: RouteLocationRaw,
+    contextKey?: string,
+  ): RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric {
+    if (typeof to === 'string') {
+      to = { path: to, state: { [contextKeySymbol]: contextKey } }
+    }
+
+    to = { ...to }
+
+    if (to.state) {
+      Object.assign(to.state, { [contextKeySymbol]: contextKey })
+    } else {
+      to.state = { [contextKeySymbol]: contextKey }
+    }
+
+    return to
+  }
+
   const { push, replace, back, forward, go, beforeEach, beforeResolve, afterEach, onError } = router
   Object.assign(router, {
     contextKey: undefined,
     getContextKey() {
+      if (!this.contextKey) {
+        debugger
+      }
       return this.contextKey
     },
     push(to) {
+      to = withContextKeyInState(to, this.getContextKey())
+
       return callWithSubRouterContextKey(this.getContextKey(), () => push(to))
     },
     replace(to) {
+      to = withContextKeyInState(to, this.getContextKey())
+
       return callWithSubRouterContextKey(this.getContextKey(), () => replace(to))
     },
     back() {
@@ -169,14 +210,20 @@ function initSubRouter(app: App, router: Router) {
 
   installModifiedRouterInGlobalProperties(app)
   // installRouterCallWithContextKey(router, data)
-  decorateRouterWithContextCalls(router)
+  // decorateRouterWithContextCalls(router)
   installContextManager(app, router, contextManager)
 }
 
-export function createSubRouter(options: RouterOptions) {
-  const router = createRouter(options)
+export function createSubRouter(
+  options: Omit<RouterOptions, 'history'> & { history: () => RouterHistory },
+) {
+  const router = createRouter({
+    ...options,
+    history: createHistoryWrapper(options.history),
+  })
 
   const { install } = router
+  decorateRouterWithContextCalls(router)
 
   Object.assign(router, {
     install: (app: App) => {
