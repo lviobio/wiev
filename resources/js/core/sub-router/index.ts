@@ -18,7 +18,10 @@ import {
   Router,
   RouterHistory,
   routerKey,
+  RouterLink,
   RouterOptions,
+  RouterView,
+  routerViewLocationKey,
 } from 'vue-router'
 
 interface SubRouterData {
@@ -190,48 +193,171 @@ function installModifiedRouterInGlobalProperties(app: App) {
   }
 }
 
+function installContextAwareRouterResolvers(app: App) {
+  if (app._context.provides[routerKey]) {
+    throw new Error('Router installed to app, this may cause unexpected behavior')
+  }
+
+  const routersMap = (app._context.provides['sub-routers'] = new Map<string, Router>())
+
+  function getInstanceContextKey() {
+    const instance = getCurrentInstance()
+
+    if (!instance) {
+      const stack = new Error().stack
+      if (stack && stack.includes('chrome-extension://nhdogjmejiglipccpnnnanhbledajbpd')) {
+        // console.log('vue ext called!', stack.split('\n'))
+        return null
+      }
+      throw new Error('No instance found')
+    }
+
+    const contextKey = instance.provides[desktopContextKey]
+
+    if (!contextKey) {
+      throw new Error('Context key not found')
+    }
+
+    return contextKey
+  }
+
+  const routerProperty = {
+    enumerable: true,
+    get() {
+      const contextKey = getInstanceContextKey()
+
+      if (!routersMap.has(contextKey)) {
+        const stack = new Error().stack
+        if (stack && stack.includes('chrome-extension://nhdogjmejiglipccpnnnanhbledajbpd')) {
+          // console.log('vue ext called!', stack.split('\n'))
+          return null
+        }
+        throw new Error(`Router not found for context ${contextKey}`)
+      }
+
+      return routersMap.get(contextKey)!
+    },
+  }
+
+  const routeProperty = {
+    enumerable: true,
+    get() {
+      const contextKey = getInstanceContextKey()
+
+      if (!routersMap.has(contextKey)) {
+        throw new Error(`Router not found for context ${contextKey}`)
+      }
+
+      return routersMap.get(contextKey)!.currentRoute.value
+    },
+  }
+
+  Object.defineProperty(app._context.provides, routerKey, routerProperty)
+  Object.defineProperty(app.config.globalProperties, '$router', routerProperty)
+
+  Object.defineProperty(app._context.provides, routeLocationKey, routeProperty)
+  Object.defineProperty(app.config.globalProperties, '$route', routeProperty)
+
+  Object.defineProperty(app._context.provides, routerViewLocationKey, {
+    enumerable: true,
+    // writable: true,
+    configurable: true,
+    get() {
+      const contextKey = getInstanceContextKey()
+
+      if (!routersMap.has(contextKey)) {
+        throw new Error(`Router not found for context ${contextKey}`)
+      }
+
+      return routersMap.get(contextKey)!.currentRoute
+    },
+    set(value) {
+      const instance = getCurrentInstance()
+
+      const originalPrototype = Object.getPrototypeOf(instance.provides)
+      const originalProperties = Object.getOwnPropertyDescriptors(instance.provides)
+
+      const { [routerViewLocationKey]: _, ...filteredProperties } = originalProperties
+
+      instance.provides = Object.defineProperties(
+        Object.create(originalPrototype),
+        filteredProperties,
+      )
+
+      Object.defineProperty(instance.provides, routerViewLocationKey, {
+        value,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      })
+    },
+  })
+}
+
 // function installRouterCallWithContextKey(router: Router, data: SubRouterData) {
 //   router.
 // }
 
-function installContextManager(
-  app: App,
-  router: Router,
-  contextManager: SubRouterContextManagerInstance,
-) {
-  app.provide(subRouterContextManagerKey, contextManager)
-  router.isReady().then(() => {
-    contextManager.markAsStarted()
-  })
+function installComponents(app: App) {
+  app.component('RouterLink', RouterLink)
+  app.component('RouterView', RouterView)
 }
 
-function initSubRouter(app: App, router: Router) {
-  const contextManager = new SubRouterContextManagerInstance()
+function installContextManager(app: App, contextManager: SubRouterContextManagerInstance) {
+  app.provide(subRouterContextManagerKey, contextManager)
+}
 
-  installModifiedRouterInGlobalProperties(app)
+function initSubRouter(app: App, options: CustomRouterOptions) {
+  const makeRouter = (contextKey: string) => {
+    const history = createHistoryWrapper(options.history)
+    const router = createRouter({
+      ...options,
+      history,
+    })
+
+    decorateRouterWithContextCalls(router)
+
+    Object.assign(router, {
+      contextKey,
+    })
+
+    return { router, history }
+  }
+
+  const contextManager = new SubRouterContextManagerInstance(app, makeRouter)
+
+  // installModifiedRouterInGlobalProperties(app)
+  installComponents(app)
+  installContextAwareRouterResolvers(app)
   // installRouterCallWithContextKey(router, data)
   // decorateRouterWithContextCalls(router)
-  installContextManager(app, router, contextManager)
+  installContextManager(app, contextManager)
 }
 
-export function createSubRouter(
-  options: Omit<RouterOptions, 'history'> & { history: () => RouterHistory },
-) {
-  const router = createRouter({
-    ...options,
-    history: createHistoryWrapper(options.history),
-  })
+type CustomRouterOptions = Omit<RouterOptions, 'history'> & { history: () => RouterHistory }
+export function createSubRouter(options: CustomRouterOptions) {
+  // const router = createRouter({
+  //   ...options,
+  //   history: createHistoryWrapper(options.history),
+  // })
+  // app.provide(subRouterContextManagerKey, contextManager)
 
-  const { install } = router
-  decorateRouterWithContextCalls(router)
+  // const { install } = router
+  // decorateRouterWithContextCalls(router)
 
-  Object.assign(router, {
+  // Object.assign(router, {
+  //   install: (app: App) => {
+  //     // install(app)
+  //
+  //     initSubRouter(app, router)
+  //   },
+  // })
+
+  return {
     install: (app: App) => {
-      install(app)
+      // install(app)
 
-      initSubRouter(app, router)
+      initSubRouter(app, options)
     },
-  })
-
-  return router
+  }
 }

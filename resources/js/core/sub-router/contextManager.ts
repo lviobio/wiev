@@ -1,4 +1,5 @@
-import { shallowRef } from 'vue'
+import { App, shallowRef } from 'vue'
+import { Router, RouterHistory } from 'vue-router'
 
 type ContextInterface =
   | {
@@ -23,6 +24,11 @@ export class SubRouterContextManagerInstance {
   private activeHistoryContext: ActiveContextInterfaceRef = shallowRef<ActiveContextInterfaceRef>()
   private registered: Map<string, ContextInterface> = new Map()
   private onContextInitListeners: ContextInitListener[] = []
+
+  constructor(
+    private app: App,
+    private makeRouter: (contextKey: string) => { router: Router; history: RouterHistory },
+  ) {}
 
   getActiveContext() {
     return this.activeContext.value
@@ -68,6 +74,20 @@ export class SubRouterContextManagerInstance {
   public register(key: string) {
     this.registered.set(key, {
       initialized: false,
+    })
+
+    const map = this.app._context.provides['sub-routers'] as Map<string, Router>
+
+    const { router, history } = this.makeRouter(key)
+
+    router.push(history.location).catch((err) => {
+      console.warn('Unexpected error when starting the router:', err)
+    })
+
+    map.set(key, router)
+
+    router.isReady().then(() => {
+      this.markAsStarted()
     })
   }
 

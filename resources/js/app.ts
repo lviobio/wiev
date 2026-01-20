@@ -6,7 +6,7 @@ import '../css/app.css'
 import App from './App.vue'
 
 const app = createApp(App)
-console.log({ app })
+
 const pinia = createPinia()
 
 app.use(router)

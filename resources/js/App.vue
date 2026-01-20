@@ -1,18 +1,16 @@
 <template>
   <AppProviderStack :stack="providerStack">
     <DesktopContextManager>
-      <AppSuspense>
-        <DesktopContext context-key="main">
-          <DesktopContextInitializer>
-            <DesktopContextActivator>
+      <DesktopContext context-key="main">
+        <DesktopContextInitializer>
+          <DesktopContextActivator>
+            <AppSuspense>
               <RouterView />
-            </DesktopContextActivator>
-          </DesktopContextInitializer>
-        </DesktopContext>
-      </AppSuspense>
-      <AppSuspense>
-        <!--      <DesktopWindowsHost />-->
-      </AppSuspense>
+            </AppSuspense>
+          </DesktopContextActivator>
+        </DesktopContextInitializer>
+      </DesktopContext>
+      <!--      <DesktopWindowsHost />-->
     </DesktopContextManager>
   </AppProviderStack>
 </template>
