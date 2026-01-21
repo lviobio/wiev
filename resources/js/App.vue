@@ -1,24 +1,18 @@
 <template>
   <AppProviderStack :stack="providerStack">
-    <DesktopContextManager>
-      <DesktopContext context-key="main">
-        <DesktopContextInitializer>
-          <DesktopContextActivator>
-            <AppSuspense>
-              <RouterView />
-            </AppSuspense>
-          </DesktopContextActivator>
-        </DesktopContextInitializer>
-      </DesktopContext>
-      <!--      <DesktopWindowsHost />-->
-    </DesktopContextManager>
+    <MultiRouterContext type="main" name="root">
+      <!--      <AppSuspense>-->
+      <RouterView />
+      <!--      </AppSuspense>-->
+    </MultiRouterContext>
+    <!--      <DesktopWindowsHost />-->
   </AppProviderStack>
 </template>
 
 <script setup lang="ts">
 import AppAuthProvider from '@/components/AppAuthProvider.vue'
 import { defineProviderStack } from '@/components/AppProviderStack.vue'
-import DesktopContextManager from '@/components/DesktopContextManager.vue'
+import MultiRouterContext from '@/core/multi-router/components/MultiRouterContext.vue'
 import {
   darkTheme,
   GlobalTheme,

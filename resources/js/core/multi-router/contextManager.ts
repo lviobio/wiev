@@ -1,0 +1,126 @@
+import { ContextTypes } from '@/core/multi-router/index'
+import { App, shallowRef } from 'vue'
+import { Router, RouterHistory } from 'vue-router'
+
+type ContextInterface = {
+  type: string
+  router: Router
+  history: RouterHistory
+  initialized: boolean
+}
+
+interface ActiveContextInterface {
+  key: string
+  context: ContextInterface
+}
+
+type ContextInitListener = (key: string) => void
+
+type ActiveContextInterfaceRef = ShallowRef<ActiveContextInterface | undefined>
+
+export class MultiRouterManagerInstance {
+  private started = false
+  private activeContext: ActiveContextInterfaceRef = shallowRef<ActiveContextInterfaceRef>()
+  private activeHistoryContext: ActiveContextInterfaceRef = shallowRef<ActiveContextInterfaceRef>()
+  private registered: Map<string, ContextInterface> = new Map()
+  private onContextInitListeners: ContextInitListener[] = []
+
+  constructor(
+    private app: App,
+    private types: ContextTypes,
+    private makeRouter: (contextKey: string) => { router: Router; history: RouterHistory },
+  ) {}
+
+  getActiveContext() {
+    return this.activeContext.value
+  }
+
+  getActiveHistoryContext() {
+    return this.activeHistoryContext.value
+  }
+
+  setActive(key: string, history: boolean) {
+    const item = this.registered.get(key)
+
+    if (!item) throw new Error(`[MultiRouter] Context "${key}" not found`)
+
+    if (!item.initialized) throw new Error(`[MultiRouter] Context "${key}" not initialized`)
+
+    let modified = false
+
+    if (this.activeContext.value?.key !== key) {
+      this.activeContext.value = {
+        key,
+        context: item,
+      }
+
+      modified = true
+    }
+
+    if (history && this.activeHistoryContext.value?.key !== key) {
+      this.activeHistoryContext.value = this.activeContext.value
+    }
+
+    if (modified) {
+      console.log('[MultiRouterContextManager] setActive', { key, history })
+    }
+
+    return modified
+  }
+
+  markAsStarted() {
+    this.started = true
+  }
+
+  getRouter(key: string) {
+    return this.registered.get(key)!.router
+  }
+
+  has(key: string) {
+    return this.registered.has(key)
+  }
+
+  public register(type: string, key: string) {
+    const typeConfig = this.types[type]
+
+    if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
+
+    // const map = this.app._context.provides['sub-routers'] as Map<string, Router>
+
+    const { router, history } = this.makeRouter(key)
+
+    this.registered.set(key, {
+      type,
+      router,
+      history,
+      initialized: false,
+    })
+
+    router.push(history.location).catch((err) => {
+      console.warn('Unexpected error when starting the router:', err)
+    })
+
+    // map.set(key, router)
+
+    router.isReady().then(() => {
+      this.markAsStarted()
+    })
+  }
+
+  public unregister(key: string) {
+    this.registered.delete(key)
+  }
+
+  public initialize(key: string) {
+    this.registered.get(key)!.initialized = true
+    this.onContextInitListeners.forEach((fn) => fn(key))
+  }
+
+  onContextInit(fn: ContextInitListener) {
+    if (this.started) {
+      throw new Error('[MultiRouter] adding listener after start is not allowed')
+    }
+
+    this.onContextInitListeners.push(fn)
+  }
+}
