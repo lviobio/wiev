@@ -34,7 +34,10 @@ function getCurrentContextKeyFromState(data?: HistoryState): string | undefined 
   return data?.[contextKeySymbol as any] as string | undefined
 }
 
-export function createHistoryWrapper(baseHistoryBuilder: () => RouterHistory): RouterHistory {
+export function createHistoryWrapper(
+  baseHistoryBuilder: () => RouterHistory,
+  contextKey: string,
+): RouterHistory {
   const baseHistory = baseHistoryBuilder()
   const isMainContext = (val: string) => val === 'main'
   let started = false

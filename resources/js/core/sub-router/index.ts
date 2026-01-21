@@ -271,6 +271,9 @@ function installContextAwareRouterResolvers(app: App) {
 
       return routersMap.get(contextKey)!.currentRoute
     },
+    /**
+     * Called by RouterView component
+     */
     set(value) {
       const instance = getCurrentInstance()
 
@@ -309,7 +312,7 @@ function installContextManager(app: App, contextManager: SubRouterContextManager
 
 function initSubRouter(app: App, options: CustomRouterOptions) {
   const makeRouter = (contextKey: string) => {
-    const history = createHistoryWrapper(options.history)
+    const history = createHistoryWrapper(options.history, contextKey)
     const router = createRouter({
       ...options,
       history,

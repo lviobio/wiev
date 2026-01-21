@@ -3,6 +3,7 @@ import { desktopContextKey } from '@/core/injectionSymbols'
 import { subRouterContextManagerKey } from '@/core/sub-router/injectionSymbols'
 import { inject, provide } from 'vue'
 import { contextStorageCollectionInjectKey } from 'vue-context-storage'
+import { viewDepthKey } from 'vue-router'
 
 export default defineComponent({
   props: {
@@ -12,6 +13,12 @@ export default defineComponent({
     },
   },
   setup({ contextKey }, { slots }) {
+    const instance = getCurrentInstance()
+
+    instance.provides[viewDepthKey] = ref(0)
+
+    // debugger
+
     const subRouterContextManager = inject(subRouterContextManagerKey)
     if (!subRouterContextManager)
       throw new Error('[DesktopContext] - SubRouterContextManager not found')
