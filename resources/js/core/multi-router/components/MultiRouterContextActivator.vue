@@ -10,7 +10,8 @@ export default defineComponent({
     const contextKey = inject(multiRouterContextKey)!
     const manager = inject(multiRouterContextManagerKey)!
 
-    const onActivate = () => {
+    const onActivate = (e: MouseEvent) => {
+      e.stopPropagation()
       if (manager.setActive(contextKey, true)) {
         console.log('[MultiRouterContextActivator] activated', contextKey)
       }

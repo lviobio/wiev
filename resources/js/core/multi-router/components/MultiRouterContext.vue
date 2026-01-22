@@ -21,6 +21,13 @@ export default defineComponent({
   setup({ type, name, location }, { slots }) {
     const manager = inject(multiRouterContextManagerKey)!
 
+    console.log('[MultiRouterContext] setup', { type, name, location })
+
+    if (manager.has(name)) {
+      console.warn(`[MultiRouterContext] Context "${name}" already registered, skipping`)
+      return () => slots.default?.()
+    }
+
     manager.register(type, name, { location })
 
     provide(multiRouterContext, name)

@@ -4,11 +4,13 @@
     <div>
       <NButton @click="test">Test</NButton>
     </div>
-    <NCard>
-      <MultiRouterContext type="window" name="ctx1">
-        <!--        <PageTestSub />-->
-      </MultiRouterContext>
-    </NCard>
+    <!--    <NCard>-->
+    <!--      <MultiRouterContext type="window" name="ctx1" location="/posts">-->
+    <!--        <MultiRouterContextActivator>-->
+    <!--          <RouterView />-->
+    <!--        </MultiRouterContextActivator>-->
+    <!--      </MultiRouterContext>-->
+    <!--    </NCard>-->
     <!--    <NCard>-->
     <!--      <MultiRouterContext type="window" name="ctx2">-->
     <!--        <AppTestContext />-->
@@ -18,7 +20,6 @@
 </template>
 
 <script setup lang="ts">
-import MultiRouterContext from '@/core/multi-router/components/MultiRouterContext.vue'
 import { PageExpose } from '@/core/types'
 
 const router = useRouter()

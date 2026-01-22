@@ -1,5 +1,5 @@
-import { MultiRouterHistoryManager } from '@/core/multi-router/history-manager'
-import { ContextTypes } from '@/core/multi-router/index'
+import { MultiRouterHistoryManager, type HistoryBuilder } from '@/core/multi-router/history'
+import type { ContextTypes } from '@/core/multi-router/index'
 import { App, shallowRef } from 'vue'
 import { Router, RouterHistory } from 'vue-router'
 
@@ -17,12 +17,12 @@ interface ActiveContextInterface {
 
 type ContextInitListener = (key: string) => void
 
-type ActiveContextInterfaceRef = ShallowRef<ActiveContextInterface | undefined>
+type MakeRouterFn = (contextKey: string, history: RouterHistory) => Router
 
 export class MultiRouterManagerInstance {
   private started = false
-  private activeContext: ActiveContextInterfaceRef = shallowRef<ActiveContextInterfaceRef>()
-  private activeHistoryContext: ActiveContextInterfaceRef = shallowRef<ActiveContextInterfaceRef>()
+  private activeContext = shallowRef<ActiveContextInterface>()
+  private activeHistoryContext = shallowRef<ActiveContextInterface>()
   private registered: Map<string, ContextInterface> = new Map()
   private onContextInitListeners: ContextInitListener[] = []
   private historyManager: MultiRouterHistoryManager
@@ -30,9 +30,14 @@ export class MultiRouterManagerInstance {
   constructor(
     private app: App,
     private types: ContextTypes,
-    private makeRouter: (contextKey: string) => { router: Router; history: RouterHistory },
+    historyBuilder: HistoryBuilder,
+    private makeRouter: MakeRouterFn,
   ) {
-    this.historyManager = new MultiRouterHistoryManager(this)
+    this.historyManager = new MultiRouterHistoryManager(historyBuilder)
+  }
+
+  getHistoryManager() {
+    return this.historyManager
   }
 
   getActiveContext() {
@@ -43,12 +48,10 @@ export class MultiRouterManagerInstance {
     return this.activeHistoryContext.value
   }
 
-  setActive(key: string, history: boolean) {
+  setActive(key: string, updateHistory: boolean) {
     const item = this.registered.get(key)
 
     if (!item) throw new Error(`[MultiRouter] Context "${key}" not found`)
-
-    // if (!item.initialized) throw new Error(`[MultiRouter] Context "${key}" not initialized`)
 
     let modified = false
 
@@ -61,15 +64,32 @@ export class MultiRouterManagerInstance {
       modified = true
     }
 
-    if (history && this.activeHistoryContext.value?.key !== key) {
+    if (updateHistory && this.activeHistoryContext.value?.key !== key) {
       this.activeHistoryContext.value = this.activeContext.value
+      this.historyManager.setActiveHistoryContext(key)
     }
 
     if (modified) {
-      console.log('[MultiRouterContextManager] setActive', { key, history })
+      console.log('[MultiRouterContextManager] setActive', { key, updateHistory })
     }
 
     return modified
+  }
+
+  clearHistoryContext(key: string) {
+    if (this.activeHistoryContext.value?.key === key) {
+      this.historyManager.clearActiveHistoryContext(key)
+      
+      const newActiveKey = this.historyManager.getActiveHistoryContextKey()
+      if (newActiveKey) {
+        const newContext = this.registered.get(newActiveKey)
+        if (newContext) {
+          this.activeHistoryContext.value = { key: newActiveKey, context: newContext }
+        }
+      } else {
+        this.activeHistoryContext.value = undefined
+      }
+    }
   }
 
   markAsStarted() {
@@ -89,9 +109,9 @@ export class MultiRouterManagerInstance {
 
     if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
 
-    // const map = this.app._context.provides['sub-routers'] as Map<string, Router>
-
-    const { router, history } = this.makeRouter(key)
+    const initialLocation = options?.location
+    const history = this.historyManager.createContextHistory(key, initialLocation)
+    const router = this.makeRouter(key, history)
 
     this.registered.set(key, {
       type,
@@ -100,21 +120,25 @@ export class MultiRouterManagerInstance {
       initialized: false,
     })
 
-    const location = options?.location || history.location
-
-    router.push(location).catch((err) => {
+    router.push(history.location).catch((err) => {
       console.warn('Unexpected error when starting the router:', err)
     })
-
-    // map.set(key, router)
 
     router.isReady().then(() => {
       this.markAsStarted()
     })
   }
 
+  getContextLocation(key: string): string | undefined {
+    return this.historyManager.getContextLocation(key)
+  }
+
   public unregister(key: string) {
-    this.registered.delete(key)
+    const context = this.registered.get(key)
+    if (context) {
+      this.historyManager.removeContextHistory(key)
+      this.registered.delete(key)
+    }
   }
 
   public initialize(key: string) {
