@@ -7,6 +7,7 @@ import { createRoutes } from './routes'
 
 export const router = createMultiRouter({
   history: () => createWebHistory('app'),
+  // history: () => createMemoryHistory('app'),
   routes: createRoutes(),
   types: contextTemplateMainWithWindows,
 })

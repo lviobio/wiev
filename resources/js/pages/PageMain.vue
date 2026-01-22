@@ -5,8 +5,8 @@
       <NButton @click="test">Test</NButton>
     </div>
     <NCard>
-      <MultiRouterContext type="window" name="ctx1" location="/app/posts">
-        <PageTestSub />
+      <MultiRouterContext type="window" name="ctx1">
+        <!--        <PageTestSub />-->
       </MultiRouterContext>
     </NCard>
     <!--    <NCard>-->
@@ -20,7 +20,6 @@
 <script setup lang="ts">
 import MultiRouterContext from '@/core/multi-router/components/MultiRouterContext.vue'
 import { PageExpose } from '@/core/types'
-import PageTestSub from '@/pages/PageTestSub.vue'
 
 const router = useRouter()
 

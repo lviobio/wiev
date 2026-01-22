@@ -1,3 +1,4 @@
+import { MultiRouterHistoryManager } from '@/core/multi-router/history-manager'
 import { ContextTypes } from '@/core/multi-router/index'
 import { App, shallowRef } from 'vue'
 import { Router, RouterHistory } from 'vue-router'
@@ -24,12 +25,15 @@ export class MultiRouterManagerInstance {
   private activeHistoryContext: ActiveContextInterfaceRef = shallowRef<ActiveContextInterfaceRef>()
   private registered: Map<string, ContextInterface> = new Map()
   private onContextInitListeners: ContextInitListener[] = []
+  private historyManager: MultiRouterHistoryManager
 
   constructor(
     private app: App,
     private types: ContextTypes,
     private makeRouter: (contextKey: string) => { router: Router; history: RouterHistory },
-  ) {}
+  ) {
+    this.historyManager = new MultiRouterHistoryManager(this)
+  }
 
   getActiveContext() {
     return this.activeContext.value
@@ -44,7 +48,7 @@ export class MultiRouterManagerInstance {
 
     if (!item) throw new Error(`[MultiRouter] Context "${key}" not found`)
 
-    if (!item.initialized) throw new Error(`[MultiRouter] Context "${key}" not initialized`)
+    // if (!item.initialized) throw new Error(`[MultiRouter] Context "${key}" not initialized`)
 
     let modified = false
 
@@ -80,7 +84,7 @@ export class MultiRouterManagerInstance {
     return this.registered.has(key)
   }
 
-  public register(type: string, key: string) {
+  public register(type: string, key: string, options?: { location?: string }) {
     const typeConfig = this.types[type]
 
     if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
@@ -96,7 +100,9 @@ export class MultiRouterManagerInstance {
       initialized: false,
     })
 
-    router.push(history.location).catch((err) => {
+    const location = options?.location || history.location
+
+    router.push(location).catch((err) => {
       console.warn('Unexpected error when starting the router:', err)
     })
 

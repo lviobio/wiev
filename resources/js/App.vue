@@ -1,9 +1,11 @@
 <template>
   <AppProviderStack :stack="providerStack">
-    <MultiRouterContext type="main" name="root">
-      <!--      <AppSuspense>-->
-      <RouterView />
-      <!--      </AppSuspense>-->
+    <MultiRouterContext type="main" name="main">
+      <AppSuspense>
+        <MultiRouterContextActivator>
+          <RouterView />
+        </MultiRouterContextActivator>
+      </AppSuspense>
     </MultiRouterContext>
     <!--      <DesktopWindowsHost />-->
   </AppProviderStack>
@@ -13,6 +15,7 @@
 import AppAuthProvider from '@/components/AppAuthProvider.vue'
 import { defineProviderStack } from '@/components/AppProviderStack.vue'
 import MultiRouterContext from '@/core/multi-router/components/MultiRouterContext.vue'
+import MultiRouterContextActivator from '@/core/multi-router/components/MultiRouterContextActivator.vue'
 import {
   darkTheme,
   GlobalTheme,

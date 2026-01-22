@@ -1,6 +1,6 @@
 import { MultiRouterManagerInstance } from '@/core/multi-router/contextManager'
 import { multiRouterContextManagerKey } from '@/core/multi-router/injectionSymbols'
-import { multiRouterContextKeySymbol } from '@/core/multi-router/symbols'
+import { multiRouterContext } from '@/core/multi-router/symbols'
 import { createHistoryWrapper } from '@/core/sub-router/history-wrapper'
 import { contextKeySymbol } from '@/core/sub-router/symbols'
 import { getCurrentInstance as _getCurrentInstance, App, ComponentInternalInstance } from 'vue'
@@ -156,7 +156,7 @@ function installContextAwareRouterResolvers(app: App, contextManager: MultiRoute
       throw new Error('No instance found')
     }
 
-    const contextKey = instance.provides[multiRouterContextKeySymbol]
+    const contextKey = instance.provides[multiRouterContext]
 
     if (!contextKey) {
       throw new Error('Context key not found')

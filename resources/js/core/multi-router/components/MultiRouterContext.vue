@@ -1,6 +1,7 @@
 <script lang="ts">
 import { multiRouterContextManagerKey } from '@/core/multi-router/injectionSymbols'
-import { multiRouterContextKeySymbol } from '@/core/multi-router/symbols'
+import { multiRouterContext } from '@/core/multi-router/symbols'
+import { viewDepthKey } from 'vue-router'
 
 export default defineComponent({
   props: {
@@ -17,12 +18,14 @@ export default defineComponent({
       required: false,
     },
   },
-  setup({ type, name }, { slots }) {
+  setup({ type, name, location }, { slots }) {
     const manager = inject(multiRouterContextManagerKey)!
 
-    manager.register(type, name)
+    manager.register(type, name, { location })
 
-    provide(multiRouterContextKeySymbol, name)
+    provide(multiRouterContext, name)
+
+    provide(viewDepthKey, ref(0))
 
     onBeforeUnmount(() => {
       manager.unregister(name)

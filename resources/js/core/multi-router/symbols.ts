@@ -1,3 +1,3 @@
 export const multiRouterContextManager = Symbol('multi-router-context-manager')
 
-export const multiRouterContextKeySymbol = Symbol('multi-router-context-key')
+export const multiRouterContext = Symbol('multi-router-context-key')
