@@ -24,6 +24,8 @@ export function useMultiRouterContext() {
   
   const isHistoryActive = computed(() => manager.getActiveHistoryContextRef().value?.key === contextKey)
   
+  const historyEnabled = computed(() => manager.getContextHistoryEnabled(contextKey))
+  
   const activate = (updateHistory = true) => {
     manager.setActive(contextKey, updateHistory)
   }
@@ -35,6 +37,7 @@ export function useMultiRouterContext() {
     route,
     isActive,
     isHistoryActive,
+    historyEnabled,
     activate,
   }
 }

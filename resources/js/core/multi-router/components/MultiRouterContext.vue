@@ -22,6 +22,10 @@ const MultiRouterContextInner = defineComponent({
       type: String,
       required: false,
     },
+    historyEnabled: {
+      type: Boolean,
+      default: true,
+    },
   },
   setup(props, { slots }) {
     const manager = inject(multiRouterContextManagerKey)!
@@ -41,6 +45,7 @@ const MultiRouterContextInner = defineComponent({
     manager.register(props.type, props.name, { 
       location: props.location,
       initialLocation: props.initialLocation,
+      historyEnabled: props.historyEnabled,
     })
 
     provide(multiRouterContext, props.name)
@@ -74,6 +79,15 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    /**
+     * Whether this context should store its navigation history in the browser history.
+     * When false, navigation within this context won't affect browser back/forward.
+     * @default true
+     */
+    historyEnabled: {
+      type: Boolean,
+      default: true,
+    },
   },
   setup(props, { slots }) {
     // Render inner component with key=name+location to force full re-mount when either changes
@@ -84,6 +98,7 @@ export default defineComponent({
       name: props.name,
       location: props.location,
       initialLocation: props.initialLocation,
+      historyEnabled: props.historyEnabled,
     }, slots.default)
   },
 })

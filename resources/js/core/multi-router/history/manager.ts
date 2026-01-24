@@ -1,10 +1,10 @@
 import type { RouterHistory } from 'vue-router'
 import { ContextHistoryProxy } from './context-proxy'
 import {
-  type ContextStorageAdapter,
-  type MaybePromise,
   flatMapMaybePromise,
   mapMaybePromise,
+  type ContextStorageAdapter,
+  type MaybePromise,
 } from './storage/index'
 import {
   NavigationDirection,
@@ -21,8 +21,33 @@ import { VirtualStackManager } from './virtual-stack'
 const CONTEXT_KEY_STATE = '__multiRouterContext'
 const STACK_INDEX_STATE = '__multiRouterStackIndex'
 
+/**
+ * Defines how the browser URL is updated when switching between contexts.
+ *
+ * - `'none'`: URL is not updated when switching contexts. URL changes only on push/replace.
+ *   This gives precise back/forward navigation matching the number of push operations.
+ *
+ * - `'replace'`: URL is updated using history.replace(). This changes the URL immediately
+ *   but overwrites the current history entry's state. May cause issues with forward navigation
+ *   if the previous context had unsaved state.
+ *
+ * - `'push'`: URL is updated using history.push() when the new context's URL differs from current.
+ *   This preserves all history entries but adds extra back steps when switching between
+ *   contexts with different URLs.
+ */
+export type ContextSwitchMode = 'none' | 'replace' | 'push'
+
 export interface MultiRouterHistoryManagerOptions {
+  /**
+   * Adapter for persisting context history state.
+   * @default SessionStorageAdapter
+   */
   storageAdapter?: ContextStorageAdapter
+  /**
+   * How to update browser URL when switching contexts.
+   * @default 'replace'
+   */
+  contextSwitchMode?: ContextSwitchMode
 }
 
 export class MultiRouterHistoryManager {
@@ -31,10 +56,12 @@ export class MultiRouterHistoryManager {
   private activeHistoryContextKey: string | null = null
   private historyContextStack: string[] = []
   private baseHistoryCleanup: (() => void) | null = null
+  private contextSwitchMode: ContextSwitchMode
 
   constructor(historyBuilder: HistoryBuilder, options?: MultiRouterHistoryManagerOptions) {
     this.baseHistory = historyBuilder()
     this.stacks = new VirtualStackManager(options?.storageAdapter)
+    this.contextSwitchMode = options?.contextSwitchMode ?? 'replace'
     this.baseHistoryCleanup = this.baseHistory.listen(this.handlePopState.bind(this))
   }
 
@@ -52,13 +79,13 @@ export class MultiRouterHistoryManager {
 
   createContextHistory(
     contextKey: string,
-    options?: { location?: string; initialLocation?: string },
+    options?: { location?: string; initialLocation?: string; historyEnabled?: boolean },
   ): MaybePromise<RouterHistory> {
     if (this.stacks.has(contextKey)) {
       return new ContextHistoryProxy(contextKey, this)
     }
 
-    const { location, initialLocation } = options ?? {}
+    const { location, initialLocation, historyEnabled = true } = options ?? {}
 
     // Get last active context (may be sync or async)
     return flatMapMaybePromise(this.stacks.getStoredActiveContext(), (lastActiveContext) => {
@@ -71,7 +98,7 @@ export class MultiRouterHistoryManager {
           contextKey,
           location,
         })
-        return this.finalizeContextCreation(contextKey, virtualStack, isLastActive)
+        return this.finalizeContextCreation(contextKey, virtualStack, isLastActive, historyEnabled)
       }
 
       // No forced location - try to restore from storage
@@ -80,7 +107,8 @@ export class MultiRouterHistoryManager {
 
         if (restoredStack) {
           // Storage has priority over initialLocation
-          if (isLastActive) {
+          // Only update from browser URL if historyEnabled (browser URL belongs to this context)
+          if (isLastActive && historyEnabled) {
             // Update current position with browser URL (user may have changed it)
             const browserUrl = this.baseHistory.location
             restoredStack.entries[restoredStack.position] = {
@@ -92,11 +120,11 @@ export class MultiRouterHistoryManager {
               browserUrl,
             })
           } else {
-            console.log('[MultiRouterHistory] Restored from storage', { contextKey })
+            console.log('[MultiRouterHistory] Restored from storage', { contextKey, historyEnabled })
           }
           virtualStack = restoredStack
-        } else if (isLastActive) {
-          // No storage, but was last active - use browser URL
+        } else if (isLastActive && historyEnabled) {
+          // No storage, but was last active with historyEnabled - use browser URL
           const browserUrl = this.baseHistory.location
           virtualStack = this.createInitialVirtualStack(browserUrl)
           console.log('[MultiRouterHistory] Created with browser URL (last active)', {
@@ -116,7 +144,7 @@ export class MultiRouterHistoryManager {
           console.log('[MultiRouterHistory] Created with default location', { contextKey })
         }
 
-        return this.finalizeContextCreation(contextKey, virtualStack, isLastActive)
+        return this.finalizeContextCreation(contextKey, virtualStack, isLastActive, historyEnabled)
       })
     })
   }
@@ -125,13 +153,17 @@ export class MultiRouterHistoryManager {
     contextKey: string,
     virtualStack: VirtualStack,
     isLastActive: boolean,
+    historyEnabled: boolean,
   ): RouterHistory {
-    this.stacks.create(contextKey, virtualStack)
+    this.stacks.create(contextKey, virtualStack, historyEnabled)
 
     // If this context was the last active, restore its active state
+    // But only update browser URL if historyEnabled is true
     if (isLastActive) {
       this.activeHistoryContextKey = contextKey
-      this.restoreUrlFromVirtualStack(contextKey)
+      if (historyEnabled) {
+        this.restoreUrlFromVirtualStack(contextKey)
+      }
     }
 
     return new ContextHistoryProxy(contextKey, this)
@@ -167,6 +199,7 @@ export class MultiRouterHistoryManager {
     this.stacks.saveActiveContext(contextKey)
 
     // Update browser URL to show the new context's current location
+    // Use replace to change URL without adding a new history entry
     this.restoreUrlFromVirtualStack(contextKey)
 
     console.log('[MultiRouterHistory] setActiveHistoryContext', {
@@ -181,6 +214,10 @@ export class MultiRouterHistoryManager {
     }
 
     this.fallbackToPreviousHistoryContext()
+  }
+
+  saveActiveContext(contextKey: string): void {
+    this.stacks.saveActiveContext(contextKey)
   }
 
   getActiveHistoryContextKey(): string | null {
@@ -210,16 +247,32 @@ export class MultiRouterHistoryManager {
   }
 
   private restoreUrlFromVirtualStack(contextKey: string): void {
+    if (this.contextSwitchMode === 'none') {
+      return
+    }
+
     const context = this.stacks.get(contextKey)
     if (!context) return
 
     const entry = context.virtualStack.entries[context.virtualStack.position]
-    if (entry) {
-      this.baseHistory.replace(entry.location, {
-        ...entry.state,
-        [CONTEXT_KEY_STATE]: contextKey,
-        [STACK_INDEX_STATE]: context.virtualStack.position,
-      })
+    if (!entry) return
+
+    const state = {
+      ...entry.state,
+      [CONTEXT_KEY_STATE]: contextKey,
+      [STACK_INDEX_STATE]: context.virtualStack.position,
+    }
+
+    if (this.contextSwitchMode === 'push') {
+      // Push if URL is different, replace if same
+      if (entry.location !== this.baseHistory.location) {
+        this.baseHistory.push(entry.location, state)
+      } else {
+        this.baseHistory.replace(entry.location, state)
+      }
+    } else {
+      // 'replace' mode - always replace
+      this.baseHistory.replace(entry.location, state)
     }
   }
 
@@ -251,28 +304,14 @@ export class MultiRouterHistoryManager {
     let ownerContextKey: string | null = null
     let targetStackIndex: number | null = null
 
-    if (info.delta < 0) {
-      // Going back - find which context owns the 'from' URL
-      for (const [contextKey, context] of this.stacks.entries()) {
-        const currentEntry = context.virtualStack.entries[context.virtualStack.position]
-        if (currentEntry && currentEntry.location === from) {
-          ownerContextKey = contextKey
-          break
-        }
-      }
-      // After reload, use state context as fallback
-      if (!ownerContextKey && stateContextKey && this.stacks.has(stateContextKey)) {
-        ownerContextKey = stateContextKey
-        targetStackIndex = stateStackIndex ?? null
-      }
-    } else {
-      // Going forward - use state context
-      if (stateContextKey && this.stacks.has(stateContextKey)) {
-        ownerContextKey = stateContextKey
-        targetStackIndex = stateStackIndex ?? null
-      }
+    // The state contains the TARGET context and stack index
+    // This is the context we're navigating TO, not FROM
+    if (stateContextKey && this.stacks.has(stateContextKey)) {
+      ownerContextKey = stateContextKey
+      targetStackIndex = stateStackIndex ?? null
     }
 
+    // Fallback to active context if state doesn't have context info
     if (!ownerContextKey) {
       ownerContextKey = this.activeHistoryContextKey
     }
@@ -314,8 +353,10 @@ export class MultiRouterHistoryManager {
 
   push(contextKey: string, to: HistoryLocation, data?: HistoryState): void {
     const stackIndex = this.stacks.push(contextKey, to, data ?? {})
+    const historyEnabled = this.stacks.isHistoryEnabled(contextKey)
 
-    if (this.activeHistoryContextKey === contextKey) {
+    // Only update browser history if context is active AND historyEnabled
+    if (this.activeHistoryContextKey === contextKey && historyEnabled) {
       this.baseHistory.push(to, {
         ...data,
         [CONTEXT_KEY_STATE]: contextKey,
@@ -328,13 +369,16 @@ export class MultiRouterHistoryManager {
       to,
       stackIndex,
       isActive: this.activeHistoryContextKey === contextKey,
+      historyEnabled,
     })
   }
 
   replace(contextKey: string, to: HistoryLocation, data?: HistoryState): void {
     const stackIndex = this.stacks.replace(contextKey, to, data ?? {})
+    const historyEnabled = this.stacks.isHistoryEnabled(contextKey)
 
-    if (this.activeHistoryContextKey === contextKey) {
+    // Only update browser history if context is active AND historyEnabled
+    if (this.activeHistoryContextKey === contextKey && historyEnabled) {
       this.baseHistory.replace(to, {
         ...data,
         [CONTEXT_KEY_STATE]: contextKey,
@@ -347,6 +391,7 @@ export class MultiRouterHistoryManager {
       to,
       stackIndex,
       isActive: this.activeHistoryContextKey === contextKey,
+      historyEnabled,
     })
   }
 

@@ -38,4 +38,5 @@ export interface VirtualStack {
 export interface ContextHistoryState {
   virtualStack: VirtualStack
   listeners: Set<NavigationCallback>
+  historyEnabled: boolean
 }

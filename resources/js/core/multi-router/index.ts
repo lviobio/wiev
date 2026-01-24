@@ -1,4 +1,5 @@
 import { MultiRouterManagerInstance } from '@/core/multi-router/contextManager'
+import { MultiRouterHistoryManagerOptions } from '@/core/multi-router/history'
 import { multiRouterContextManagerKey } from '@/core/multi-router/injectionSymbols'
 import { multiRouterContext } from '@/core/multi-router/symbols'
 import { getCurrentInstance as _getCurrentInstance, App, ComponentInternalInstance } from 'vue'
@@ -150,6 +151,7 @@ export const contextTemplateTabsWithWindows = {
 
 type CustomRouterOptions = Omit<RouterOptions, 'history'> & {
   history: () => RouterHistory
+  historyOptions: MultiRouterHistoryManagerOptions
   types: ContextTypes
 }
 
@@ -175,7 +177,7 @@ export function createMultiRouter(options: CustomRouterOptions): MultiRouterInte
       contextManager = new MultiRouterManagerInstance(
         app,
         options.types,
-        options.history,
+        { historyBuilder: options.history, ...options.historyOptions },
         makeRouter,
       )
       app.provide(multiRouterContextManagerKey, contextManager)

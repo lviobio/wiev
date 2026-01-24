@@ -1,8 +1,9 @@
 import {
+  mapMaybePromise,
   MultiRouterHistoryManager,
+  MultiRouterHistoryManagerOptions,
   type HistoryBuilder,
   type MaybePromise,
-  mapMaybePromise,
 } from '@/core/multi-router/history'
 import type { ContextTypes } from '@/core/multi-router/index'
 import { App, shallowRef } from 'vue'
@@ -13,6 +14,7 @@ type ContextInterface = {
   router: Router
   history: RouterHistory
   initialized: boolean
+  historyEnabled: boolean
 }
 
 interface ActiveContextInterface {
@@ -24,21 +26,26 @@ type ContextInitListener = (key: string) => void
 
 type MakeRouterFn = (contextKey: string, history: RouterHistory) => Router
 
+type HistoryManagerOptions = {
+  historyBuilder: HistoryBuilder
+} & MultiRouterHistoryManagerOptions
+
 export class MultiRouterManagerInstance {
   private started = false
   private activeContext = shallowRef<ActiveContextInterface>()
   private activeHistoryContext = shallowRef<ActiveContextInterface>()
   private registered: Map<string, ContextInterface> = new Map()
   private onContextInitListeners: ContextInitListener[] = []
-  private historyManager: MultiRouterHistoryManager
+  private readonly historyManager: MultiRouterHistoryManager
 
   constructor(
     private app: App,
     private types: ContextTypes,
-    historyBuilder: HistoryBuilder,
+    historyManagerOptions: HistoryManagerOptions,
     private makeRouter: MakeRouterFn,
   ) {
-    this.historyManager = new MultiRouterHistoryManager(historyBuilder)
+    const { historyBuilder, ...historyOptions } = historyManagerOptions
+    this.historyManager = new MultiRouterHistoryManager(historyBuilder, historyOptions)
   }
 
   getHistoryManager() {
@@ -78,12 +85,23 @@ export class MultiRouterManagerInstance {
     }
 
     if (updateHistory && this.activeHistoryContext.value?.key !== key) {
-      this.activeHistoryContext.value = this.activeContext.value
-      this.historyManager.setActiveHistoryContext(key)
+      // Always save active context to storage (for restoration after reload)
+      // But only update browser history if historyEnabled is true
+      if (item.historyEnabled) {
+        this.activeHistoryContext.value = this.activeContext.value
+        this.historyManager.setActiveHistoryContext(key)
+      } else {
+        // Just save to storage without updating browser history
+        this.historyManager.saveActiveContext(key)
+      }
     }
 
     if (modified) {
-      console.log('[MultiRouterContextManager] setActive', { key, updateHistory })
+      console.log('[MultiRouterContextManager] setActive', {
+        key,
+        updateHistory,
+        historyEnabled: item.historyEnabled,
+      })
     }
 
     return modified
@@ -92,7 +110,7 @@ export class MultiRouterManagerInstance {
   clearHistoryContext(key: string) {
     if (this.activeHistoryContext.value?.key === key) {
       this.historyManager.clearActiveHistoryContext(key)
-      
+
       const newActiveKey = this.historyManager.getActiveHistoryContextKey()
       if (newActiveKey) {
         const newContext = this.registered.get(newActiveKey)
@@ -120,15 +138,18 @@ export class MultiRouterManagerInstance {
   public register(
     type: string,
     key: string,
-    options?: { location?: string; initialLocation?: string },
+    options?: { location?: string; initialLocation?: string; historyEnabled?: boolean },
   ): MaybePromise<void> {
     const typeConfig = this.types[type]
 
     if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
 
+    const historyEnabled = options?.historyEnabled ?? true
+
     const historyResult = this.historyManager.createContextHistory(key, {
       location: options?.location,
       initialLocation: options?.initialLocation,
+      historyEnabled,
     })
 
     return mapMaybePromise(historyResult, (history) => {
@@ -139,6 +160,7 @@ export class MultiRouterManagerInstance {
         router,
         history,
         initialized: false,
+        historyEnabled,
       })
 
       router.push(history.location).catch((err) => {
@@ -162,6 +184,10 @@ export class MultiRouterManagerInstance {
 
   getContextLocation(key: string): string | undefined {
     return this.historyManager.getContextLocation(key)
+  }
+
+  getContextHistoryEnabled(key: string): boolean {
+    return this.registered.get(key)?.historyEnabled ?? true
   }
 
   public unregister(key: string) {

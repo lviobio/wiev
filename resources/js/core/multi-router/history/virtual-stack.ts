@@ -28,11 +28,16 @@ export class VirtualStackManager {
     return this.contexts.get(contextKey)
   }
 
-  create(contextKey: string, initialStack: VirtualStack): void {
+  create(contextKey: string, initialStack: VirtualStack, historyEnabled: boolean = true): void {
     this.contexts.set(contextKey, {
       virtualStack: initialStack,
       listeners: new Set(),
+      historyEnabled,
     })
+  }
+
+  isHistoryEnabled(contextKey: string): boolean {
+    return this.contexts.get(contextKey)?.historyEnabled ?? true
   }
 
   remove(contextKey: string): void {
