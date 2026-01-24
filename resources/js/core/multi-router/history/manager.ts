@@ -14,6 +14,8 @@ import {
 
 const CONTEXT_KEY_STATE = '__multiRouterContext'
 const STACK_INDEX_STATE = '__multiRouterStackIndex'
+const STORAGE_KEY = '__multiRouterVirtualStacks'
+const ACTIVE_CONTEXT_STORAGE_KEY = '__multiRouterActiveContext'
 
 export class MultiRouterHistoryManager {
   private baseHistory: RouterHistory
@@ -41,8 +43,40 @@ export class MultiRouterHistoryManager {
 
   createContextHistory(contextKey: string, initialLocation?: string): RouterHistory {
     if (!this.contexts.has(contextKey)) {
+      // Check if this was the last active context - if so, use browser URL
+      const lastActiveContext = this.getStoredActiveContext()
+      const isLastActive = lastActiveContext === contextKey
+      
+      let virtualStack: VirtualStack
+      
+      if (isLastActive) {
+        // This was the last active context - use browser URL as priority
+        // This handles the case where user manually changed the URL
+        const browserUrl = this.baseHistory.location
+        const restoredStack = this.restoreVirtualStack(contextKey)
+        
+        if (restoredStack) {
+          // Update the current position with browser URL
+          restoredStack.entries[restoredStack.position] = {
+            location: browserUrl,
+            state: this.baseHistory.state ?? {},
+          }
+          virtualStack = restoredStack
+        } else {
+          virtualStack = this.createInitialVirtualStack(browserUrl)
+        }
+        
+        console.log('[MultiRouterHistory] Restored last active context with browser URL', {
+          contextKey,
+          browserUrl,
+        })
+      } else {
+        // Not the last active context - restore from sessionStorage or use initial
+        virtualStack = this.restoreVirtualStack(contextKey) ?? this.createInitialVirtualStack(initialLocation)
+      }
+      
       this.contexts.set(contextKey, {
-        virtualStack: this.createInitialVirtualStack(initialLocation),
+        virtualStack,
         listeners: new Set(),
       })
     }
@@ -52,6 +86,7 @@ export class MultiRouterHistoryManager {
 
   removeContextHistory(contextKey: string): void {
     this.contexts.delete(contextKey)
+    this.clearStoredVirtualStack(contextKey)
 
     if (this.activeHistoryContextKey === contextKey) {
       this.fallbackToPreviousHistoryContext()
@@ -77,6 +112,10 @@ export class MultiRouterHistoryManager {
     }
 
     this.activeHistoryContextKey = contextKey
+    this.saveActiveContext(contextKey)
+    
+    // Update browser URL to show the new context's current location
+    this.restoreUrlFromVirtualStack(contextKey)
 
     console.log('[MultiRouterHistory] setActiveHistoryContext', {
       from: previousKey,
@@ -134,7 +173,11 @@ export class MultiRouterHistoryManager {
 
     const entry = context.virtualStack.entries[context.virtualStack.position]
     if (entry) {
-      this.baseHistory.replace(entry.location, { ...entry.state, [CONTEXT_KEY_STATE]: contextKey })
+      this.baseHistory.replace(entry.location, { 
+        ...entry.state, 
+        [CONTEXT_KEY_STATE]: contextKey,
+        [STACK_INDEX_STATE]: context.virtualStack.position,
+      })
     }
   }
 
@@ -229,6 +272,9 @@ export class MultiRouterHistoryManager {
 
       // Notify with the context's own URL from its virtual stack
       this.notifyListeners(ownerContextKey, targetLocation, previousLocation, info)
+      
+      // Save updated position to sessionStorage
+      this.saveVirtualStack(ownerContextKey)
     }
   }
 
@@ -259,6 +305,8 @@ export class MultiRouterHistoryManager {
     }
 
     console.log('[MultiRouterHistory] push', { contextKey, to, stackIndex: context.virtualStack.position, isActive: this.activeHistoryContextKey === contextKey })
+    
+    this.saveVirtualStack(contextKey)
   }
 
   replace(contextKey: string, to: HistoryLocation, data?: HistoryState): void {
@@ -281,6 +329,8 @@ export class MultiRouterHistoryManager {
     }
 
     console.log('[MultiRouterHistory] replace', { contextKey, to, stackIndex: context.virtualStack.position, isActive: this.activeHistoryContextKey === contextKey })
+    
+    this.saveVirtualStack(contextKey)
   }
 
   go(contextKey: string, delta: number, triggerListeners = true): void {
@@ -367,5 +417,88 @@ export class MultiRouterHistoryManager {
 
     this.contexts.clear()
     this.baseHistory.destroy()
+  }
+
+  // SessionStorage persistence methods
+  
+  private saveVirtualStack(contextKey: string): void {
+    try {
+      const context = this.contexts.get(contextKey)
+      if (!context) return
+
+      const allStacks = this.getAllStoredStacks()
+      allStacks[contextKey] = {
+        entries: context.virtualStack.entries,
+        position: context.virtualStack.position,
+      }
+      
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(allStacks))
+    } catch (e) {
+      console.warn('[MultiRouterHistory] Failed to save virtual stack to sessionStorage:', e)
+    }
+  }
+
+  private restoreVirtualStack(contextKey: string): VirtualStack | null {
+    try {
+      const allStacks = this.getAllStoredStacks()
+      const stored = allStacks[contextKey]
+      
+      if (stored && Array.isArray(stored.entries) && stored.entries.length > 0) {
+        console.log('[MultiRouterHistory] Restored virtual stack from sessionStorage', {
+          contextKey,
+          entries: stored.entries.length,
+          position: stored.position,
+        })
+        return {
+          entries: stored.entries,
+          position: stored.position ?? 0,
+        }
+      }
+    } catch (e) {
+      console.warn('[MultiRouterHistory] Failed to restore virtual stack from sessionStorage:', e)
+    }
+    return null
+  }
+
+  private clearStoredVirtualStack(contextKey: string): void {
+    try {
+      const allStacks = this.getAllStoredStacks()
+      delete allStacks[contextKey]
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(allStacks))
+    } catch (e) {
+      console.warn('[MultiRouterHistory] Failed to clear virtual stack from sessionStorage:', e)
+    }
+  }
+
+  private getAllStoredStacks(): Record<string, { entries: Array<{ location: string; state: any }>; position: number }> {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        return JSON.parse(stored)
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {}
+  }
+
+  private saveActiveContext(contextKey: string): void {
+    try {
+      sessionStorage.setItem(ACTIVE_CONTEXT_STORAGE_KEY, contextKey)
+    } catch (e) {
+      console.warn('[MultiRouterHistory] Failed to save active context to sessionStorage:', e)
+    }
+  }
+
+  private getStoredActiveContext(): string | null {
+    try {
+      return sessionStorage.getItem(ACTIVE_CONTEXT_STORAGE_KEY)
+    } catch (e) {
+      return null
+    }
+  }
+
+  getLastActiveContextKey(): string | null {
+    return this.getStoredActiveContext()
   }
 }

@@ -14,6 +14,13 @@
         </MultiRouterContextActivator>
       </AppSuspense>
     </MultiRouterContext>
+    <MultiRouterContext type="main" name="main-3">
+      <AppSuspense>
+        <MultiRouterContextActivator>
+          <RouterView />
+        </MultiRouterContextActivator>
+      </AppSuspense>
+    </MultiRouterContext>
     <!--      <DesktopWindowsHost />-->
   </AppProviderStack>
 </template>

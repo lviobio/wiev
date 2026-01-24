@@ -126,6 +126,13 @@ export class MultiRouterManagerInstance {
 
     router.isReady().then(() => {
       this.markAsStarted()
+      
+      // Auto-activate if this was the last active context before reload
+      const lastActiveKey = this.historyManager.getLastActiveContextKey()
+      if (lastActiveKey === key && !this.activeHistoryContext.value) {
+        console.log('[MultiRouterContextManager] Auto-activating last active context', { key })
+        this.setActive(key, true)
+      }
     })
   }
 
