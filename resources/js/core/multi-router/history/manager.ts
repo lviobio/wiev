@@ -13,6 +13,7 @@ import {
 } from './types'
 
 const CONTEXT_KEY_STATE = '__multiRouterContext'
+const STACK_INDEX_STATE = '__multiRouterStackIndex'
 
 export class MultiRouterHistoryManager {
   private baseHistory: RouterHistory
@@ -138,17 +139,32 @@ export class MultiRouterHistoryManager {
   }
 
   private handlePopState(to: HistoryLocation, from: HistoryLocation, info: NavigationInformation): void {
-    // When going back (delta < 0), the state now contains the TARGET entry's context
-    // But we need to know which context we're LEAVING (the one that made the last push)
-    // When going forward (delta > 0), the state contains the context we're going TO
+    // Get context and stack index from browser history state (this is the TARGET entry)
+    const stateContextKey = this.baseHistory.state?.[CONTEXT_KEY_STATE] as string | undefined
+    const stateStackIndex = this.baseHistory.state?.[STACK_INDEX_STATE] as number | undefined
     
-    // For back navigation: we need to find which context has 'from' URL at its current position
-    // For forward navigation: we use the state context (where we're going)
+    console.log('[MultiRouterHistory] popstate raw', {
+      stateContextKey,
+      stateStackIndex,
+      browserTo: to,
+      browserFrom: from,
+      delta: info.delta,
+      virtualStacks: Object.fromEntries(
+        Array.from(this.contexts.entries()).map(([k, v]) => [
+          k, 
+          { position: v.virtualStack.position, entries: v.virtualStack.entries.map(e => e.location) }
+        ])
+      ),
+    })
     
+    // For back navigation: we need to find which context we're LEAVING (source)
+    // For forward navigation: we use the state context (target)
     let ownerContextKey: string | null = null
+    let targetStackIndex: number | null = null
     
     if (info.delta < 0) {
       // Going back - find which context owns the 'from' URL (the one we're leaving)
+      // This is the context that made the last push
       for (const [contextKey, context] of this.contexts) {
         const currentEntry = context.virtualStack.entries[context.virtualStack.position]
         if (currentEntry && currentEntry.location === from) {
@@ -156,44 +172,63 @@ export class MultiRouterHistoryManager {
           break
         }
       }
+      // After reload, virtual stacks are empty, so use state context as fallback
+      if (!ownerContextKey && stateContextKey && this.contexts.has(stateContextKey)) {
+        ownerContextKey = stateContextKey
+        targetStackIndex = stateStackIndex ?? null
+      }
     } else {
       // Going forward - use state context (where we're going)
-      const stateContextKey = this.baseHistory.state?.[CONTEXT_KEY_STATE] as string | undefined
-      ownerContextKey = stateContextKey && this.contexts.has(stateContextKey) 
-        ? stateContextKey 
-        : null
+      if (stateContextKey && this.contexts.has(stateContextKey)) {
+        ownerContextKey = stateContextKey
+        targetStackIndex = stateStackIndex ?? null
+      }
     }
     
-    // Fallback to active context
+    // Final fallback to active context
     if (!ownerContextKey) {
       ownerContextKey = this.activeHistoryContextKey
     }
 
-    // Only notify the owner context - each context has independent history
-    if (ownerContextKey) {
-      const context = this.contexts.get(ownerContextKey)!
-      
-      // Calculate new position in virtual stack
-      const newPosition = context.virtualStack.position + info.delta
-      
-      if (newPosition >= 0 && newPosition < context.virtualStack.entries.length) {
-        // Get the URL from the owner's virtual stack (not from browser)
-        const previousLocation = context.virtualStack.entries[context.virtualStack.position].location
-        context.virtualStack.position = newPosition
-        const targetLocation = context.virtualStack.entries[newPosition].location
+    if (!ownerContextKey) return
 
-        console.log('[MultiRouterHistory] popstate', {
-          ownerContext: ownerContextKey,
-          activeContext: this.activeHistoryContextKey,
-          browserUrl: to,
-          contextFrom: previousLocation,
-          contextTo: targetLocation,
-          delta: info.delta,
-        })
+    const context = this.contexts.get(ownerContextKey)!
+    
+    // Calculate new position in virtual stack
+    let newPosition: number
+    if (targetStackIndex !== null) {
+      // Use stack index from state (works after reload)
+      newPosition = targetStackIndex
+    } else {
+      // Calculate from delta (works during session)
+      newPosition = context.virtualStack.position + info.delta
+    }
+    
+    // Ensure virtual stack has enough entries (after reload, stack might be smaller)
+    while (context.virtualStack.entries.length <= newPosition) {
+      context.virtualStack.entries.push({ location: to, state: {} })
+    }
+    
+    if (newPosition >= 0 && newPosition < context.virtualStack.entries.length) {
+      const previousLocation = context.virtualStack.entries[context.virtualStack.position]?.location ?? from
+      context.virtualStack.position = newPosition
+      
+      // Get the target URL from the context's virtual stack (not from browser!)
+      // The browser URL belongs to a different context
+      const targetLocation = context.virtualStack.entries[newPosition]?.location ?? to
 
-        // Notify with the context's own URL from its virtual stack
-        this.notifyListeners(ownerContextKey, targetLocation, previousLocation, info)
-      }
+      console.log('[MultiRouterHistory] popstate result', {
+        ownerContext: ownerContextKey,
+        activeContext: this.activeHistoryContextKey,
+        browserUrl: to,
+        contextUrl: targetLocation,
+        targetStackIndex: newPosition,
+        previousLocation,
+        delta: info.delta,
+      })
+
+      // Notify with the context's own URL from its virtual stack
+      this.notifyListeners(ownerContextKey, targetLocation, previousLocation, info)
     }
   }
 
@@ -216,10 +251,14 @@ export class MultiRouterHistoryManager {
     context.virtualStack.position = context.virtualStack.entries.length - 1
 
     if (this.activeHistoryContextKey === contextKey) {
-      this.baseHistory.push(to, { ...data, [CONTEXT_KEY_STATE]: contextKey })
+      this.baseHistory.push(to, { 
+        ...data, 
+        [CONTEXT_KEY_STATE]: contextKey,
+        [STACK_INDEX_STATE]: context.virtualStack.position,
+      })
     }
 
-    console.log('[MultiRouterHistory] push', { contextKey, to, isActive: this.activeHistoryContextKey === contextKey })
+    console.log('[MultiRouterHistory] push', { contextKey, to, stackIndex: context.virtualStack.position, isActive: this.activeHistoryContextKey === contextKey })
   }
 
   replace(contextKey: string, to: HistoryLocation, data?: HistoryState): void {
@@ -234,10 +273,14 @@ export class MultiRouterHistoryManager {
     }
 
     if (this.activeHistoryContextKey === contextKey) {
-      this.baseHistory.replace(to, { ...data, [CONTEXT_KEY_STATE]: contextKey })
+      this.baseHistory.replace(to, { 
+        ...data, 
+        [CONTEXT_KEY_STATE]: contextKey,
+        [STACK_INDEX_STATE]: context.virtualStack.position,
+      })
     }
 
-    console.log('[MultiRouterHistory] replace', { contextKey, to, isActive: this.activeHistoryContextKey === contextKey })
+    console.log('[MultiRouterHistory] replace', { contextKey, to, stackIndex: context.virtualStack.position, isActive: this.activeHistoryContextKey === contextKey })
   }
 
   go(contextKey: string, delta: number, triggerListeners = true): void {
