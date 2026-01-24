@@ -113,6 +113,14 @@ export class MultiRouterHistoryManager {
         virtualStack,
         listeners: new Set(),
       })
+      
+      // If this context was the last active (from sessionStorage), restore its active state
+      // This handles the case when context is re-created with new location prop
+      const lastActiveContext = this.getStoredActiveContext()
+      if (lastActiveContext === contextKey) {
+        this.activeHistoryContextKey = contextKey
+        this.restoreUrlFromVirtualStack(contextKey)
+      }
     }
 
     return new ContextHistoryProxy(contextKey, this)
