@@ -20,15 +20,10 @@ export class MultiRouterHistoryManager {
   private activeHistoryContextKey: string | null = null
   private historyContextStack: string[] = []
   private baseHistoryCleanup: (() => void) | null = null
-  private onContextActivate: ((contextKey: string) => void) | null = null
 
   constructor(historyBuilder: HistoryBuilder) {
     this.baseHistory = historyBuilder()
     this.baseHistoryCleanup = this.baseHistory.listen(this.handlePopState.bind(this))
-  }
-
-  setOnContextActivate(callback: (contextKey: string) => void): void {
-    this.onContextActivate = callback
   }
 
   get base() {
@@ -76,13 +71,11 @@ export class MultiRouterHistoryManager {
     const previousKey = this.activeHistoryContextKey
 
     if (previousKey) {
-      this.saveCurrentUrlToVirtualStack(previousKey)
       this.historyContextStack = this.historyContextStack.filter((k) => k !== previousKey)
       this.historyContextStack.push(previousKey)
     }
 
     this.activeHistoryContextKey = contextKey
-    this.restoreUrlFromVirtualStack(contextKey)
 
     console.log('[MultiRouterHistory] setActiveHistoryContext', {
       from: previousKey,
@@ -107,7 +100,6 @@ export class MultiRouterHistoryManager {
 
     if (previousKey && this.contexts.has(previousKey)) {
       this.activeHistoryContextKey = previousKey
-      this.restoreUrlFromVirtualStack(previousKey)
     } else {
       this.activeHistoryContextKey = null
     }
@@ -146,32 +138,62 @@ export class MultiRouterHistoryManager {
   }
 
   private handlePopState(to: HistoryLocation, from: HistoryLocation, info: NavigationInformation): void {
-    const stateContextKey = this.baseHistory.state?.[CONTEXT_KEY_STATE] as string | undefined
-
-    // If the history entry belongs to a different context, activate it
-    if (stateContextKey && stateContextKey !== this.activeHistoryContextKey && this.contexts.has(stateContextKey)) {
-      console.log('[MultiRouterHistory] popstate switching context', {
-        from: this.activeHistoryContextKey,
-        to: stateContextKey,
-      })
-
-      // Save current URL to old context before switching
-      if (this.activeHistoryContextKey) {
-        this.saveCurrentUrlToVirtualStack(this.activeHistoryContextKey)
+    // When going back (delta < 0), the state now contains the TARGET entry's context
+    // But we need to know which context we're LEAVING (the one that made the last push)
+    // When going forward (delta > 0), the state contains the context we're going TO
+    
+    // For back navigation: we need to find which context has 'from' URL at its current position
+    // For forward navigation: we use the state context (where we're going)
+    
+    let ownerContextKey: string | null = null
+    
+    if (info.delta < 0) {
+      // Going back - find which context owns the 'from' URL (the one we're leaving)
+      for (const [contextKey, context] of this.contexts) {
+        const currentEntry = context.virtualStack.entries[context.virtualStack.position]
+        if (currentEntry && currentEntry.location === from) {
+          ownerContextKey = contextKey
+          break
+        }
       }
-
-      this.activeHistoryContextKey = stateContextKey
-
-      // Notify the context manager to update active context
-      if (this.onContextActivate) {
-        this.onContextActivate(stateContextKey)
-      }
+    } else {
+      // Going forward - use state context (where we're going)
+      const stateContextKey = this.baseHistory.state?.[CONTEXT_KEY_STATE] as string | undefined
+      ownerContextKey = stateContextKey && this.contexts.has(stateContextKey) 
+        ? stateContextKey 
+        : null
+    }
+    
+    // Fallback to active context
+    if (!ownerContextKey) {
+      ownerContextKey = this.activeHistoryContextKey
     }
 
-    if (this.activeHistoryContextKey) {
-      const context = this.contexts.get(this.activeHistoryContextKey)!
-      this.updateVirtualStackOnPop(context, to, info.delta)
-      this.notifyListeners(this.activeHistoryContextKey, to, from, info)
+    // Only notify the owner context - each context has independent history
+    if (ownerContextKey) {
+      const context = this.contexts.get(ownerContextKey)!
+      
+      // Calculate new position in virtual stack
+      const newPosition = context.virtualStack.position + info.delta
+      
+      if (newPosition >= 0 && newPosition < context.virtualStack.entries.length) {
+        // Get the URL from the owner's virtual stack (not from browser)
+        const previousLocation = context.virtualStack.entries[context.virtualStack.position].location
+        context.virtualStack.position = newPosition
+        const targetLocation = context.virtualStack.entries[newPosition].location
+
+        console.log('[MultiRouterHistory] popstate', {
+          ownerContext: ownerContextKey,
+          activeContext: this.activeHistoryContextKey,
+          browserUrl: to,
+          contextFrom: previousLocation,
+          contextTo: targetLocation,
+          delta: info.delta,
+        })
+
+        // Notify with the context's own URL from its virtual stack
+        this.notifyListeners(ownerContextKey, targetLocation, previousLocation, info)
+      }
     }
   }
 
