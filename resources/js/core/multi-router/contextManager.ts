@@ -45,7 +45,14 @@ export class MultiRouterManagerInstance {
     private makeRouter: MakeRouterFn,
   ) {
     const { historyBuilder, ...historyOptions } = historyManagerOptions
-    this.historyManager = new MultiRouterHistoryManager(historyBuilder, historyOptions)
+    this.historyManager = new MultiRouterHistoryManager(historyBuilder, {
+      ...historyOptions,
+      onContextActivate: (contextKey) => {
+        // Activate context on popstate (browser back/forward)
+        // Use updateHistory=false since we're responding to browser history change
+        this.setActive(contextKey, false)
+      },
+    })
   }
 
   getHistoryManager() {

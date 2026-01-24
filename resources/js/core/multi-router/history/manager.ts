@@ -48,6 +48,11 @@ export interface MultiRouterHistoryManagerOptions {
    * @default 'replace'
    */
   contextSwitchMode?: ContextSwitchMode
+  /**
+   * Callback called when a popstate event requires activating a different context.
+   * This happens when navigating back/forward to a history entry owned by another context.
+   */
+  onContextActivate?: (contextKey: string) => void
 }
 
 export class MultiRouterHistoryManager {
@@ -57,11 +62,13 @@ export class MultiRouterHistoryManager {
   private historyContextStack: string[] = []
   private baseHistoryCleanup: (() => void) | null = null
   private contextSwitchMode: ContextSwitchMode
+  private onContextActivate?: (contextKey: string) => void
 
   constructor(historyBuilder: HistoryBuilder, options?: MultiRouterHistoryManagerOptions) {
     this.baseHistory = historyBuilder()
     this.stacks = new VirtualStackManager(options?.storageAdapter)
     this.contextSwitchMode = options?.contextSwitchMode ?? 'replace'
+    this.onContextActivate = options?.onContextActivate
     this.baseHistoryCleanup = this.baseHistory.listen(this.handlePopState.bind(this))
   }
 
@@ -346,6 +353,11 @@ export class MultiRouterHistoryManager {
         previousLocation,
         delta: info.delta,
       })
+
+      // Activate the context that owns this history entry
+      if (this.onContextActivate) {
+        this.onContextActivate(ownerContextKey)
+      }
 
       this.stacks.notifyListeners(ownerContextKey, targetLocation, previousLocation, info)
     }
