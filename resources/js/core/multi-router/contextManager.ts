@@ -104,13 +104,15 @@ export class MultiRouterManagerInstance {
     return this.registered.has(key)
   }
 
-  public register(type: string, key: string, options?: { location?: string }) {
+  public register(type: string, key: string, options?: { location?: string; initialLocation?: string }) {
     const typeConfig = this.types[type]
 
     if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
 
-    const initialLocation = options?.location
-    const history = this.historyManager.createContextHistory(key, initialLocation)
+    const history = this.historyManager.createContextHistory(key, {
+      location: options?.location,
+      initialLocation: options?.initialLocation,
+    })
     const router = this.makeRouter(key, history)
 
     this.registered.set(key, {
@@ -143,6 +145,7 @@ export class MultiRouterManagerInstance {
   public unregister(key: string) {
     const context = this.registered.get(key)
     if (context) {
+      console.log('[MultiRouterContextManager] unregister', { key })
       this.historyManager.removeContextHistory(key)
       this.registered.delete(key)
     }

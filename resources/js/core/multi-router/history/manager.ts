@@ -41,38 +41,72 @@ export class MultiRouterHistoryManager {
     return this.baseHistory.state
   }
 
-  createContextHistory(contextKey: string, initialLocation?: string): RouterHistory {
+  createContextHistory(
+    contextKey: string, 
+    options?: { location?: string; initialLocation?: string }
+  ): RouterHistory {
     if (!this.contexts.has(contextKey)) {
-      // Check if this was the last active context - if so, use browser URL
-      const lastActiveContext = this.getStoredActiveContext()
-      const isLastActive = lastActiveContext === contextKey
-      
       let virtualStack: VirtualStack
+      const { location, initialLocation } = options ?? {}
       
-      if (isLastActive) {
-        // This was the last active context - use browser URL as priority
-        // This handles the case where user manually changed the URL
-        const browserUrl = this.baseHistory.location
+      if (location) {
+        // Explicit location always has priority - force this URL
+        virtualStack = this.createInitialVirtualStack(location)
+        
+        console.log('[MultiRouterHistory] Created context with forced location', {
+          contextKey,
+          location,
+        })
+      } else {
+        // No forced location - try to restore from sessionStorage, then use initialLocation as fallback
+        const lastActiveContext = this.getStoredActiveContext()
+        const isLastActive = lastActiveContext === contextKey
         const restoredStack = this.restoreVirtualStack(contextKey)
         
         if (restoredStack) {
-          // Update the current position with browser URL
-          restoredStack.entries[restoredStack.position] = {
-            location: browserUrl,
-            state: this.baseHistory.state ?? {},
+          // sessionStorage has priority over initialLocation
+          if (isLastActive) {
+            // Update current position with browser URL (user may have changed it)
+            const browserUrl = this.baseHistory.location
+            restoredStack.entries[restoredStack.position] = {
+              location: browserUrl,
+              state: this.baseHistory.state ?? {},
+            }
+            console.log('[MultiRouterHistory] Restored from sessionStorage with browser URL', {
+              contextKey,
+              browserUrl,
+            })
+          } else {
+            console.log('[MultiRouterHistory] Restored from sessionStorage', {
+              contextKey,
+            })
           }
           virtualStack = restoredStack
-        } else {
+        } else if (isLastActive) {
+          // No sessionStorage, but was last active - use browser URL
+          const browserUrl = this.baseHistory.location
           virtualStack = this.createInitialVirtualStack(browserUrl)
+          
+          console.log('[MultiRouterHistory] Created with browser URL (last active)', {
+            contextKey,
+            browserUrl,
+          })
+        } else if (initialLocation) {
+          // Use initialLocation as fallback
+          virtualStack = this.createInitialVirtualStack(initialLocation)
+          
+          console.log('[MultiRouterHistory] Created with initialLocation', {
+            contextKey,
+            initialLocation,
+          })
+        } else {
+          // Fallback to default '/'
+          virtualStack = this.createInitialVirtualStack()
+          
+          console.log('[MultiRouterHistory] Created with default location', {
+            contextKey,
+          })
         }
-        
-        console.log('[MultiRouterHistory] Restored last active context with browser URL', {
-          contextKey,
-          browserUrl,
-        })
-      } else {
-        // Not the last active context - restore from sessionStorage or use initial
-        virtualStack = this.restoreVirtualStack(contextKey) ?? this.createInitialVirtualStack(initialLocation)
       }
       
       this.contexts.set(contextKey, {
@@ -83,7 +117,7 @@ export class MultiRouterHistoryManager {
 
     return new ContextHistoryProxy(contextKey, this)
   }
-
+  
   removeContextHistory(contextKey: string): void {
     this.contexts.delete(contextKey)
     this.clearStoredVirtualStack(contextKey)
