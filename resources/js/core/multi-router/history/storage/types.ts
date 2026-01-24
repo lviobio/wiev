@@ -14,6 +14,9 @@ export interface ContextStorageAdapter {
   
   saveActiveContext(contextKey: string): MaybePromise<void>
   getActiveContext(): MaybePromise<string | null>
+  
+  saveActiveHistoryContext(contextKey: string): MaybePromise<void>
+  getActiveHistoryContext(): MaybePromise<string | null>
 }
 
 export function isPromise<T>(value: MaybePromise<T>): value is Promise<T> {

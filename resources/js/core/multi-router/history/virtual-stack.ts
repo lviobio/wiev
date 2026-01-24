@@ -162,6 +162,14 @@ export class VirtualStackManager {
     return this.storage.getActiveContext()
   }
 
+  saveActiveHistoryContext(contextKey: string): MaybePromise<void> {
+    return this.storage.saveActiveHistoryContext(contextKey)
+  }
+
+  getStoredActiveHistoryContext(): MaybePromise<string | null> {
+    return this.storage.getActiveHistoryContext()
+  }
+
   // Iteration
   entries(): IterableIterator<[string, ContextHistoryState]> {
     return this.contexts.entries()

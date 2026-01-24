@@ -3,6 +3,7 @@ import type { ContextStorageAdapter, StoredVirtualStack } from './types'
 
 const STACK_STORAGE_PREFIX = '__multiRouter_stack_'
 const ACTIVE_CONTEXT_STORAGE_KEY = '__multiRouterActiveContext'
+const ACTIVE_HISTORY_CONTEXT_STORAGE_KEY = '__multiRouterActiveHistoryContext'
 
 export class SessionStorageAdapter implements ContextStorageAdapter {
   private getStackStorageKey(contextKey: string): string {
@@ -62,6 +63,22 @@ export class SessionStorageAdapter implements ContextStorageAdapter {
   getActiveContext(): string | null {
     try {
       return sessionStorage.getItem(ACTIVE_CONTEXT_STORAGE_KEY)
+    } catch (e) {
+      return null
+    }
+  }
+
+  saveActiveHistoryContext(contextKey: string): void {
+    try {
+      sessionStorage.setItem(ACTIVE_HISTORY_CONTEXT_STORAGE_KEY, contextKey)
+    } catch (e) {
+      console.warn('[SessionStorageAdapter] Failed to save active history context:', e)
+    }
+  }
+
+  getActiveHistoryContext(): string | null {
+    try {
+      return sessionStorage.getItem(ACTIVE_HISTORY_CONTEXT_STORAGE_KEY)
     } catch (e) {
       return null
     }

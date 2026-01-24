@@ -177,10 +177,18 @@ export class MultiRouterManagerInstance {
       router.isReady().then(() => {
         this.markAsStarted()
 
+        // Try to restore activeHistoryContext if this context was the last history context
+        mapMaybePromise(this.historyManager.tryRestoreActiveHistoryContext(key), (restored) => {
+          if (restored && !this.activeHistoryContext.value) {
+            console.log('[MultiRouterContextManager] Restored activeHistoryContext', { key })
+            this.activeHistoryContext.value = { key, context: this.registered.get(key)! }
+          }
+        })
+
         // Auto-activate if this was the last active context before reload
         const lastActiveKey = this.historyManager.getLastActiveContextKey()
         mapMaybePromise(lastActiveKey, (resolvedLastActiveKey) => {
-          if (resolvedLastActiveKey === key && !this.activeHistoryContext.value) {
+          if (resolvedLastActiveKey === key && !this.activeContext.value) {
             console.log('[MultiRouterContextManager] Auto-activating last active context', { key })
             this.setActive(key, true)
           }

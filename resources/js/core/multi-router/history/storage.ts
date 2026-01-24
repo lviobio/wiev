@@ -36,5 +36,13 @@ export class VirtualStackStorage {
     return this.adapter.getActiveContext()
   }
 
+  saveActiveHistoryContext(contextKey: string): MaybePromise<void> {
+    return this.adapter.saveActiveHistoryContext(contextKey)
+  }
+
+  getActiveHistoryContext(): MaybePromise<string | null> {
+    return this.adapter.getActiveHistoryContext()
+  }
+
   resolveValue = resolveValue
 }
