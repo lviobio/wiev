@@ -1,4 +1,9 @@
-import { MultiRouterHistoryManager, type HistoryBuilder } from '@/core/multi-router/history'
+import {
+  MultiRouterHistoryManager,
+  type HistoryBuilder,
+  type MaybePromise,
+  mapMaybePromise,
+} from '@/core/multi-router/history'
 import type { ContextTypes } from '@/core/multi-router/index'
 import { App, shallowRef } from 'vue'
 import { Router, RouterHistory } from 'vue-router'
@@ -44,8 +49,16 @@ export class MultiRouterManagerInstance {
     return this.activeContext.value
   }
 
+  getActiveContextRef() {
+    return this.activeContext
+  }
+
   getActiveHistoryContext() {
     return this.activeHistoryContext.value
+  }
+
+  getActiveHistoryContextRef() {
+    return this.activeHistoryContext
   }
 
   setActive(key: string, updateHistory: boolean) {
@@ -104,37 +117,46 @@ export class MultiRouterManagerInstance {
     return this.registered.has(key)
   }
 
-  public register(type: string, key: string, options?: { location?: string; initialLocation?: string }) {
+  public register(
+    type: string,
+    key: string,
+    options?: { location?: string; initialLocation?: string },
+  ): MaybePromise<void> {
     const typeConfig = this.types[type]
 
     if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
 
-    const history = this.historyManager.createContextHistory(key, {
+    const historyResult = this.historyManager.createContextHistory(key, {
       location: options?.location,
       initialLocation: options?.initialLocation,
     })
-    const router = this.makeRouter(key, history)
 
-    this.registered.set(key, {
-      type,
-      router,
-      history,
-      initialized: false,
-    })
+    return mapMaybePromise(historyResult, (history) => {
+      const router = this.makeRouter(key, history)
 
-    router.push(history.location).catch((err) => {
-      console.warn('Unexpected error when starting the router:', err)
-    })
+      this.registered.set(key, {
+        type,
+        router,
+        history,
+        initialized: false,
+      })
 
-    router.isReady().then(() => {
-      this.markAsStarted()
-      
-      // Auto-activate if this was the last active context before reload
-      const lastActiveKey = this.historyManager.getLastActiveContextKey()
-      if (lastActiveKey === key && !this.activeHistoryContext.value) {
-        console.log('[MultiRouterContextManager] Auto-activating last active context', { key })
-        this.setActive(key, true)
-      }
+      router.push(history.location).catch((err) => {
+        console.warn('Unexpected error when starting the router:', err)
+      })
+
+      router.isReady().then(() => {
+        this.markAsStarted()
+
+        // Auto-activate if this was the last active context before reload
+        const lastActiveKey = this.historyManager.getLastActiveContextKey()
+        mapMaybePromise(lastActiveKey, (resolvedLastActiveKey) => {
+          if (resolvedLastActiveKey === key && !this.activeHistoryContext.value) {
+            console.log('[MultiRouterContextManager] Auto-activating last active context', { key })
+            this.setActive(key, true)
+          }
+        })
+      })
     })
   }
 

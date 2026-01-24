@@ -1,3 +1,6 @@
-export { MultiRouterHistoryManager } from './manager'
+export { MultiRouterHistoryManager, type MultiRouterHistoryManagerOptions } from './manager'
 export { ContextHistoryProxy } from './context-proxy'
+export { VirtualStackManager } from './virtual-stack'
+export { VirtualStackStorage } from './storage'
 export * from './types'
+export * from './storage/index'
