@@ -176,13 +176,11 @@ export class MultiRouterHistoryManager {
 
   tryRestoreActiveHistoryContext(contextKey: string): MaybePromise<boolean> {
     // Try to restore activeHistoryContext from storage if this context matches
+    // Only restore if historyEnabled is true - contexts with historyEnabled=false cannot be activeHistoryContext
     return mapMaybePromise(this.stacks.getStoredActiveHistoryContext(), (storedKey) => {
-      if (storedKey === contextKey && this.stacks.has(contextKey)) {
+      if (storedKey === contextKey && this.stacks.has(contextKey) && this.stacks.isHistoryEnabled(contextKey)) {
         this.activeHistoryContextKey = contextKey
-        // Restore URL only if historyEnabled
-        if (this.stacks.isHistoryEnabled(contextKey)) {
-          this.restoreUrlFromVirtualStack(contextKey)
-        }
+        this.restoreUrlFromVirtualStack(contextKey)
         return true
       }
       return false

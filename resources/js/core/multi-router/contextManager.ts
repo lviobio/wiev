@@ -91,15 +91,14 @@ export class MultiRouterManagerInstance {
       modified = true
     }
 
-    if (updateHistory && this.activeHistoryContext.value?.key !== key) {
+    if (updateHistory) {
       // Always save active context to storage (for restoration after reload)
-      // But only update browser history if historyEnabled is true
-      if (item.historyEnabled) {
+      this.historyManager.saveActiveContext(key)
+      
+      // Update browser history and activeHistoryContext only if historyEnabled is true
+      if (item.historyEnabled && this.activeHistoryContext.value?.key !== key) {
         this.activeHistoryContext.value = this.activeContext.value
         this.historyManager.setActiveHistoryContext(key)
-      } else {
-        // Just save to storage without updating browser history
-        this.historyManager.saveActiveContext(key)
       }
     }
 
@@ -187,19 +186,18 @@ export class MultiRouterManagerInstance {
         })
 
         // Auto-activate if this was the last active context before reload
+        // Or activate as default if no saved context exists
         const lastActiveKey = this.historyManager.getLastActiveContextKey()
         mapMaybePromise(lastActiveKey, (resolvedLastActiveKey) => {
           if (resolvedLastActiveKey === key && !this.activeContext.value) {
             console.log('[MultiRouterContextManager] Auto-activating last active context', { key })
             this.setActive(key, true)
+          } else if (isDefault && !resolvedLastActiveKey && !this.activeContext.value) {
+            // Only activate default if there's no saved context in storage
+            console.log('[MultiRouterContextManager] Activating default context', { key, historyEnabled })
+            this.setActive(key, true)
           }
         })
-
-        // Activate as default if no active context and this is marked as default
-        if (isDefault && !this.activeContext.value) {
-          console.log('[MultiRouterContextManager] Activating default context', { key, historyEnabled })
-          this.setActive(key, true)
-        }
       })
     })
   }
