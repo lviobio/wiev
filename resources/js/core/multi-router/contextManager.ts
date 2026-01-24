@@ -145,13 +145,14 @@ export class MultiRouterManagerInstance {
   public register(
     type: string,
     key: string,
-    options?: { location?: string; initialLocation?: string; historyEnabled?: boolean },
+    options?: { location?: string; initialLocation?: string; historyEnabled?: boolean; default?: boolean },
   ): MaybePromise<void> {
     const typeConfig = this.types[type]
 
     if (!typeConfig) throw new Error(`[MultiRouter] Context type "${type}" not found`)
 
     const historyEnabled = options?.historyEnabled ?? true
+    const isDefault = options?.default ?? false
 
     const historyResult = this.historyManager.createContextHistory(key, {
       location: options?.location,
@@ -193,6 +194,12 @@ export class MultiRouterManagerInstance {
             this.setActive(key, true)
           }
         })
+
+        // Activate as default if no active context and this is marked as default
+        if (isDefault && !this.activeContext.value) {
+          console.log('[MultiRouterContextManager] Activating default context', { key, historyEnabled })
+          this.setActive(key, true)
+        }
       })
     })
   }

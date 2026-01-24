@@ -26,6 +26,10 @@ const MultiRouterContextInner = defineComponent({
       type: Boolean,
       default: true,
     },
+    default: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props, { slots }) {
     const manager = inject(multiRouterContextManagerKey)!
@@ -46,6 +50,7 @@ const MultiRouterContextInner = defineComponent({
       location: props.location,
       initialLocation: props.initialLocation,
       historyEnabled: props.historyEnabled,
+      default: props.default,
     })
 
     provide(multiRouterContext, props.name)
@@ -88,6 +93,15 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    /**
+     * Whether this context should be activated by default if no prior active context exists.
+     * Only one context should have this set to true.
+     * @default false
+     */
+    default: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props, { slots }) {
     // Render inner component with key=name+location to force full re-mount when either changes
@@ -99,6 +113,7 @@ export default defineComponent({
       location: props.location,
       initialLocation: props.initialLocation,
       historyEnabled: props.historyEnabled,
+      default: props.default,
     }, slots.default)
   },
 })
