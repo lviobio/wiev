@@ -34,6 +34,21 @@ export class MultiRouterManagerInstance {
     private makeRouter: MakeRouterFn,
   ) {
     this.historyManager = new MultiRouterHistoryManager(historyBuilder)
+
+    // Handle context activation from browser back/forward
+    this.historyManager.setOnContextActivate((contextKey) => {
+      this.activateFromHistory(contextKey)
+    })
+  }
+
+  private activateFromHistory(key: string) {
+    const item = this.registered.get(key)
+    if (!item) return
+
+    this.activeContext.value = { key, context: item }
+    this.activeHistoryContext.value = this.activeContext.value
+
+    console.log('[MultiRouterContextManager] activateFromHistory', { key })
   }
 
   getHistoryManager() {

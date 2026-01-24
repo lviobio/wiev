@@ -12,16 +12,23 @@ import {
   type VirtualStack,
 } from './types'
 
+const CONTEXT_KEY_STATE = '__multiRouterContext'
+
 export class MultiRouterHistoryManager {
   private baseHistory: RouterHistory
   private contexts = new Map<string, ContextHistoryState>()
   private activeHistoryContextKey: string | null = null
   private historyContextStack: string[] = []
   private baseHistoryCleanup: (() => void) | null = null
+  private onContextActivate: ((contextKey: string) => void) | null = null
 
   constructor(historyBuilder: HistoryBuilder) {
     this.baseHistory = historyBuilder()
     this.baseHistoryCleanup = this.baseHistory.listen(this.handlePopState.bind(this))
+  }
+
+  setOnContextActivate(callback: (contextKey: string) => void): void {
+    this.onContextActivate = callback
   }
 
   get base() {
@@ -134,11 +141,33 @@ export class MultiRouterHistoryManager {
 
     const entry = context.virtualStack.entries[context.virtualStack.position]
     if (entry) {
-      this.baseHistory.replace(entry.location, entry.state)
+      this.baseHistory.replace(entry.location, { ...entry.state, [CONTEXT_KEY_STATE]: contextKey })
     }
   }
 
   private handlePopState(to: HistoryLocation, from: HistoryLocation, info: NavigationInformation): void {
+    const stateContextKey = this.baseHistory.state?.[CONTEXT_KEY_STATE] as string | undefined
+
+    // If the history entry belongs to a different context, activate it
+    if (stateContextKey && stateContextKey !== this.activeHistoryContextKey && this.contexts.has(stateContextKey)) {
+      console.log('[MultiRouterHistory] popstate switching context', {
+        from: this.activeHistoryContextKey,
+        to: stateContextKey,
+      })
+
+      // Save current URL to old context before switching
+      if (this.activeHistoryContextKey) {
+        this.saveCurrentUrlToVirtualStack(this.activeHistoryContextKey)
+      }
+
+      this.activeHistoryContextKey = stateContextKey
+
+      // Notify the context manager to update active context
+      if (this.onContextActivate) {
+        this.onContextActivate(stateContextKey)
+      }
+    }
+
     if (this.activeHistoryContextKey) {
       const context = this.contexts.get(this.activeHistoryContextKey)!
       this.updateVirtualStackOnPop(context, to, info.delta)
@@ -165,7 +194,7 @@ export class MultiRouterHistoryManager {
     context.virtualStack.position = context.virtualStack.entries.length - 1
 
     if (this.activeHistoryContextKey === contextKey) {
-      this.baseHistory.push(to, data)
+      this.baseHistory.push(to, { ...data, [CONTEXT_KEY_STATE]: contextKey })
     }
 
     console.log('[MultiRouterHistory] push', { contextKey, to, isActive: this.activeHistoryContextKey === contextKey })
@@ -183,7 +212,7 @@ export class MultiRouterHistoryManager {
     }
 
     if (this.activeHistoryContextKey === contextKey) {
-      this.baseHistory.replace(to, data)
+      this.baseHistory.replace(to, { ...data, [CONTEXT_KEY_STATE]: contextKey })
     }
 
     console.log('[MultiRouterHistory] replace', { contextKey, to, isActive: this.activeHistoryContextKey === contextKey })
