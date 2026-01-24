@@ -150,8 +150,11 @@ export class MultiRouterHistoryManager {
   }
 
   private createInitialVirtualStack(initialLocation?: string): VirtualStack {
+    // Use explicit initialLocation, or fallback to base path (not current browser URL)
+    // This prevents new contexts from inheriting query params from other contexts
+    const location = initialLocation ?? '/'
     return {
-      entries: [{ location: initialLocation ?? this.baseHistory.location, state: {} }],
+      entries: [{ location, state: {} }],
       position: 0,
     }
   }
