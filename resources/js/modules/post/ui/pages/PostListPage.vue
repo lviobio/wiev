@@ -3,7 +3,7 @@ import { FilterTrashedValues } from '@/core/filters/trashed'
 import { usePostListContext } from '@/modules/post/composables/usePostListData'
 import { List } from '@/modules/post/ui/components'
 import { get } from 'lodash'
-import { transform, useContextStorageQueryHandler } from 'vue-context-storage'
+import { transform, useContextStorage } from 'vue-context-storage'
 
 const context = usePostListContext()
 context.init()
@@ -13,7 +13,7 @@ const data = ref({
   filters: contextData.filters,
 })
 
-useContextStorageQueryHandler(data, {
+useContextStorage('query', data, {
   transform: (deserialized) => {
     return {
       filters: {
