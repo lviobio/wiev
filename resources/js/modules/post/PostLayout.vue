@@ -36,9 +36,9 @@ const handleOpenListInNewWindow = () =>
         </RouterLink>
       </NFlex>
     </template>
-    <RouterViewCustom v-slot="{ Component }">
+    <RouterView v-slot="{ Component }">
       <component :is="Component" />
-    </RouterViewCustom>
+    </RouterView>
   </NCard>
 </template>
 

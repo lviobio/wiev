@@ -1,24 +1,19 @@
 <template>
   <AppProviderStack :stack="providerStack">
-    <ContextStorageCollection>
+    <ContextStorage>
       <AppSuspense>
-        <ContextStorageProvider item-key="main">
-          <ContextStorageActivator>
-            <RouterViewCustom />
-          </ContextStorageActivator>
-        </ContextStorageProvider>
+        <RouterView />
       </AppSuspense>
-      <AppSuspense>
-        <DesktopWindowsHost />
-      </AppSuspense>
-    </ContextStorageCollection>
+      <!--      <AppSuspense>-->
+      <!--        <DesktopWindowsHost />-->
+      <!--      </AppSuspense>-->
+    </ContextStorage>
   </AppProviderStack>
 </template>
 
 <script setup lang="ts">
 import AppAuthProvider from '@/components/AppAuthProvider.vue'
 import { defineProviderStack } from '@/components/AppProviderStack.vue'
-import DesktopWindowsHost from '@/core/navigator/windows/DesktopWindowsHost.vue'
 import {
   GlobalTheme,
   lightTheme,
@@ -27,11 +22,7 @@ import {
   NNotificationProvider,
 } from 'naive-ui'
 import { ref } from 'vue'
-import {
-  ContextStorageActivator,
-  ContextStorageCollection,
-  ContextStorageProvider,
-} from 'vue-context-storage'
+import { ContextStorage } from 'vue-context-storage'
 
 const theme = ref<GlobalTheme | null>(lightTheme)
 

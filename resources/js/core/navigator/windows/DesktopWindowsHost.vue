@@ -23,9 +23,7 @@ const mgr = useDesktopWindows()
           @close="() => mgr.close(w.windowId)"
         >
           <WindowContext :key-val="w.windowId">
-            <AppCustomRouter>
-              <component :is="w.component" v-bind="w.props" />
-            </AppCustomRouter>
+            <component :is="w.component" v-bind="w.props" />
           </WindowContext>
         </DesktopWindow>
       </ContextStorageProvider>
