@@ -1,5 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import {
+  CancelInterface,
+  CancelSymbol,
   ForbiddenInterface,
   ForbiddenSymbol,
   ModelNotFoundInterface,
@@ -47,11 +49,12 @@ export class ClientErrorUnknown extends ClientError {
   }
 }
 
-export class TimedOutException
-  extends RequestFailedWithoutResponse
-  implements NetworkErrorInterface
-{
+export class TimedOutException extends RequestFailedWithoutResponse {
   [NetworkErrorSymbol] = true
+}
+
+export class CancelException extends RequestFailedWithoutResponse implements CancelInterface {
+  [CancelSymbol] = true
 }
 
 export class UnprocessableEntity extends HttpException {}
@@ -119,6 +122,13 @@ export class AxiosUtils {
    */
   static toSpecificException(error: any): SpecificException {
     if (axios.isAxiosError(error)) {
+      if (axios.isCancel(error)) {
+        return new CancelException(
+          error.message,
+          ERROR_DESCRIPTIONS[error.code as keyof typeof ERROR_DESCRIPTIONS] || error.code,
+          { cause: error },
+        )
+      }
       if (error.response) {
         // Запрос был сделан, и сервер ответил кодом состояния, который выходит за пределы 2xx.
         // Или был определён validateStatus, который вернул false

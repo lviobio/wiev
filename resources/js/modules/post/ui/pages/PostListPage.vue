@@ -9,13 +9,13 @@ const context = usePostListContext()
 context.init()
 const contextData = context.get()
 
-const data = ref({
-  filters: contextData.filters,
-})
-
-useContextStorage('query', data, {
+useContextStorage('query', contextData, {
   transform: (deserialized) => {
     return {
+      page: transform.asNumber(get(deserialized, 'page'), { missable: true }),
+      cursor: transform.asString(get(deserialized, 'cursor'), { missable: true }),
+      per_page: transform.asNumber(get(deserialized, 'per_page'), { fallbackValue: 13 }),
+      search: transform.asString(get(deserialized, 'search'), { missable: true }),
       filters: {
         search: transform.asString(get(deserialized, 'filters.search'), { nullable: true }),
         title: transform.asString(get(deserialized, 'filters.title'), { nullable: true }),
@@ -32,6 +32,11 @@ useContextStorage('query', data, {
       },
     }
   },
+  onlyChanges: false,
+  // additionalDefaultData: {
+  //   page: 1,
+  //   per_page: 15,
+  // },
 })
 </script>
 

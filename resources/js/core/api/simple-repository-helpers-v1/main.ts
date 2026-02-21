@@ -42,7 +42,7 @@ function handleHasDataContract(options: OptionsContract, data: any) {
 
 function handleHasPaginationContract(options: OptionsContract, data: any) {
   if ('pagination' in options && options.pagination) {
-    Object.assign(data, options.pagination.toQueryParams())
+    Object.assign(data, options.pagination.queryParams.value)
   }
 }
 

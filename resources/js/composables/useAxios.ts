@@ -1,4 +1,5 @@
 import { injectLoginData } from '@/core/auth'
+import { isCancel } from '@/core/errors'
 import { AxiosUtils, UnauthorizedHttpException } from '@/core/errors/axios'
 import axios from 'axios'
 import { format } from 'date-fns'
@@ -31,7 +32,7 @@ export const useAxios = () => {
         return
       }
 
-      if (error.message) {
+      if (error.message && !isCancel(error)) {
         notification.error({
           title: 'Error',
           content: error.message,

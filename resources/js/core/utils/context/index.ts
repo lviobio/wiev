@@ -12,7 +12,7 @@ export type ReturnContextType<T> = {
   Provider: ProviderType<T>
 }
 
-export function createContext<T extends Record<string, unknown>>(
+export function createContext<T extends object>(
   key: InjectionKey<T>,
   defaultFactory: () => T,
 ): ReturnContextType<T> {

@@ -13,6 +13,7 @@ export const ValidationFailedSymbol = Symbol('ValidationFailed')
 
 export const SystemErrorSymbol = Symbol('SystemError')
 export const NetworkErrorSymbol = Symbol('NetworkError')
+export const CancelSymbol = Symbol('Cancel')
 
 export function isValidationFailed(v: any): v is ValidationFailedInterface {
   return v ? v[ValidationFailedSymbol] === true : false
@@ -35,6 +36,10 @@ export function isNetworkError(v: any): v is NetworkErrorInterface {
 
 export function isForbidden(v: any): v is ForbiddenInterface {
   return v ? v[ForbiddenSymbol] === true : false
+}
+
+export function isCancel(v: any): v is CancelInterface {
+  return v ? v[CancelSymbol] === true : false
 }
 
 interface HasMessage {
@@ -62,4 +67,8 @@ export interface SystemErrorInterface extends HasMessage {
 
 export interface NetworkErrorInterface extends HasMessage {
   [NetworkErrorSymbol]: boolean
+}
+
+export interface CancelInterface extends HasMessage {
+  [CancelSymbol]: boolean
 }

@@ -25,12 +25,26 @@ import { syncRef } from '@vueuse/core'
 
 const message = useMessage()
 const router = useRouter()
-
-const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
-
 const context = usePostListContext().get()
 
-syncRef(context.filters, filters)
+const {
+  items,
+  loading,
+  load,
+  reload,
+  filters,
+  pagination,
+  repository,
+  context: composableContext,
+} = usePostsList() //{ context }
+console.log('context', context.value)
+syncRef(context, composableContext, {
+  deep: true,
+  immediate: true,
+})
+// console.log('composableContext', composableContext)
+console.log('pagination', pagination.state.value)
+// debugger
 
 const dataTablePagination = useNaiveUiPagination(pagination)
 
