@@ -82,6 +82,7 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
     // Проверяем, является ли поле nullable
     // Важно: разворачиваем ZodDefault тоже, чтобы добраться до внутреннего типа
     let isNullable = false
+    let isOptional = false
     let checkType: z.ZodType<any> = field
     while (
       checkType instanceof z.ZodOptional ||
@@ -91,12 +92,21 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
       if (checkType instanceof z.ZodNullable) {
         isNullable = true
       }
+      if (checkType instanceof z.ZodOptional) {
+        isOptional = true
+      }
       checkType = checkType.unwrap() as z.ZodType<any>
     }
 
     // Если поле nullable, используем null как дефолт
     if (isNullable) {
       result[key] = null
+      continue
+    }
+
+    // Если поле optional, используем undefined как дефолт
+    if (isOptional) {
+      result[key] = undefined
       continue
     }
 
@@ -114,7 +124,14 @@ export function createEmptyObjectFromSchema<T extends ZodRawShape>(
     if (baseType instanceof z.ZodString) {
       result[key] = ''
     } else if (baseType instanceof z.ZodNumber) {
-      result[key] = 0
+      // Учитываем positive() и min() constraints, чтобы дефолт проходил валидацию
+      // Используем публичный minValue геттер и safeParse для проверки
+      let defaultValue = baseType.minValue ?? 0
+      if (!baseType.safeParse(defaultValue).success) {
+        // minValue не проходит валидацию (exclusive min, например positive())
+        defaultValue += 1
+      }
+      result[key] = defaultValue
     } else if (baseType instanceof z.ZodBoolean) {
       result[key] = false
     } else if (baseType instanceof z.ZodArray) {

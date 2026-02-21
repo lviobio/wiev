@@ -18,6 +18,7 @@ import {
   GlobalTheme,
   lightTheme,
   NConfigProvider,
+  NDialogProvider,
   NMessageProvider,
   NNotificationProvider,
 } from 'naive-ui'
@@ -29,6 +30,7 @@ const theme = ref<GlobalTheme | null>(lightTheme)
 const providerStack = defineProviderStack([
   { component: NConfigProvider, props: { preflightStyleDisabled: true, theme: theme } },
   NMessageProvider,
+  NDialogProvider,
   NNotificationProvider,
   AppAuthProvider,
 ])

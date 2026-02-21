@@ -1,4 +1,5 @@
 import { PaginationComposable } from '@/core/pagination/base'
+import { SortingComposable } from '@/core/sorting/base'
 import { AxiosInstance, AxiosRequestConfig } from 'axios'
 
 export interface HasSignalContract {
@@ -13,8 +14,12 @@ export interface HasPaginationContract {
   pagination?: PaginationComposable
 }
 
+export interface HasSortingContract {
+  sorting?: SortingComposable
+}
+
 export interface DefaultListQueryContract<TData>
-  extends HasDataContract<TData>, HasSignalContract, HasPaginationContract {}
+  extends HasDataContract<TData>, HasSignalContract, HasPaginationContract, HasSortingContract {}
 
 export interface DefaultCreateQueryContract<TData>
   extends HasDataContract<TData>, HasSignalContract {}
@@ -26,7 +31,11 @@ export interface DefaultCreateQueryResultContract<TData> extends HasDataContract
 export interface DefaultFindQueryResultContract<TData> extends HasDataContract<TData> {}
 export interface DefaultUpdateQueryResultContract<TData> extends HasDataContract<TData> {}
 
-export type OptionsContract = HasSignalContract | HasDataContract<unknown> | HasPaginationContract
+export type OptionsContract =
+  | HasSignalContract
+  | HasDataContract<unknown>
+  | HasPaginationContract
+  | HasSortingContract
 
 function handleHasSignalContract(options: OptionsContract, config: AxiosRequestConfig) {
   if ('signal' in options) {
@@ -42,7 +51,13 @@ function handleHasDataContract(options: OptionsContract, data: any) {
 
 function handleHasPaginationContract(options: OptionsContract, data: any) {
   if ('pagination' in options && options.pagination) {
-    Object.assign(data, options.pagination.toQueryParams())
+    Object.assign(data, options.pagination.params.value)
+  }
+}
+
+function handleHasSortingContract(options: OptionsContract, data: any) {
+  if ('sorting' in options && options.sorting) {
+    Object.assign(data, options.sorting.params.value)
   }
 }
 
@@ -53,6 +68,7 @@ function buildAxiosGetConfigFromOptions(options: OptionsContract, addDataToParam
   handleHasSignalContract(options, config)
   handleHasDataContract(options, data)
   handleHasPaginationContract(options, data)
+  handleHasSortingContract(options, data)
 
   if (addDataToParams) {
     config.params = data

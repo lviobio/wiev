@@ -10,14 +10,13 @@ import {
   sendAxiosPutRequest,
 } from '@/core/api/simple-repository-helpers-v1/main'
 import { zFilterTrashed } from '@/core/filters/trashed'
-import { PaginatedData } from '@/core/pagination/base'
+import { MaybePaginatedData } from '@/core/pagination/base'
 import { AxiosInstance } from 'axios'
 import { z } from 'zod'
 import { Post, PostIdentifier } from '../types'
 
 export const postListFiltersSchema = z.object({
-  search: z.string().nullable(),
-  title: z.string().nullable(),
+  title: z.string().nullable().meta({ placeholder: 'Search by title' }),
   created_at: z.object({
     from: z.number().nullable(),
     to: z.number().nullable(),
@@ -29,10 +28,11 @@ export const postListFiltersSchema = z.object({
 export type PostListFilters = z.infer<typeof postListFiltersSchema>
 
 interface PostListQuery extends DefaultListQueryContract<{
-  filters: PostListFilters
+  filters?: PostListFilters
+  search?: string
 }> {}
 
-type PostListQueryResult = PaginatedData<Post>
+type PostListQueryResult = MaybePaginatedData<Post>
 
 export const postFormSchema = z.object({
   title: z.string(),

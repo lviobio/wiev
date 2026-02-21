@@ -1,8 +1,17 @@
 <script setup lang="ts" generic="D extends Record<string, any>, FS extends Record<string, unknown>">
 import AppDataTableActiveFilters from '@/components/AppDataTable/AppDataTableActiveFilters.vue'
+import AppDataTableCursorPagination from '@/components/AppDataTable/AppDataTableCursorPagination.vue'
 import AppDataTableFiltersFunnelButton from '@/components/AppDataTable/AppDataTableFiltersFunnelButton.vue'
 import { TableFiltering } from '@/components/AppDataTable/filters'
-import { useDataTableFilters } from '@/components/AppDataTable/useDataTableFilters'
+import {
+  type ActiveFilter,
+  useDataTableFilters,
+} from '@/components/AppDataTable/useDataTableFilters'
+import {
+  CursorPaginationProps,
+  isNaiveUiCursorPagination,
+  isNaiveUiPagePagination,
+} from '@/core/pagination/naive-ui'
 import { useForwardRef } from '@/core/utils/useForwardRef'
 import { pick } from 'lodash'
 import {
@@ -12,6 +21,7 @@ import {
   dataTableProps,
   NDataTable,
 } from 'naive-ui'
+import { PaginationProps } from 'naive-ui/es/pagination/src/Pagination'
 import { VNodeChild } from 'vue'
 import { ComponentSlots } from 'vue-component-type-helpers'
 
@@ -24,9 +34,11 @@ export interface AppDataTableProps<
   FS extends Record<string, unknown>,
 > extends /* @vue-ignore */ DataTableProps {
   loading: boolean
-  loader?: () => Promise<void> | undefined
+  loader?: () => Promise<unknown> | unknown
   columns: DataTableColumns<RowData>
   filtering?: TableFiltering<FS>
+  extraActiveFilters?: ActiveFilter[]
+  pagination?: PaginationProps | CursorPaginationProps | false
 }
 
 defineOptions({
@@ -44,6 +56,11 @@ const { customizeColumnForFilters, activeFilters, renderFiltersFunnelContent } =
     dataTableRef: elRef,
   })
 
+const allActiveFilters = computed(() => [
+  ...(props.extraActiveFilters ?? []),
+  ...activeFilters.value,
+])
+
 const forwarded = computed(() => ({
   ...pick(props, Object.keys(dataTableProps)),
   columns: props.columns?.map((column) => {
@@ -52,6 +69,7 @@ const forwarded = computed(() => ({
       ...customizeColumnForFilters(column),
     }
   }),
+  pagination: undefined,
   ...attrs,
 }))
 
@@ -73,11 +91,9 @@ onMounted(() => {
     <thead>
       <tr>
         <td>
-          <div class="flex justify-between">
-            <div>
-              <slot name="header" />
-            </div>
-            <div v-if="props.filtering?.items.length" class="self-end">
+          <div class="flex justify-end gap-2">
+            <slot name="header" />
+            <div v-if="props.filtering?.items.length">
               <AppDataTableFiltersFunnelButton
                 :active-filters-count="activeFilters.length"
                 :render-content="renderFiltersFunnelContent"
@@ -86,9 +102,9 @@ onMounted(() => {
           </div>
         </td>
       </tr>
-      <tr v-if="activeFilters.length">
+      <tr v-if="allActiveFilters.length">
         <td>
-          <AppDataTableActiveFilters :items="activeFilters" />
+          <AppDataTableActiveFilters :items="allActiveFilters" />
         </td>
       </tr>
       <tr></tr>
@@ -107,6 +123,18 @@ onMounted(() => {
           </NEmpty>
         </template>
       </NDataTable>
+      <template v-if="props.pagination">
+        <div class="flex justify-end gap-2 py-2 pr-2">
+          <AppDataTableCursorPagination
+            v-if="isNaiveUiCursorPagination(props.pagination)"
+            :pagination="props.pagination"
+          />
+          <NPagination
+            v-else-if="isNaiveUiPagePagination(props.pagination)"
+            v-bind="props.pagination"
+          />
+        </div>
+      </template>
     </tbody>
   </NTable>
 </template>

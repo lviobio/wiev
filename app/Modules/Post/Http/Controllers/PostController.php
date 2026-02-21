@@ -35,13 +35,15 @@ class PostController extends Controller
             ->tap($this->eagerLoad(...));
 
         $validated = $request->safe();
+        if ($validated->has('search')) {
+            $search = '%' . $validated->string('search') . '%';
+            $query->where(fn($q) => $q
+                ->whereLike('title', $search)
+                ->orWhereLike('content', $search)
+            );
+        }
+
         $validated->whenFilled('filters', function (array $filters) use ($query) {
-            if (!empty($filters['search'])) {
-                $query->where(fn($q) => $q
-                    ->whereLike('title', '%' . $filters['search'] . '%')
-                    ->orWhereLike('content', '%' . $filters['search'] . '%')
-                );
-            }
             if (!empty($filters['title'])) {
                 $query->whereLike('title', '%' . $filters['title'] . '%');
             }
