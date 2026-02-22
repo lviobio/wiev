@@ -102,7 +102,6 @@ export function castAsCursor(data?: PaginationState): CursorPaginationState | un
 
 export interface PaginationComposable {
   state: ShallowRef<PaginationState | undefined>
-  refs: Required<PaginationSyncRefs>
   queryParams: ComputedRef<Record<string, unknown>>
 
   setPage: (page: number) => void
@@ -197,17 +196,8 @@ export const usePagination = () //options?: UsePaginationOptions
     }
   }
 
-  const refs: PaginationSyncRefs = {
-    page: ref(),
-    perPage: ref(),
-    cursor: ref(),
-  }
-
-  usePaginationSync(state, refs)
-
   return {
     state,
-    refs,
     queryParams,
     setPage,
     setPerPage,
@@ -216,125 +206,4 @@ export const usePagination = () //options?: UsePaginationOptions
     applyCursorMeta,
     applyMeta,
   }
-}
-
-// ── Sync helper ────────────────────────────────────────────────
-
-export interface PaginationSyncRefs {
-  page?: Ref<number | undefined>
-  perPage?: Ref<number | undefined>
-  cursor?: Ref<string | undefined>
-}
-
-/**
- * Two-way sync between pagination state and individual refs.
- *
- * When a ref changes — pagination.state is updated.
- * When pagination.state changes (e.g. after `applyMeta`) — refs are updated back.
- *
- * @example
- * const pagination = usePagination()
- * const page = ref<number | undefined>(1)
- * const perPage = ref<number | undefined>(15)
- *
- * usePaginationSync(pagination.state, { page, perPage })
- */
-export function usePaginationSync(
-  state: ShallowRef<PaginationState | undefined>,
-  refs: PaginationSyncRefs,
-): void {
-  let isSyncing = false
-
-  function guard(fn: () => void) {
-    if (isSyncing) {
-      console.log('!!! Prevented syncing issues')
-      return
-    }
-    isSyncing = true
-    try {
-      fn()
-    } finally {
-      isSyncing = false
-    }
-  }
-
-  const opts = { flush: 'sync' as const }
-
-  // ── refs → state ──────────────────────────────────────────
-
-  if (refs.page) {
-    watch(
-      refs.page,
-      (page) =>
-        guard(() => {
-          state.value = {
-            type: 'page',
-            page,
-            per_page: refs.perPage?.value ?? state.value?.per_page,
-            meta: state.value?.type === 'page' ? state.value.meta : undefined,
-          }
-        }),
-      opts,
-    )
-  }
-
-  if (refs.cursor) {
-    watch(
-      refs.cursor,
-      (cursor) =>
-        guard(() => {
-          state.value = {
-            type: 'cursor',
-            cursor,
-            per_page: refs.perPage?.value ?? state.value?.per_page,
-            meta: state.value?.type === 'cursor' ? state.value.meta : undefined,
-          }
-        }),
-      opts,
-    )
-  }
-
-  if (refs.perPage) {
-    watch(
-      refs.perPage,
-      (perPage) =>
-        guard(() => {
-          const s = state.value
-          if (!s) return
-
-          if (s.type === 'page') {
-            state.value = { ...s, per_page: perPage, page: 1 }
-            if (refs.page) refs.page.value = 1
-          } else if (s.type === 'cursor') {
-            state.value = { ...s, per_page: perPage, cursor: undefined }
-            if (refs.cursor) refs.cursor.value = undefined
-          }
-        }),
-      opts,
-    )
-  }
-
-  // ── state → refs ──────────────────────────────────────────
-
-  watch(
-    state,
-    (s) =>
-      guard(() => {
-        if (!s) {
-          if (refs.page) refs.page.value = undefined
-          if (refs.cursor) refs.cursor.value = undefined
-          if (refs.perPage) refs.perPage.value = undefined
-          return
-        }
-
-        if (s.type === 'page') {
-          if (refs.page) refs.page.value = s.page
-          if (refs.perPage) refs.perPage.value = s.per_page
-        } else if (s.type === 'cursor') {
-          if (refs.cursor) refs.cursor.value = s.cursor
-          if (refs.perPage) refs.perPage.value = s.per_page
-        }
-      }),
-    opts,
-  )
 }

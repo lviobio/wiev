@@ -1,8 +1,6 @@
 import { usePagination } from '@/core/pagination/base'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
-import { ListContextData, makeContextData } from '@/modules/post/composables/usePostListData'
 import {
-  PostListFilters,
   postListFiltersSchema,
   usePostRepository,
 } from '@/modules/post/repositories/PostRepository'
@@ -10,68 +8,15 @@ import { Post } from '@/modules/post/types'
 import { watchDebounced } from '@vueuse/core'
 import { ref } from 'vue'
 
-interface UseListComposable {
-  // context: Reactive<ListContextData<PostListFilters>>
-  context: Ref<ListContextData<PostListFilters>>
-}
-
-export function usePostsList(options?: UseListComposable) {
-  const context = makeContextData()
-  // const context = options?.context ?? makeContextData()
-
+export function usePostsList() {
   const items = ref<Post[]>([])
   const loading = ref(false)
   const filters = ref(createEmptyObjectFromSchema(postListFiltersSchema))
-  // const filters = toRef(context, 'filters')
-  // const filters = computed(() => context.value.filters)
   let abortController: AbortController
 
   const repository = usePostRepository()
 
   const pagination = usePagination()
-
-  // watch(
-  //   () => castAsPage(pagination.state.value)?.page,
-  //   (newValue) => {
-  //     context.value.page = newValue
-  //   },
-  // )
-  // watch(
-  //   () => context.value.page,
-  //   (newValue) => {
-  //     pagination.setPage(newValue)
-  //   },
-  // )
-  //
-  // watch(
-  //   () => castAsPage(pagination.state.value)?.per_page,
-  //   (newValue) => {
-  //     context.value.per_page = newValue
-  //   },
-  // )
-  // watch(
-  //   () => context.value.per_page,
-  //   (newValue) => {
-  //     pagination.setPerPage(newValue)
-  //   },
-  // )
-  //
-  // watch(
-  //   filters,
-  //   (newValue) => {
-  //     context.value.filters = newValue
-  //   },
-  //   { deep: true },
-  // )
-  // watch(
-  //   () => context.value.filters,
-  //   (newValue) => {
-  //     filters.value = newValue
-  //   },
-  //   { deep: true },
-  // )
-
-  // const paginationPage = toRef(pagination.state, 'page')
 
   const makeQuery = () => {
     // debugger
@@ -140,7 +85,6 @@ export function usePostsList(options?: UseListComposable) {
     load,
     reload,
     pagination,
-    context,
     repository,
   }
 }

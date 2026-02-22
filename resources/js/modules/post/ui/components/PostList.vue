@@ -22,29 +22,21 @@ import {
 } from '@/components/AppDataTable/filters'
 import { usePostListContext } from '@/modules/post/composables/usePostListData'
 import { syncRef } from '@vueuse/core'
+import { castAsCursor, castAsPage } from '@/core/pagination/base'
 
 const message = useMessage()
 const router = useRouter()
 const context = usePostListContext().get()
 
-const {
-  items,
-  loading,
-  load,
-  reload,
-  filters,
-  pagination,
-  repository,
-  context: composableContext,
-} = usePostsList() //{ context }
+const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
 console.log('context', context.value)
-syncRef(context, composableContext, {
-  deep: true,
-  immediate: true,
-})
-// console.log('composableContext', composableContext)
 console.log('pagination', pagination.state.value)
-// debugger
+
+// watch(pagination.state, (newValue) => {
+//   context.value.page = castAsPage(newValue)?.page
+//   context.value.cursor = castAsCursor(newValue)?.cursor
+//   context.value.per_page = newValue?.per_page
+// })
 
 const dataTablePagination = useNaiveUiPagination(pagination)
 
