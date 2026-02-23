@@ -21,22 +21,15 @@ import {
   TextFilter,
 } from '@/components/AppDataTable/filters'
 import { usePostListContext } from '@/modules/post/composables/usePostListData'
-import { syncRef } from '@vueuse/core'
-import { castAsCursor, castAsPage } from '@/core/pagination/base'
+import { useListContextSync } from '@/core/list-context/useListContextSync'
 
 const message = useMessage()
 const router = useRouter()
 const context = usePostListContext().get()
 
 const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
-console.log('context', context.value)
-console.log('pagination', pagination.state.value)
 
-// watch(pagination.state, (newValue) => {
-//   context.value.page = castAsPage(newValue)?.page
-//   context.value.cursor = castAsCursor(newValue)?.cursor
-//   context.value.per_page = newValue?.per_page
-// })
+useListContextSync(context, { filters, pagination })
 
 const dataTablePagination = useNaiveUiPagination(pagination)
 
