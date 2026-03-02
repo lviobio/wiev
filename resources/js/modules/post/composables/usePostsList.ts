@@ -1,37 +1,57 @@
-import { usePagination } from '@/core/pagination/base'
+import { PaginationComposable, usePagination } from '@/core/pagination/base'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import {
   postListFiltersSchema,
   usePostRepository,
 } from '@/modules/post/repositories/PostRepository'
 import { Post } from '@/modules/post/types'
-import { watchDebounced } from '@vueuse/core'
-import { ref } from 'vue'
+import { debounce } from 'lodash'
+import { Reactive, ref, Ref } from 'vue'
+import { z } from 'zod'
 
-export function usePostsList() {
-  const items = ref<Post[]>([])
+// interface SyncListData<F> {
+//   filters: Ref<F>
+//   pagination: PaginationComposable
+// }
+
+interface UseListOptions<F extends Record<string, unknown>> {
+  filters: F
+  loader: (options: { signal: AbortSignal }) => Promise<void>
+}
+
+interface UseListOptionsResult<T, F extends Record<string, unknown>> {
+  items: ShallowRef<T[]>
+  loading: Ref<boolean>
+  params: {
+    pagination: PaginationComposable
+    search: Ref<string | undefined>
+    filters: Reactive<F>
+  }
+  load: () => void
+  enableWatchers: () => void
+}
+
+export function useList<T, F extends Record<string, unknown>>(
+  options: UseListOptions<F>,
+): UseListOptionsResult<T, F> {
+  const items = shallowRef<T[]>([])
   const loading = ref(false)
-  const filters = ref(createEmptyObjectFromSchema(postListFiltersSchema))
-  let abortController: AbortController
-
-  const repository = usePostRepository()
-
   const pagination = usePagination()
+  const search = ref<string | undefined>('')
+  const filters = reactive(options.filters)
 
-  const makeQuery = () => {
-    // debugger
-    return {
-      data: {
-        filters: filters.value,
-      },
-      pagination,
-      signal: abortController.signal,
-    }
+  const { loader } = options
+
+  const params: UseListOptionsResult<T, F>['params'] = {
+    pagination,
+    search,
+    filters,
   }
 
   let isLoadScheduled = false
+  let abortController: AbortController
+
   const load = () => {
-    console.log('called load')
     if (isLoadScheduled) {
       return
     }
@@ -41,50 +61,67 @@ export function usePostsList() {
     abortController = new AbortController()
     loading.value = true
 
-    return repository
-      .list(makeQuery())
-      .then((response) => {
-        items.value = response.data
-        pagination.applyMeta(response.meta)
-      })
-      .finally(() => {
-        loading.value = false
-        isLoadScheduled = false
-      })
+    return loader({ signal: abortController.signal }).finally(() => {
+      loading.value = false
+      isLoadScheduled = false
+    })
   }
 
-  async function reload() {
-    await load()
+  const loadDebounced = debounce(load, 400)
+
+  const enableWatchers = () => {
+    watch(
+      () => JSON.stringify(params.filters),
+      () => {
+        params.pagination?.resetPage()
+        loadDebounced()
+      },
+    )
+
+    watch(
+      () => JSON.stringify(params.pagination?.params.value),
+      () => load(),
+    )
   }
-
-  watchDebounced(
-    filters,
-    () => {
-      pagination.resetPage()
-      console.log('filters changed')
-      load()
-    },
-    {
-      deep: true,
-      debounce: 400,
-    },
-  )
-
-  watch(
-    () => JSON.stringify(pagination.queryParams.value),
-    () => {
-      console.log('pagination.queryParams changed')
-      load()
-    },
-  )
 
   return {
     items,
-    filters,
     loading,
+    params,
     load,
-    reload,
-    pagination,
+    enableWatchers,
+  }
+}
+
+/**
+ * options?: {
+ *   syncCallback?: (data: SyncListData) => void
+ *   context?: (data: SyncListData) => void
+ * }
+ */
+export function usePostsList() {
+  const repository = usePostRepository()
+
+  const list = useList<Post, z.infer<typeof postListFiltersSchema>>({
+    filters: createEmptyObjectFromSchema(postListFiltersSchema),
+    loader: async ({ signal }) => {
+      await repository
+        .list({
+          data: {
+            filters: toRaw(list.params.filters),
+          },
+          pagination: list.params.pagination,
+          signal,
+        })
+        .then((result) => {
+          list.items.value = result.data
+          list.params.pagination?.applyMeta(result.meta)
+        })
+    },
+  })
+
+  return {
+    ...list,
     repository,
   }
 }

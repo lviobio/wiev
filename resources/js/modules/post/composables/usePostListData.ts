@@ -1,23 +1,21 @@
+import { ListContextConstraint } from '@/core/list-context/useListContextSync'
 import { createContext } from '@/core/utils/context'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { PostListFilters, postListFiltersSchema } from '@/modules/post/repositories/PostRepository'
+import { z } from 'zod'
 
-export interface ListContextData<F> {
-  page?: number
-  cursor?: string
-  per_page?: number
-  search?: string
-  filters: F
-}
+export type ListContextData<F> = ListContextConstraint<F>
+
+export const postListDataSchema = z.object({
+  page: z.coerce.number().positive().optional(),
+  cursor: z.coerce.string().optional(),
+  per_page: z.coerce.number().optional(),
+  search: z.coerce.string().optional(),
+  filters: postListFiltersSchema,
+})
 
 export const makeContextData = (): Ref<ListContextData<PostListFilters>> =>
-  ref({
-    page: undefined as number | undefined,
-    cursor: undefined as string | undefined,
-    per_page: undefined as number | undefined,
-    search: undefined as string | undefined,
-    filters: createEmptyObjectFromSchema(postListFiltersSchema),
-  })
+  ref(createEmptyObjectFromSchema(postListDataSchema))
 
 const contextKey: InjectionKey<ReturnType<typeof makeContextData>> = Symbol()
 

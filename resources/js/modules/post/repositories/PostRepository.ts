@@ -16,7 +16,6 @@ import { z } from 'zod'
 import { Post, PostIdentifier } from '../types'
 
 export const postListFiltersSchema = z.object({
-  search: z.string().nullable(),
   title: z.string().nullable(),
   created_at: z.object({
     from: z.number().nullable(),

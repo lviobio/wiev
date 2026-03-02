@@ -102,9 +102,10 @@ export function castAsCursor(data?: PaginationState): CursorPaginationState | un
 
 export interface PaginationComposable {
   state: ShallowRef<PaginationState | undefined>
-  queryParams: ComputedRef<Record<string, unknown>>
+  params: ComputedRef<Record<string, unknown>>
 
   setPage: (page: number) => void
+  setCursor: (cursor: string) => void
   setPerPage: (perPage: number) => void
   resetPage: () => void
 
@@ -119,7 +120,7 @@ export const usePagination = () //options?: UsePaginationOptions
 : PaginationComposable => {
   const state = shallowRef<PaginationState | undefined>(undefined)
 
-  const queryParams = computed<Record<string, unknown>>(() => {
+  const params = computed<Record<string, unknown>>(() => {
     const s = state.value
     if (!s) return {}
     if (s.type === 'page') return { page: s.page, per_page: s.per_page }
@@ -142,6 +143,15 @@ export const usePagination = () //options?: UsePaginationOptions
       }
     } else if (s) {
       console.warn('setPage is not supported on non-page pagination')
+    }
+  }
+
+  function setCursor(cursor: string) {
+    const s = state.value
+    if (s?.type === 'cursor') {
+      state.value = { ...s, cursor }
+    } else if (s) {
+      console.warn('setCursor is not supported on non-cursor pagination')
     }
   }
 
@@ -198,8 +208,9 @@ export const usePagination = () //options?: UsePaginationOptions
 
   return {
     state,
-    queryParams,
+    params,
     setPage,
+    setCursor,
     setPerPage,
     resetPage,
     applyPageMeta,

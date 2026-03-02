@@ -1,22 +1,24 @@
 import { castAsCursor, castAsPage, PaginationComposable } from '@/core/pagination/base'
-import { nextTick, Ref, toRaw, watch } from 'vue'
+import { nextTick, Reactive, Ref, toRaw, watch } from 'vue'
 
-// ── Types ──────────────────────────────────────────────────────
+// ── Types ──
 
 /** Minimal shape the context must satisfy for sync to work. */
-interface ListContextConstraint<F> {
+export interface ListContextConstraint<F> {
   page?: number
   cursor?: string
   per_page?: number
+  search?: string
   filters: F
 }
 
 export interface ListContextSyncOptions<F extends Record<string, any>> {
-  filters?: Ref<F>
+  filters?: Reactive<F>
   pagination?: PaginationComposable
+  search?: Ref<string | undefined>
 }
 
-// ── Deep assign utility ────────────────────────────────────────
+// ── Deep assign utility ──
 
 /**
  * Recursively assigns values from `source` to `target` property-by-property.
@@ -45,7 +47,7 @@ function deepAssign(target: Record<string, any>, source: Record<string, any>): v
   }
 }
 
-// ── Composable ─────────────────────────────────────────────────
+// ── Composable ──
 
 /**
  * Bidirectional sync between a unified list context and separated
@@ -79,13 +81,14 @@ export function useListContextSync<F extends Record<string, any>>(
     })
   }
 
-  // ── Filters ────────────────────────────────────────────────
+  // ── Filters ──
 
   if (options.filters) {
     const filters = options.filters
 
     // Initialization: context filters -> local filters
-    deepAssign(filters.value, toRaw(context.value.filters))
+
+    deepAssign(filters, toRaw(context.value.filters))
 
     // filters -> context.filters
     watch(
@@ -106,11 +109,39 @@ export function useListContextSync<F extends Record<string, any>>(
       (newVal) => {
         guard(() => {
           const raw = toRaw(newVal)
-          if (JSON.stringify(raw) === JSON.stringify(toRaw(filters.value))) return
-          deepAssign(filters.value as Record<string, any>, raw)
+          if (JSON.stringify(raw) === JSON.stringify(toRaw(filters))) return
+          deepAssign(filters as Record<string, any>, raw)
         })
       },
       { deep: true },
+    )
+  }
+
+  // ── Search ──
+
+  if (options.search) {
+    const search = options.search
+
+    // Initialization: context search -> local ref
+    search.value = context.value.search
+
+    // search -> context.search
+    watch(search, (newVal) => {
+      guard(() => {
+        if (newVal === context.value.search) return
+        context.value.search = newVal
+      })
+    })
+
+    // context.search -> search
+    watch(
+      () => context.value.search,
+      (newVal) => {
+        guard(() => {
+          if (newVal === search.value) return
+          search.value = newVal
+        })
+      },
     )
   }
 
@@ -122,13 +153,13 @@ export function useListContextSync<F extends Record<string, any>>(
     // Initialization: context -> pagination.state
     // Direct write because setPage()/setPerPage() are no-ops
     // when state is undefined (before first applyMeta).
-    if (context.value.page != null || context.value.per_page != null) {
+    if (context.value.page !== null || context.value.per_page !== null) {
       pagination.state.value = {
         type: 'page',
         page: context.value.page,
         per_page: context.value.per_page,
       }
-    } else if (context.value.cursor != null) {
+    } else if (context.value.cursor !== null) {
       pagination.state.value = {
         type: 'cursor',
         cursor: context.value.cursor,
@@ -150,13 +181,16 @@ export function useListContextSync<F extends Record<string, any>>(
     // context -> pagination
     watch(
       () => [context.value.page, context.value.per_page, context.value.cursor] as const,
-      ([page, perPage, cursor], old) => {
+      ([page, perPage, cursor], [oldPage, oldPerPage, oldCursor]) => {
         guard(() => {
-          if (page !== old?.[0] && page != null) {
+          if (page !== oldPage && page !== undefined) {
             pagination.setPage(page)
           }
-          if (perPage !== old?.[1] && perPage != null) {
+          if (perPage !== oldPerPage && perPage !== undefined) {
             pagination.setPerPage(perPage)
+          }
+          if (cursor !== oldCursor && cursor !== undefined) {
+            pagination.setCursor(cursor)
           }
         })
       },

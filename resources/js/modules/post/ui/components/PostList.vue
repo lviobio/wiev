@@ -20,16 +20,20 @@ import {
   makeDataTableFiltering,
   TextFilter,
 } from '@/components/AppDataTable/filters'
-import { usePostListContext } from '@/modules/post/composables/usePostListData'
-import { useListContextSync } from '@/core/list-context/useListContextSync'
+
+const props = defineProps<{
+  callback?: (params: ReturnType<typeof usePostsList>['params']) => void
+}>()
 
 const message = useMessage()
 const router = useRouter()
-const context = usePostListContext().get()
 
-const { items, loading, load, reload, filters, pagination, repository } = usePostsList()
+const { items, loading, load, params, repository, enableWatchers } = usePostsList()
+const { search, filters, pagination } = params
 
-useListContextSync(context, { filters, pagination })
+props.callback?.(params)
+
+enableWatchers()
 
 const dataTablePagination = useNaiveUiPagination(pagination)
 
@@ -101,7 +105,7 @@ const columns: DataTableColumns<Post> = [
           <NPopconfirm
             onPositiveClick={() =>
               repository.delete(row.id).then(() => {
-                reload()
+                load()
                 message.success(`Post ${row.id} deleted successfully`)
               })
             }
@@ -123,7 +127,7 @@ const columns: DataTableColumns<Post> = [
 
 const tableRef = useTemplateRef<DataTableInst>('tableRef')
 
-const filtering = makeDataTableFiltering(filters, [
+const filtering = makeDataTableFiltering(ref(filters), [
   TextFilter.make('title', 'Title').withPlaceholder('Search by title').toTableFilter(),
   DateRangeFilter.make('created_at', 'Created').toTableFilter(),
 ])
@@ -144,7 +148,7 @@ const filtering = makeDataTableFiltering(filters, [
       striped
     >
       <template #header>
-        <NGrid :x-gap="12" :y-gap="12" :cols="3">
+        <NGrid :x-gap="12" :y-gap="12" :cols="4">
           <NGi>
             <NSelect
               v-model:value="filters.trashed"
@@ -163,8 +167,8 @@ const filtering = makeDataTableFiltering(filters, [
           </NGi>
           <NGi span="1">
             <NInput
-              :value="filters.search"
-              @update:value="filters.search = $event || null"
+              :value="search"
+              @update:value="search = $event || undefined"
               placeholder="Search"
               clearable
             >

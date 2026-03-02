@@ -24,7 +24,7 @@ export interface AppDataTableProps<
   FS extends Record<string, unknown>,
 > extends /* @vue-ignore */ DataTableProps {
   loading: boolean
-  loader?: () => Promise<void> | undefined
+  loader?: () => Promise<unknown> | unknown
   columns: DataTableColumns<RowData>
   filtering?: TableFiltering<FS>
 }
