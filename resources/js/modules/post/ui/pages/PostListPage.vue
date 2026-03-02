@@ -10,7 +10,7 @@ const contextData = context.get()
 
 useContextStorage('query', contextData, {
   schema: postListDataSchema,
-  onlyChanges: false,
+  onlyChanges: true,
   additionalDefaultData: {
     page: 1,
     per_page: 15,

@@ -16,17 +16,19 @@ import { z } from 'zod'
 
 interface UseListOptions<F extends Record<string, unknown>> {
   filters: F
-  loader: (options: { signal: AbortSignal }) => Promise<void>
+  loader: (options: UseListParams<F> & { signal: AbortSignal }) => Promise<void>
+}
+
+interface UseListParams<F extends Record<string, unknown>> {
+  pagination: PaginationComposable
+  search: Ref<string | undefined>
+  filters: Reactive<F>
 }
 
 interface UseListOptionsResult<T, F extends Record<string, unknown>> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
-  params: {
-    pagination: PaginationComposable
-    search: Ref<string | undefined>
-    filters: Reactive<F>
-  }
+  params: UseListParams<F>
   load: () => void
   enableWatchers: () => void
 }
@@ -61,7 +63,7 @@ export function useList<T, F extends Record<string, unknown>>(
     abortController = new AbortController()
     loading.value = true
 
-    return loader({ signal: abortController.signal }).finally(() => {
+    return loader({ ...params, signal: abortController.signal }).finally(() => {
       loading.value = false
       isLoadScheduled = false
     })
