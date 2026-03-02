@@ -1,4 +1,5 @@
-import { PaginationComposable, usePagination } from '@/core/pagination/base'
+import { MaybePaginatedData, PaginationComposable, usePagination } from '@/core/pagination/base'
+import { SortingComposable, useSorting } from '@/core/sorting/base'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import {
   postListFiltersSchema,
@@ -14,18 +15,20 @@ import { z } from 'zod'
 //   pagination: PaginationComposable
 // }
 
-interface UseListOptions<F extends Record<string, unknown>> {
+interface UseListOptions<T, F extends Record<string, unknown>> {
   filters: F
-  loader: (options: UseListParams<F> & { signal: AbortSignal }) => Promise<void>
+  debounceMs?: number
+  loader: (options: UseListParams<F> & { signal: AbortSignal }) => Promise<MaybePaginatedData<T>>
 }
 
 interface UseListParams<F extends Record<string, unknown>> {
   pagination: PaginationComposable
+  sorting: SortingComposable
   search: Ref<string | undefined>
   filters: Reactive<F>
 }
 
-interface UseListOptionsResult<T, F extends Record<string, unknown>> {
+interface UseListResult<T, F extends Record<string, unknown>> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
   params: UseListParams<F>
@@ -34,18 +37,20 @@ interface UseListOptionsResult<T, F extends Record<string, unknown>> {
 }
 
 export function useList<T, F extends Record<string, unknown>>(
-  options: UseListOptions<F>,
-): UseListOptionsResult<T, F> {
+  options: UseListOptions<T, F>,
+): UseListResult<T, F> {
   const items = shallowRef<T[]>([])
   const loading = ref(false)
   const pagination = usePagination()
+  const sorting = useSorting()
   const search = ref<string | undefined>('')
   const filters = reactive(options.filters)
 
-  const { loader } = options
+  const { loader, debounceMs = 400 } = options
 
-  const params: UseListOptionsResult<T, F>['params'] = {
+  const params: UseListResult<T, F>['params'] = {
     pagination,
+    sorting,
     search,
     filters,
   }
@@ -60,14 +65,16 @@ export function useList<T, F extends Record<string, unknown>>(
     isPaginationWatchPaused = true
 
     try {
-      await loader({ ...params, signal: abortController.signal })
+      const result = await loader({ ...params, signal: abortController.signal })
+      items.value = result.data
+      pagination.applyMeta(result.meta)
     } finally {
       loading.value = false
       isPaginationWatchPaused = false
     }
   }
 
-  const loadDebounced = debounce(load, 400)
+  const loadDebounced = debounce(load, debounceMs)
 
   const enableWatchers = () => {
     watch(
@@ -78,6 +85,21 @@ export function useList<T, F extends Record<string, unknown>>(
         loadDebounced()
       },
       { deep: true },
+    )
+
+    watch(params.search, (newVal, oldVal) => {
+      if (newVal === oldVal) return
+      params.pagination?.resetPage()
+      loadDebounced()
+    })
+
+    watch(
+      () => params.sorting.state.value,
+      (newVal, oldVal) => {
+        if (isEqual(newVal, oldVal)) return
+        params.pagination?.resetPage()
+        load()
+      },
     )
 
     watch(
@@ -116,19 +138,15 @@ export function usePostsList() {
 
   const list = useList<Post, z.infer<typeof postListFiltersSchema>>({
     filters: createEmptyObjectFromSchema(postListFiltersSchema),
-    loader: async ({ signal }) => {
-      await repository
-        .list({
-          data: {
-            filters: toRaw(list.params.filters),
-          },
-          pagination: list.params.pagination,
-          signal,
-        })
-        .then((result) => {
-          list.items.value = result.data
-          list.params.pagination?.applyMeta(result.meta)
-        })
+    loader: async ({ filters, pagination, sorting, signal }) => {
+      return repository.list({
+        data: {
+          filters: toRaw(filters),
+        },
+        pagination,
+        sorting,
+        signal,
+      })
     },
   })
 

@@ -11,6 +11,14 @@ export const postListDataSchema = z.object({
   cursor: z.coerce.string().optional(),
   per_page: z.coerce.number().optional(),
   search: z.coerce.string().optional(),
+  sort: z
+    .array(
+      z.object({
+        field: z.string(),
+        order: z.enum(['asc', 'desc']),
+      }),
+    )
+    .optional(),
   filters: postListFiltersSchema,
 })
 

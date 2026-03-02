@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import { trashedOptions } from '@/core/filters/trashed'
 import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
+import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { usePostsList } from '../../composables/usePostsList'
 import { Post } from '../../types'
 import {
@@ -29,13 +30,14 @@ const message = useMessage()
 const router = useRouter()
 
 const { items, loading, load, params, repository, enableWatchers } = usePostsList()
-const { search, filters, pagination } = params
+const { search, filters, pagination, sorting } = params
 
 props.callback?.(params)
 
 enableWatchers()
 
 const dataTablePagination = useNaiveUiPagination(pagination)
+const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(sorting)
 
 const openPostWindow = (
   params: { id: number }, //params: ParamOf<typeof postRouteNames.show>
@@ -48,11 +50,13 @@ const openPostWindow = (
     },
   })
 
-const columns: DataTableColumns<Post> = [
+const columns = computed<DataTableColumns<Post>>(() => [
   {
     title: 'ID',
     key: 'id',
     width: 50,
+    sorter: true,
+    sortOrder: getSortOrder('id'),
     render(row) {
       // open in a window-like modal instead of navigating
       return (
@@ -65,6 +69,8 @@ const columns: DataTableColumns<Post> = [
   {
     title: 'Title',
     key: 'title',
+    sorter: true,
+    sortOrder: getSortOrder('title'),
   },
   {
     title: 'Content',
@@ -78,6 +84,8 @@ const columns: DataTableColumns<Post> = [
     title: 'Created',
     key: 'created_at',
     width: 200,
+    sorter: true,
+    sortOrder: getSortOrder('created_at'),
     filter: true,
     render(row) {
       return <AppDateTime value={row.created_at} />
@@ -123,7 +131,7 @@ const columns: DataTableColumns<Post> = [
       )
     },
   },
-]
+])
 
 const tableRef = useTemplateRef<DataTableInst>('tableRef')
 
@@ -144,6 +152,7 @@ const filtering = makeDataTableFiltering(ref(filters), [
       size="small"
       :pagination="dataTablePagination"
       :filtering="filtering"
+      @update:sorter="onUpdateSorter"
       remote
       striped
     >

@@ -1,4 +1,5 @@
 import { castAsCursor, castAsPage, PaginationComposable } from '@/core/pagination/base'
+import { SortField, SortingComposable } from '@/core/sorting/base'
 import { nextTick, Reactive, Ref, toRaw, watch } from 'vue'
 
 // ── Types ──
@@ -9,12 +10,14 @@ export interface ListContextConstraint<F> {
   cursor?: string
   per_page?: number
   search?: string
+  sort?: SortField[]
   filters: F
 }
 
 export interface ListContextSyncOptions<F extends Record<string, any>> {
   filters?: Reactive<F>
   pagination?: PaginationComposable
+  sorting?: SortingComposable
   search?: Ref<string | undefined>
 }
 
@@ -194,6 +197,39 @@ export function useListContextSync<F extends Record<string, any>>(
           }
         })
       },
+    )
+  }
+
+  // ── Sorting ──────────────────────────────────────────────────
+
+  if (options.sorting) {
+    const sorting = options.sorting
+
+    // Initialization: context sort -> local sorting
+    if (context.value.sort?.length) {
+      sorting.state.value = [...context.value.sort]
+    }
+
+    // sorting.state -> context.sort
+    watch(sorting.state, (newVal) => {
+      guard(() => {
+        const raw = toRaw(newVal)
+        if (JSON.stringify(raw) === JSON.stringify(toRaw(context.value.sort ?? []))) return
+        context.value.sort = [...raw]
+      })
+    })
+
+    // context.sort -> sorting.state
+    watch(
+      () => context.value.sort,
+      (newVal) => {
+        guard(() => {
+          const raw = toRaw(newVal ?? [])
+          if (JSON.stringify(raw) === JSON.stringify(toRaw(sorting.state.value))) return
+          sorting.state.value = [...raw]
+        })
+      },
+      { deep: true },
     )
   }
 }
