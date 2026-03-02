@@ -5,8 +5,8 @@ import {
   usePostRepository,
 } from '@/modules/post/repositories/PostRepository'
 import { Post } from '@/modules/post/types'
-import { debounce } from 'lodash'
-import { Reactive, ref, Ref } from 'vue'
+import { debounce, isEqual } from 'lodash'
+import { onScopeDispose, Reactive, ref, Ref } from 'vue'
 import { z } from 'zod'
 
 // interface SyncListData<F> {
@@ -50,41 +50,51 @@ export function useList<T, F extends Record<string, unknown>>(
     filters,
   }
 
-  let isLoadScheduled = false
-  let abortController: AbortController
+  let abortController: AbortController | undefined
+  let isPaginationWatchPaused = false
 
-  const load = () => {
-    if (isLoadScheduled) {
-      return
-    }
-    isLoadScheduled = true
-
+  const load = async (): Promise<void> => {
     abortController?.abort()
     abortController = new AbortController()
     loading.value = true
+    isPaginationWatchPaused = true
 
-    return loader({ ...params, signal: abortController.signal }).finally(() => {
+    try {
+      await loader({ ...params, signal: abortController.signal })
+    } finally {
       loading.value = false
-      isLoadScheduled = false
-    })
+      isPaginationWatchPaused = false
+    }
   }
 
   const loadDebounced = debounce(load, 400)
 
   const enableWatchers = () => {
     watch(
-      () => JSON.stringify(params.filters),
-      () => {
+      () => structuredClone(toRaw(params.filters)),
+      (newVal, oldVal) => {
+        if (isEqual(newVal, oldVal)) return
         params.pagination?.resetPage()
         loadDebounced()
       },
+      { deep: true },
     )
 
     watch(
-      () => JSON.stringify(params.pagination?.params.value),
-      () => load(),
+      () => params.pagination?.params.value,
+      (newVal, oldVal) => {
+        if (isPaginationWatchPaused) return
+        if (isEqual(newVal, oldVal)) return
+        load()
+      },
+      { deep: true },
     )
   }
+
+  onScopeDispose(() => {
+    loadDebounced.cancel()
+    abortController?.abort()
+  })
 
   return {
     items,
