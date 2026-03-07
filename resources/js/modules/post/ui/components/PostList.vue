@@ -1,195 +1,68 @@
 <script setup lang="tsx">
 import { trashedOptions } from '@/core/filters/trashed'
-import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
-import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
-import { usePostsList } from '../../composables/usePostsList'
+import {
+  actionGroup,
+  dateColumn,
+  defineColumns,
+  defineFilters,
+  deleteAction,
+  linkColumn,
+  makeDataHandlerFromRepository,
+  openAction,
+  useListPage,
+  type UseListParams,
+} from '@/core/list-page'
+import { z } from 'zod'
+import { postListFiltersSchema, usePostRepository } from '../../repositories/PostRepository'
+import { postRouteNames } from '../../router/names'
 import { Post } from '../../types'
-import {
-  DataTableColumns,
-  DataTableInst,
-  NA,
-  NButton,
-  NFlex,
-  NPopconfirm,
-  useMessage,
-} from 'naive-ui'
-import AppDateTime from '@/components/AppDateTime.vue'
-import { postRouteNames } from '@/modules/post/router/names'
-import { Search24Regular } from '@vicons/fluent'
-import {
-  DateRangeFilter,
-  makeDataTableFiltering,
-  TextFilter,
-} from '@/components/AppDataTable/filters'
+
+type Filters = z.infer<typeof postListFiltersSchema>
 
 const props = defineProps<{
-  callback?: (params: ReturnType<typeof usePostsList>['params']) => void
+  callback?: (params: UseListParams<Filters>) => void
 }>()
 
-const message = useMessage()
-const router = useRouter()
+const repository = usePostRepository()
 
-const { items, loading, load, params, repository, enableWatchers } = usePostsList()
-const { search, filters, pagination, sorting } = params
+const ListPage = useListPage<Post, Filters>({
+  dataHandler: makeDataHandlerFromRepository(repository),
+  filtersSchema: postListFiltersSchema,
 
-props.callback?.(params)
+  filters: defineFilters(postListFiltersSchema, {
+    title: { placeholder: 'Search by title' },
+    trashed: { options: trashedOptions },
+    // created_at — auto-inferred as DateRangeFilter
+  }),
 
-enableWatchers()
+  columns: defineColumns<Post>([
+    linkColumn('id', {
+      width: 50,
+      to: (row) => ({ name: postRouteNames.show, params: { id: row.id } }),
+      windowed: (row) => ({ title: `Post #${row.id}` }),
+    }),
+    { title: 'Title', key: 'title', sorter: true },
+    { title: 'Content', key: 'content', ellipsis: { tooltip: true } },
+    dateColumn('created_at', { width: 200, sorter: true }),
+  ]),
 
-const dataTablePagination = useNaiveUiPagination(pagination)
-const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(sorting)
+  actions: [
+    actionGroup([
+      openAction((row) => ({ name: postRouteNames.show, params: { id: row.id } })),
+      deleteAction((row) => repository.delete(row.id), {
+        confirm: 'Delete this post?',
+        success: (row) => `Post ${row.id} deleted successfully`,
+      }),
+    ]),
+  ],
 
-const openPostWindow = (
-  params: { id: number }, //params: ParamOf<typeof postRouteNames.show>
-) =>
-  router.push({
-    name: postRouteNames.show,
-    params,
-    windowed: {
-      title: (p) => `Post #${p.id}`,
-    },
-  })
+  search: { placeholder: 'Search' },
+})
 
-const columns = computed<DataTableColumns<Post>>(() => [
-  {
-    title: 'ID',
-    key: 'id',
-    width: 50,
-    sorter: true,
-    sortOrder: getSortOrder('id'),
-    render(row) {
-      // open in a window-like modal instead of navigating
-      return (
-        <span onClick={() => openPostWindow({ id: row.id })}>
-          <NA>{row.id}</NA>
-        </span>
-      )
-    },
-  },
-  {
-    title: 'Title',
-    key: 'title',
-    sorter: true,
-    sortOrder: getSortOrder('title'),
-  },
-  {
-    title: 'Content',
-    key: 'content',
-    ellipsis: { tooltip: true },
-    render(row) {
-      return row.content ?? ''
-    },
-  },
-  {
-    title: 'Created',
-    key: 'created_at',
-    width: 200,
-    sorter: true,
-    sortOrder: getSortOrder('created_at'),
-    filter: true,
-    render(row) {
-      return <AppDateTime value={row.created_at} />
-    },
-  },
-  {
-    title: 'Actions',
-    key: 'actions',
-    width: 200,
-    render(row) {
-      return (
-        <NFlex>
-          <NButton
-            size="small"
-            type="info"
-            onClick={() =>
-              router.push({
-                name: postRouteNames.show,
-                params: { id: row.id },
-              })
-            }
-          >
-            Open
-          </NButton>
-          <NPopconfirm
-            onPositiveClick={() =>
-              repository.delete(row.id).then(() => {
-                load()
-                message.success(`Post ${row.id} deleted successfully`)
-              })
-            }
-          >
-            {{
-              default: () => 'Delete this post?',
-              trigger: () => (
-                <NButton size="small" type="error">
-                  Delete
-                </NButton>
-              ),
-            }}
-          </NPopconfirm>
-        </NFlex>
-      )
-    },
-  },
-])
-
-const tableRef = useTemplateRef<DataTableInst>('tableRef')
-
-const filtering = makeDataTableFiltering(ref(filters), [
-  TextFilter.make('title', 'Title').withPlaceholder('Search by title').toTableFilter(),
-  DateRangeFilter.make('created_at', 'Created').toTableFilter(),
-])
+props.callback?.(ListPage.params)
+ListPage.actions.enableWatchers()
 </script>
 
 <template>
-  <NFlex>
-    <AppDataTable
-      ref="tableRef"
-      :columns="columns"
-      :data="items"
-      :loading="loading"
-      :loader="load"
-      size="small"
-      :pagination="dataTablePagination"
-      :filtering="filtering"
-      @update:sorter="onUpdateSorter"
-      remote
-      striped
-    >
-      <template #header>
-        <NGrid :x-gap="12" :y-gap="12" :cols="4">
-          <NGi>
-            <NSelect
-              v-model:value="filters.trashed"
-              placeholder="Without Trashed"
-              :options="trashedOptions"
-              clearable
-            />
-          </NGi>
-          <NGi span="1">
-            <NInput
-              :value="filters.title"
-              @update:value="filters.title = $event || null"
-              placeholder="Title"
-              clearable
-            />
-          </NGi>
-          <NGi span="1">
-            <NInput
-              :value="search"
-              @update:value="search = $event || undefined"
-              placeholder="Search"
-              clearable
-            >
-              <template #prefix>
-                <NIcon><Search24Regular /></NIcon>
-              </template>
-            </NInput>
-          </NGi>
-        </NGrid>
-      </template>
-    </AppDataTable>
-  </NFlex>
+  <ListPage.Component />
 </template>
-
-<style scoped></style>

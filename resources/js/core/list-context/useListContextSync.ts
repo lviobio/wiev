@@ -1,6 +1,8 @@
 import { castAsCursor, castAsPage, PaginationComposable } from '@/core/pagination/base'
 import { SortField, SortingComposable } from '@/core/sorting/base'
-import { nextTick, Reactive, Ref, toRaw, watch } from 'vue'
+import { Reactive, Ref, toRaw, watch } from 'vue'
+
+type WatchHandle = ReturnType<typeof watch>
 
 // ── Types ──
 
@@ -73,15 +75,13 @@ export function useListContextSync<F extends Record<string, any>>(
   context: Ref<ListContextConstraint<F>>,
   options: ListContextSyncOptions<F>,
 ): void {
-  let isSyncing = false
+  const watchers: WatchHandle[] = []
 
-  function guard(fn: () => void): void {
-    if (isSyncing) return
-    isSyncing = true
+  /** Pause all watchers, run `fn`, then resume — prevents bidirectional loops. */
+  function guarded(fn: () => void): void {
+    watchers.forEach((w) => w.pause())
     fn()
-    nextTick(() => {
-      isSyncing = false
-    })
+    watchers.forEach((w) => w.resume())
   }
 
   // ── Filters ──
@@ -90,33 +90,32 @@ export function useListContextSync<F extends Record<string, any>>(
     const filters = options.filters
 
     // Initialization: context filters -> local filters
-
     deepAssign(filters, toRaw(context.value.filters))
 
     // filters -> context.filters
-    watch(
-      filters,
-      (newVal) => {
-        guard(() => {
+    watchers.push(
+      watch(
+        filters,
+        (newVal) => {
           const raw = toRaw(newVal)
           if (JSON.stringify(raw) === JSON.stringify(toRaw(context.value.filters))) return
-          deepAssign(context.value.filters as Record<string, any>, raw)
-        })
-      },
-      { deep: true },
+          guarded(() => deepAssign(context.value.filters as Record<string, any>, raw))
+        },
+        { deep: true },
+      ),
     )
 
     // context.filters -> filters
-    watch(
-      () => context.value.filters,
-      (newVal) => {
-        guard(() => {
+    watchers.push(
+      watch(
+        () => context.value.filters,
+        (newVal) => {
           const raw = toRaw(newVal)
           if (JSON.stringify(raw) === JSON.stringify(toRaw(filters))) return
-          deepAssign(filters as Record<string, any>, raw)
-        })
-      },
-      { deep: true },
+          guarded(() => deepAssign(filters as Record<string, any>, raw))
+        },
+        { deep: true },
+      ),
     )
   }
 
@@ -129,22 +128,26 @@ export function useListContextSync<F extends Record<string, any>>(
     search.value = context.value.search
 
     // search -> context.search
-    watch(search, (newVal) => {
-      guard(() => {
+    watchers.push(
+      watch(search, (newVal) => {
         if (newVal === context.value.search) return
-        context.value.search = newVal
-      })
-    })
+        guarded(() => {
+          context.value.search = newVal
+        })
+      }),
+    )
 
     // context.search -> search
-    watch(
-      () => context.value.search,
-      (newVal) => {
-        guard(() => {
+    watchers.push(
+      watch(
+        () => context.value.search,
+        (newVal) => {
           if (newVal === search.value) return
-          search.value = newVal
-        })
-      },
+          guarded(() => {
+            search.value = newVal
+          })
+        },
+      ),
     )
   }
 
@@ -171,32 +174,36 @@ export function useListContextSync<F extends Record<string, any>>(
     }
 
     // pagination.state -> context
-    watch(pagination.state, (state) => {
-      guard(() => {
+    watchers.push(
+      watch(pagination.state, (state) => {
         const page = castAsPage(state)
         const cursor = castAsCursor(state)
-        context.value.page = page?.page
-        context.value.cursor = cursor?.cursor
-        context.value.per_page = state?.per_page
-      })
-    })
+        guarded(() => {
+          context.value.page = page?.page
+          context.value.cursor = cursor?.cursor
+          context.value.per_page = state?.per_page
+        })
+      }),
+    )
 
     // context -> pagination
-    watch(
-      () => [context.value.page, context.value.per_page, context.value.cursor] as const,
-      ([page, perPage, cursor], [oldPage, oldPerPage, oldCursor]) => {
-        guard(() => {
-          if (page !== oldPage && page !== undefined) {
-            pagination.setPage(page)
-          }
-          if (perPage !== oldPerPage && perPage !== undefined) {
-            pagination.setPerPage(perPage)
-          }
-          if (cursor !== oldCursor && cursor !== undefined) {
-            pagination.setCursor(cursor)
-          }
-        })
-      },
+    watchers.push(
+      watch(
+        () => [context.value.page, context.value.per_page, context.value.cursor] as const,
+        ([page, perPage, cursor], [oldPage, oldPerPage, oldCursor]) => {
+          guarded(() => {
+            if (page !== oldPage && page !== undefined) {
+              pagination.setPage(page)
+            }
+            if (perPage !== oldPerPage && perPage !== undefined) {
+              pagination.setPerPage(perPage)
+            }
+            if (cursor !== oldCursor && cursor !== undefined) {
+              pagination.setCursor(cursor)
+            }
+          })
+        },
+      ),
     )
   }
 
@@ -211,25 +218,29 @@ export function useListContextSync<F extends Record<string, any>>(
     }
 
     // sorting.state -> context.sort
-    watch(sorting.state, (newVal) => {
-      guard(() => {
+    watchers.push(
+      watch(sorting.state, (newVal) => {
         const raw = toRaw(newVal)
         if (JSON.stringify(raw) === JSON.stringify(toRaw(context.value.sort ?? []))) return
-        context.value.sort = [...raw]
-      })
-    })
+        guarded(() => {
+          context.value.sort = [...raw]
+        })
+      }),
+    )
 
     // context.sort -> sorting.state
-    watch(
-      () => context.value.sort,
-      (newVal) => {
-        guard(() => {
+    watchers.push(
+      watch(
+        () => context.value.sort,
+        (newVal) => {
           const raw = toRaw(newVal ?? [])
           if (JSON.stringify(raw) === JSON.stringify(toRaw(sorting.state.value))) return
-          sorting.state.value = [...raw]
-        })
-      },
-      { deep: true },
+          guarded(() => {
+            sorting.state.value = [...raw]
+          })
+        },
+        { deep: true },
+      ),
     )
   }
 }

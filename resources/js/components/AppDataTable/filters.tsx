@@ -1,11 +1,12 @@
 import { TableFilter } from '@/components/AppDataTable/filters/base'
 import { DateRangeFilter } from '@/components/AppDataTable/filters/DateRangeFilter'
+import { SelectFilter } from '@/components/AppDataTable/filters/SelectFilter'
 import { TextFilter } from '@/components/AppDataTable/filters/TextFilter'
 import { createEmptyObjectFromSchema, getSchemaFromObject } from '@/core/utils/form-schemas'
 import { cloneDeep } from 'lodash'
 import { type Ref, VNodeChild } from 'vue'
 
-export { DateRangeFilter, TextFilter }
+export { DateRangeFilter, SelectFilter, TextFilter }
 
 /**
  * remove - reset filter to empty state
