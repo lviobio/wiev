@@ -1,3 +1,4 @@
+import { pick } from 'lodash'
 import { computed, ComputedRef, shallowRef, ShallowRef } from 'vue'
 
 // ── API response types (Laravel format, kept as-is) ────────────
@@ -32,6 +33,14 @@ export interface PagePaginationMeta {
   to: number | null
   total: number
 }
+const pagePaginationMetaKeys: (keyof PagePaginationMeta)[] = [
+  'current_page',
+  'from',
+  'last_page',
+  'per_page',
+  'to',
+  'total',
+]
 
 export interface PagePaginationState {
   type: 'page'
@@ -47,6 +56,12 @@ export interface CursorPaginationMeta {
   per_page: number
   prev_cursor: string | null
 }
+const cursorPaginationMetaKeys: (keyof CursorPaginationMeta)[] = [
+  'next_cursor',
+  'path',
+  'per_page',
+  'prev_cursor',
+]
 
 export interface CursorPaginationState {
   type: 'cursor'
@@ -180,7 +195,7 @@ export const usePagination = () //options?: UsePaginationOptions
       type: 'page',
       page: data.current_page,
       per_page: data.per_page,
-      meta: data,
+      meta: pick(data, pagePaginationMetaKeys),
     }
   }
 
@@ -189,7 +204,7 @@ export const usePagination = () //options?: UsePaginationOptions
       type: 'cursor',
       cursor: isCursorPaginationState(state.value) ? state.value.cursor : undefined,
       per_page: data.per_page,
-      meta: data,
+      meta: pick(data, cursorPaginationMetaKeys),
     }
   }
 
