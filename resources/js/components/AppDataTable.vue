@@ -2,7 +2,10 @@
 import AppDataTableActiveFilters from '@/components/AppDataTable/AppDataTableActiveFilters.vue'
 import AppDataTableFiltersFunnelButton from '@/components/AppDataTable/AppDataTableFiltersFunnelButton.vue'
 import { TableFiltering } from '@/components/AppDataTable/filters'
-import { useDataTableFilters } from '@/components/AppDataTable/useDataTableFilters'
+import {
+  type ActiveFilter,
+  useDataTableFilters,
+} from '@/components/AppDataTable/useDataTableFilters'
 import { useForwardRef } from '@/core/utils/useForwardRef'
 import { pick } from 'lodash'
 import {
@@ -27,6 +30,7 @@ export interface AppDataTableProps<
   loader?: () => Promise<unknown> | unknown
   columns: DataTableColumns<RowData>
   filtering?: TableFiltering<FS>
+  extraActiveFilters?: ActiveFilter[]
 }
 
 defineOptions({
@@ -43,6 +47,11 @@ const { customizeColumnForFilters, activeFilters, renderFiltersFunnelContent } =
     filtering: toRef(props, 'filtering'),
     dataTableRef: elRef,
   })
+
+const allActiveFilters = computed(() => [
+  ...(props.extraActiveFilters ?? []),
+  ...activeFilters.value,
+])
 
 const forwarded = computed(() => ({
   ...pick(props, Object.keys(dataTableProps)),
@@ -86,9 +95,9 @@ onMounted(() => {
           </div>
         </td>
       </tr>
-      <tr v-if="activeFilters.length">
+      <tr v-if="allActiveFilters.length">
         <td>
-          <AppDataTableActiveFilters :items="activeFilters" />
+          <AppDataTableActiveFilters :items="allActiveFilters" />
         </td>
       </tr>
       <tr></tr>

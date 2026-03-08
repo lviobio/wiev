@@ -1,5 +1,7 @@
 import AppDataTable from '@/components/AppDataTable.vue'
 import { makeDataTableFiltering, type TableFiltering } from '@/components/AppDataTable/filters'
+import { Indicator } from '@/components/AppDataTable/filters/base'
+import type { ActiveFilter } from '@/components/AppDataTable/useAbstractTableFilters'
 import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
@@ -131,6 +133,22 @@ export function useListPage<T, F extends Record<string, unknown>>(
     })
   })
 
+  // ── Search active filter indicator ─────────────────────────────
+
+  const searchActiveFilters = computed<ActiveFilter[]>(() => {
+    if (!params.search.value) return []
+
+    return [
+      {
+        key: 'search',
+        indicator: Indicator.make(`Search: ${params.search.value}`),
+        remove: () => {
+          params.search.value = undefined
+        },
+      },
+    ]
+  })
+
   // ── Components ────────────────────────────────────────────────
 
   const SearchComponent = markRaw(
@@ -181,6 +199,7 @@ export function useListPage<T, F extends Record<string, unknown>>(
               size: tableConfig?.size ?? 'small',
               pagination: dataTablePagination.value,
               filtering,
+              extraActiveFilters: searchActiveFilters.value,
               remote: tableConfig?.remote ?? true,
               striped: tableConfig?.striped ?? true,
               'onUpdate:sorter': onUpdateSorter,
