@@ -1,6 +1,7 @@
 import AppDateTime from '@/components/AppDateTime.vue'
+import { ListComposables } from '@/core/list-page/useListPage'
 import { MoreVertical24Regular } from '@vicons/fluent'
-import { NA, NButton, NDropdown, NFlex, NIcon, NPopconfirm, useDialog, useMessage } from 'naive-ui'
+import { NA, NButton, NDropdown, NFlex, NIcon, NPopconfirm } from 'naive-ui'
 import { h } from 'vue'
 import type {
   ActionDef,
@@ -280,12 +281,11 @@ export function isActionsColumn<T>(
  * Returns a partial column definition with `render` to be merged with the original column.
  */
 export function processActionsColumn<T>(
+  composables: ListComposables,
   actions: ActionDef<T>[],
   load: () => Promise<void>,
 ): { render: (row: T) => ReturnType<typeof h> } {
-  const router = useRouter()
-  const message = useMessage()
-  const dialog = useDialog()
+  const { router, message, dialog } = composables
 
   /** Navigate to a route, optionally in a window. */
   function navigateAction(action: OpenActionDef<T>, row: T) {

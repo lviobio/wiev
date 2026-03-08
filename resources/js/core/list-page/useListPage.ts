@@ -6,9 +6,11 @@ import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
-import { NFlex, NIcon, NInput } from 'naive-ui'
+import { DialogApi, MessageApi, NFlex, NIcon, NInput } from 'naive-ui'
 import { computed, defineComponent, h, markRaw, toValue, type Component } from 'vue'
+import { Router } from 'vue-router'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
+import { defineFilters } from './filters'
 import type {
   ActionsColumnMarker,
   ListPageColumn,
@@ -17,6 +19,12 @@ import type {
 } from './types'
 import { LIST_PAGE_ACTIONS_SYMBOL } from './types'
 import { useList } from './useList'
+
+export interface ListComposables {
+  router: Router
+  message: MessageApi
+  dialog: DialogApi
+}
 
 /**
  * Create a full list page composable with ready-to-use components.
@@ -50,6 +58,12 @@ export function useListPage<T, F extends Record<string, unknown>>(
     table: tableConfig,
   } = options
 
+  const composables: ListComposables = {
+    router: useRouter(),
+    message: useMessage(),
+    dialog: useDialog(),
+  }
+
   // ── Core list state ───────────────────────────────────────────
 
   const list = useList<T, F>({
@@ -75,8 +89,10 @@ export function useListPage<T, F extends Record<string, unknown>>(
 
   // ── Filter integration ────────────────────────────────────────
 
-  const filtering: TableFiltering | undefined = filterItems?.length
-    ? makeDataTableFiltering(ref(params.filters) as any, filterItems as any)
+  const resolvedFilterItems = filterItems ?? defineFilters(filtersSchema)
+
+  const filtering: TableFiltering | undefined = resolvedFilterItems.length
+    ? makeDataTableFiltering(ref(params.filters) as any, resolvedFilterItems as any)
     : undefined
 
   // ── Column processing ─────────────────────────────────────────
@@ -116,7 +132,7 @@ export function useListPage<T, F extends Record<string, unknown>>(
           if (result.width) processed.width = result.width
         }
 
-        const actionsRender = processActionsColumn<T>(finalActions, load)
+        const actionsRender = processActionsColumn<T>(composables, finalActions, load)
         processed.render = actionsRender.render
         delete processed[LIST_PAGE_ACTIONS_SYMBOL]
       }

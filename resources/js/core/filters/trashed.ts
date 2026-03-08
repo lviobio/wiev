@@ -9,4 +9,7 @@ export const trashedOptions = [
   { label: 'Only Trashed', value: 'only' },
 ]
 
-export const zFilterTrashed = z.enum(FilterTrashedValues).optional()
+export const zFilterTrashed = z
+  .enum(FilterTrashedValues)
+  .optional()
+  .meta({ options: trashedOptions })

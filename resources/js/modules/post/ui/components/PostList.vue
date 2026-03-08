@@ -1,10 +1,8 @@
 <script setup lang="tsx">
-import { trashedOptions } from '@/core/filters/trashed'
 import {
   actionGroup,
   dateColumn,
   defineColumns,
-  defineFilters,
   deleteAction,
   linkColumn,
   makeDataHandlerFromRepository,
@@ -28,12 +26,6 @@ const repository = usePostRepository()
 const ListPage = useListPage<Post, Filters>({
   dataHandler: makeDataHandlerFromRepository(repository),
   filtersSchema: postListFiltersSchema,
-
-  filters: defineFilters(postListFiltersSchema, {
-    title: { placeholder: 'Search by title' },
-    trashed: { options: trashedOptions },
-    // created_at — auto-inferred as DateRangeFilter
-  }),
 
   columns: defineColumns<Post>([
     linkColumn('id', {

@@ -49,19 +49,37 @@ function isStringLike(schema: z.ZodType<any>): boolean {
   return base instanceof z.ZodString
 }
 
+// ── Schema metadata ─────────────────────────────────────────────
+
+/**
+ * Read filter metadata from a Zod schema's `.meta()`.
+ * Returns an empty object if no metadata is set.
+ */
+function readSchemaMeta(schema: z.ZodType<any>): FilterOverride {
+  const meta = (schema as any).meta?.() as FilterOverride | undefined
+  return meta ?? {}
+}
+
+/**
+ * Merge schema meta with explicit overrides. Overrides take priority.
+ */
+function mergeOverrides(schemaMeta: FilterOverride, override?: FilterOverride): FilterOverride {
+  return { ...schemaMeta, ...override }
+}
+
 // ── Filter type inference ───────────────────────────────────────
 
 type InferredFilterType = 'text' | 'daterange' | 'select'
 
 function inferFilterType(
   schema: z.ZodType<any>,
-  override?: FilterOverride,
+  merged: FilterOverride,
 ): InferredFilterType | null {
-  // Explicit type from override takes priority
-  if (override?.type) return override.type
+  // Explicit type takes priority
+  if (merged.type) return merged.type
 
   // If options are provided, it's a select filter
-  if (override?.options) return 'select'
+  if (merged.options) return 'select'
 
   // Infer from Zod schema shape
   if (isDateRangeShape(schema)) return 'daterange'
@@ -85,20 +103,29 @@ function humanizeKey(key: string): string {
 /**
  * Auto-generate TableFilter definitions from a Zod schema.
  *
+ * Filter metadata can be embedded directly in the Zod schema via `.meta()`:
+ * ```ts
+ * z.string().nullable().meta({ placeholder: 'Search by title' })
+ * ```
+ *
+ * Explicit `overrides` take priority over schema `.meta()`.
+ *
  * Inference rules:
  * - `z.string().nullable()` -> TextFilter
  * - `z.object({ from: z.number().nullable(), to: z.number().nullable() })` -> DateRangeFilter
- * - override with `options` -> SelectFilter
- * - override with explicit `type` -> that type
+ * - `options` in meta or override -> SelectFilter
+ * - explicit `type` in meta or override -> that type
  *
  * Title is auto-generated from key via `startCase()` unless overridden.
  *
  * @example
  * ```ts
- * const filters = defineFilters(postListFiltersSchema, {
- *   title: { placeholder: 'Search by title' },
- *   trashed: { options: trashedOptions },
- *   // created_at — auto-inferred as DateRangeFilter
+ * // Metadata in schema — no overrides needed:
+ * defineFilters(postListFiltersSchema)
+ *
+ * // Or with overrides (take priority over .meta()):
+ * defineFilters(postListFiltersSchema, {
+ *   title: { placeholder: 'Custom placeholder' },
  * })
  * ```
  */
@@ -111,17 +138,18 @@ export function defineFilters<T extends ZodRawShape>(
 
   for (const key of Object.keys(shape)) {
     const fieldSchema = shape[key] as unknown as z.ZodType<any>
-    const override = overrides?.[key as keyof T & string]
+    const schemaMeta = readSchemaMeta(fieldSchema)
+    const merged = mergeOverrides(schemaMeta, overrides?.[key as keyof T & string])
 
-    const filterType = inferFilterType(fieldSchema, override)
+    const filterType = inferFilterType(fieldSchema, merged)
     if (!filterType) continue
 
-    const title = override?.title ?? humanizeKey(key)
+    const title = merged.title ?? humanizeKey(key)
 
     switch (filterType) {
       case 'text': {
         const filter = TextFilter.make(key, title)
-        if (override?.placeholder) filter.withPlaceholder(override.placeholder)
+        if (merged.placeholder) filter.withPlaceholder(merged.placeholder)
         filters.push(filter.toTableFilter())
         break
       }
@@ -132,8 +160,8 @@ export function defineFilters<T extends ZodRawShape>(
       }
       case 'select': {
         const filter = SelectFilter.make(key, title)
-        if (override?.options) filter.withOptions(override.options)
-        if (override?.placeholder) filter.withPlaceholder(override.placeholder)
+        if (merged.options) filter.withOptions(merged.options)
+        if (merged.placeholder) filter.withPlaceholder(merged.placeholder)
         filters.push(filter.toTableFilter())
         break
       }
