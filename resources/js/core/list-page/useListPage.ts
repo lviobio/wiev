@@ -205,7 +205,7 @@ export function useListPage<T, F extends Record<string, unknown>>(
               'onUpdate:sorter': onUpdateSorter,
             },
             {
-              header: () => (searchConfig !== false ? h(SearchComponent) : null),
+              header: () => h('div', [searchConfig !== false ? h(SearchComponent) : null]),
             },
           )
         }

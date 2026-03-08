@@ -82,11 +82,9 @@ onMounted(() => {
     <thead>
       <tr>
         <td>
-          <div class="flex justify-between">
-            <div>
-              <slot name="header" />
-            </div>
-            <div v-if="props.filtering?.items.length" class="self-end">
+          <div class="flex justify-end gap-2">
+            <slot name="header" />
+            <div v-if="props.filtering?.items.length">
               <AppDataTableFiltersFunnelButton
                 :active-filters-count="activeFilters.length"
                 :render-content="renderFiltersFunnelContent"
