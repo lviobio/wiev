@@ -5,7 +5,7 @@ import { debounce, isEqual } from 'lodash'
 import { onScopeDispose, Reactive, ref, Ref, watch } from 'vue'
 
 export interface UseListOptions<T, F extends Record<string, unknown>> {
-  filters: F
+  filters: Reactive<F>
   debounceMs?: number
   loader: (options: UseListParams<F> & { signal: AbortSignal }) => Promise<MaybePaginatedData<T>>
 }
@@ -37,7 +37,7 @@ export function useList<T, F extends Record<string, unknown>>(
     pagination: usePagination(),
     sorting: useSorting(),
     search: ref<string | undefined>(''),
-    filters: reactive(options.filters),
+    filters: options.filters,
   }
 
   let abortController: AbortController | undefined
@@ -63,9 +63,8 @@ export function useList<T, F extends Record<string, unknown>>(
 
   const enableWatchers = () => {
     watch(
-      () => structuredClone(toRaw(params.filters)),
-      (newVal, oldVal) => {
-        if (isEqual(newVal, oldVal)) return
+      params.filters,
+      () => {
         params.pagination?.resetPage()
         loadDebounced()
       },

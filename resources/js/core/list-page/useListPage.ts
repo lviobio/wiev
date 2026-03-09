@@ -63,10 +63,12 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
     dialog: useDialog(),
   }
 
+  const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as F)
+
   // ── Core list state ───────────────────────────────────────────
 
   const list = useList<T, F>({
-    filters: createEmptyObjectFromSchema(filtersSchema) as F,
+    filters,
     debounceMs: options.debounceMs,
     loader: async ({ filters, pagination, sorting, search, signal }) => {
       return dataHandler({
@@ -91,7 +93,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
   const resolvedFilterItems = filterItems ?? defineFilters(filtersSchema)
 
   const filtering: TableFiltering | undefined = resolvedFilterItems.length
-    ? makeDataTableFiltering(ref(params.filters) as any, resolvedFilterItems as any)
+    ? makeDataTableFiltering(toRef(filters) as any, resolvedFilterItems as any)
     : undefined
 
   // ── Column processing ─────────────────────────────────────────
