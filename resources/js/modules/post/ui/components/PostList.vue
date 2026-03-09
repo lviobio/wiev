@@ -47,8 +47,6 @@ const ListPage = useListPage({
       ],
     },
   ],
-
-  search: { placeholder: 'Search' },
 })
 
 props.callback?.(ListPage.params)

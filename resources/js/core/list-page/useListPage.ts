@@ -172,7 +172,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
     defineComponent({
       name: 'ListPageSearch',
       setup() {
-        const placeholder = typeof searchConfig === 'object' ? searchConfig?.placeholder : 'Search'
+        const { placeholder = () => 'Search' } = searchConfig || {}
 
         return () => {
           if (searchConfig === false) return null
@@ -184,7 +184,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
               'onUpdate:value': (val: string) => {
                 params.search.value = val !== '' ? val : undefined
               },
-              placeholder,
+              placeholder: toValue(placeholder),
               clearable: true,
             },
             {

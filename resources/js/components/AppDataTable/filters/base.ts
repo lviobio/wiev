@@ -130,7 +130,7 @@ export abstract class BaseFilter<K extends string = string, S = unknown> {
       title: this.title,
       getIndicator: (filterState) => this.getIndicators(filterState),
       removedState: this.removedState,
-      makeRenderer: this.renderFilter,
+      makeRenderer: this.renderFilter.bind(this),
     }
   }
 }

@@ -114,7 +114,7 @@ export interface UseListPageOptions<
   filters?: TableFilter<string, any>[]
   columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>
   actions?: ActionDef<T>[]
-  search?: { placeholder?: string } | false
+  search?: { placeholder?: MaybeRefOrGetter<string> } | false
   table?: Partial<{
     size: 'small' | 'medium' | 'large'
     striped: boolean
