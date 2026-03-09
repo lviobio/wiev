@@ -1,9 +1,9 @@
 import { MaybePaginatedData, PaginationComposable, usePagination } from '@/core/pagination/base'
 import { SortingComposable, useSorting } from '@/core/sorting/base'
+import { watchIgnorable } from '@vueuse/core'
+import { WatchIgnorableReturn } from '@vueuse/shared'
 import { debounce, isEqual } from 'lodash'
 import { onScopeDispose, Reactive, ref, Ref, watch } from 'vue'
-
-type WatchHandle = ReturnType<typeof watch>
 
 export interface UseListOptions<T, F extends Record<string, unknown>> {
   filters: F
@@ -31,36 +31,32 @@ export function useList<T, F extends Record<string, unknown>>(
 ): UseListResult<T, F> {
   const items = shallowRef<T[]>([])
   const loading = ref(false)
-  const pagination = usePagination()
-  const sorting = useSorting()
-  const search = ref<string | undefined>('')
-  const filters = reactive(options.filters)
 
   const { loader, debounceMs = 400 } = options
 
   const params: UseListResult<T, F>['params'] = {
-    pagination,
-    sorting,
-    search,
-    filters,
+    pagination: usePagination(),
+    sorting: useSorting(),
+    search: ref<string | undefined>(''),
+    filters: reactive(options.filters),
   }
 
   let abortController: AbortController | undefined
-  let paginationWatch: WatchHandle | undefined
+  let paginationWatch: WatchIgnorableReturn | undefined
 
   const load = async (): Promise<void> => {
     abortController?.abort()
     abortController = new AbortController()
     loading.value = true
-    paginationWatch?.pause()
 
     try {
       const result = await loader({ ...params, signal: abortController.signal })
       items.value = result.data
-      pagination.applyMeta(result.meta)
+      paginationWatch?.ignoreUpdates(() => {
+        params.pagination.applyMeta(result.meta)
+      })
     } finally {
       loading.value = false
-      paginationWatch?.resume()
     }
   }
 
@@ -88,14 +84,16 @@ export function useList<T, F extends Record<string, unknown>>(
       (newVal, oldVal) => {
         if (isEqual(newVal, oldVal)) return
         params.pagination?.resetPage()
+        loadDebounced.cancel()
         load()
       },
     )
 
-    paginationWatch = watch(
+    paginationWatch = watchIgnorable(
       () => params.pagination?.params.value,
       (newVal, oldVal) => {
         if (isEqual(newVal, oldVal)) return
+        loadDebounced.cancel()
         load()
       },
       { deep: true },
