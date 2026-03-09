@@ -5,7 +5,7 @@ import {
   makeDataHandlerFromRepository,
   useListPage,
   type UseListParams,
-} from '@/core/list-page'
+} from '@/core/crud/list-page'
 import { z } from 'zod'
 import { postListFiltersSchema, usePostRepository } from '../../repositories/PostRepository'
 import { postRouteNames } from '../../router/names'
