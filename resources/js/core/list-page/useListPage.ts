@@ -6,13 +6,14 @@ import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
-import { DialogApi, MessageApi, NFlex, NIcon, NInput } from 'naive-ui'
+import { NFlex, NIcon, NInput } from 'naive-ui'
 import { computed, defineComponent, h, markRaw, toValue, type Component } from 'vue'
-import { Router } from 'vue-router'
+import { z, type ZodObject, type ZodRawShape } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
 import { defineFilters } from './filters'
 import type {
   ActionsColumnMarker,
+  ListComposables,
   ListPageColumn,
   UseListPageOptions,
   UseListPageReturn,
@@ -20,24 +21,21 @@ import type {
 import { LIST_PAGE_ACTIONS_SYMBOL } from './types'
 import { useList } from './useList'
 
-export interface ListComposables {
-  router: Router
-  message: MessageApi
-  dialog: DialogApi
-}
-
 /**
  * Create a full list page composable with ready-to-use components.
  *
+ * Types are inferred automatically:
+ * - `T` (row type) from `dataHandler`'s return type
+ * - `F` (filters) from `filtersSchema` via `z.infer`
+ *
  * @example
  * ```ts
- * const ListPage = useListPage<Post, PostListFilters>({
+ * const ListPage = useListPage({
  *   dataHandler: makeDataHandlerFromRepository(repository),
  *   filtersSchema: postListFiltersSchema,
- *   filters: defineFilters(postListFiltersSchema, { ... }),
  *   columns: [...],
+ *   actions: [...],
  *   search: { placeholder: 'Search' },
- *   table: { size: 'small', striped: true, remote: true },
  * })
  *
  * // Template:
@@ -47,9 +45,10 @@ export interface ListComposables {
  * // <ListPage.Partial.Wrapper />    — wrapper with slots
  * ```
  */
-export function useListPage<T, F extends Record<string, unknown>>(
-  options: UseListPageOptions<T, F>,
-): UseListPageReturn<T, F> {
+export function useListPage<T extends Record<string, any>, S extends ZodObject<ZodRawShape>>(
+  options: UseListPageOptions<T, S>,
+): UseListPageReturn<T, z.infer<S>> {
+  type F = z.infer<S>
   const {
     dataHandler,
     filtersSchema,

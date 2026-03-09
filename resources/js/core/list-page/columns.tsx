@@ -1,5 +1,4 @@
 import AppDateTime from '@/components/AppDateTime.vue'
-import { ListComposables } from '@/core/list-page/useListPage'
 import { MoreVertical24Regular } from '@vicons/fluent'
 import { NA, NButton, NDropdown, NFlex, NIcon, NPopconfirm } from 'naive-ui'
 import { h } from 'vue'
@@ -10,6 +9,7 @@ import type {
   ActionsColumnDef,
   Column,
   DeleteActionDef,
+  ListComposables,
   ListPageColumn,
   OpenActionDef,
 } from './types'
@@ -162,7 +162,7 @@ export function linkColumn<T extends Record<string, any>>(
     to: (row: T) => any // RouteLocationRaw
     windowed?: boolean | ((row: T) => { title: string })
   },
-): Column<T> {
+): Column<Record<string, any>> {
   const router = useRouter()
 
   return {
@@ -170,12 +170,12 @@ export function linkColumn<T extends Record<string, any>>(
     key,
     width: options.width,
     sorter: options.sorter,
-    render(row: T) {
-      const route = options.to(row)
+    render(row) {
+      const route = options.to(row as T)
 
       if (options.windowed) {
         const windowedConfig =
-          typeof options.windowed === 'function' ? options.windowed(row) : options.windowed
+          typeof options.windowed === 'function' ? options.windowed(row as T) : options.windowed
         Object.assign(route, {
           windowed: windowedConfig === true ? {} : windowedConfig,
         })
@@ -208,14 +208,14 @@ export function dateColumn<T extends Record<string, any>>(
     title?: string
     sorter?: boolean
   },
-): Column<T> {
+): Column<Record<string, any>> {
   return {
     title: options?.title ?? humanizeKey(key),
     key,
     width: options?.width,
     sorter: options?.sorter,
-    render(row: T) {
-      return h(AppDateTime, { value: row[key] })
+    render(row) {
+      return h(AppDateTime, { value: (row as T)[key] })
     },
   }
 }

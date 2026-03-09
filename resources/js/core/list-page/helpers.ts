@@ -1,6 +1,6 @@
 import type { MaybePaginatedData } from '@/core/pagination/base'
 import { toRaw } from 'vue'
-import type { DataLoader } from './types'
+import type { DataLoader, DataLoaderParams } from './types'
 
 /**
  * Repository contract expected by makeDataHandlerFromRepository.
@@ -32,7 +32,7 @@ interface ListableRepository<T, F> {
 export function makeDataHandlerFromRepository<T, F extends Record<string, unknown>>(
   repository: ListableRepository<T, F>,
 ): DataLoader<T, F> {
-  return async ({ filters, pagination, sorting, search, signal }) => {
+  const loader = async ({ filters, pagination, sorting, search, signal }: DataLoaderParams<F>) => {
     return repository.list({
       data: {
         filters: toRaw(filters) as F,
@@ -43,4 +43,6 @@ export function makeDataHandlerFromRepository<T, F extends Record<string, unknow
       signal,
     })
   }
+
+  return loader as DataLoader<T, F>
 }

@@ -1,14 +1,24 @@
 import type { TableFilter } from '@/components/AppDataTable/filters/base'
 import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
 import type { SortingComposable } from '@/core/sorting/base'
+import type { DialogApi, MessageApi } from 'naive-ui'
 import type { Component, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
-import type { ZodObject, ZodRawShape } from 'zod'
+import type { Router } from 'vue-router'
+import { z, type ZodObject, type ZodRawShape } from 'zod'
 import type { UseListParams } from './useList'
+
+// ── Composables ─────────────────────────────────────────────────
+
+export interface ListComposables {
+  router: Router
+  message: MessageApi
+  dialog: DialogApi
+}
 
 // ── Abstract Column ─────────────────────────────────────────────
 
 export interface Column<T> {
-  key: string
+  key: Extract<keyof T, string> | (string & {})
   title?: string | (() => VNodeChild)
   width?: number | string
   sorter?: boolean
@@ -19,9 +29,14 @@ export interface Column<T> {
 
 // ── Data Loading ────────────────────────────────────────────────
 
-export type DataLoader<T, F extends Record<string, unknown>> = (
+export type DataLoaderFn<T, F extends Record<string, unknown>> = (
   params: DataLoaderParams<F>,
 ) => Promise<MaybePaginatedData<T>>
+
+export type DataLoader<T, F extends Record<string, unknown>> = DataLoaderFn<T, F> & {
+  /** @internal Phantom brand for type inference. Never set at runtime. */
+  readonly _type?: T
+}
 
 export interface DataLoaderParams<F extends Record<string, unknown>> {
   filters: F
@@ -90,11 +105,14 @@ export interface FilterOverride {
 
 // ── Options & Return ────────────────────────────────────────────
 
-export interface UseListPageOptions<T, F extends Record<string, unknown>> {
-  dataHandler: DataLoader<T, F>
-  filtersSchema: ZodObject<ZodRawShape>
+export interface UseListPageOptions<
+  T extends Record<string, any>,
+  S extends ZodObject<ZodRawShape> = ZodObject<ZodRawShape>,
+> {
+  dataHandler: DataLoader<T, z.infer<S>>
+  filtersSchema: S
   filters?: TableFilter<string, any>[]
-  columns?: MaybeRefOrGetter<ListPageColumn<T>[]>
+  columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>
   actions?: ActionDef<T>[]
   search?: { placeholder?: string } | false
   table?: Partial<{

@@ -1,7 +1,6 @@
 import { MaybePaginatedData, PaginationComposable, usePagination } from '@/core/pagination/base'
 import { SortingComposable, useSorting } from '@/core/sorting/base'
-import { watchIgnorable } from '@vueuse/core'
-import { WatchIgnorableReturn } from '@vueuse/shared'
+import { watchIgnorable, type WatchIgnorableReturn } from '@vueuse/core'
 import { debounce, isEqual } from 'lodash'
 import { onScopeDispose, Reactive, ref, Ref, watch } from 'vue'
 
