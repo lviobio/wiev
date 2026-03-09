@@ -1,6 +1,6 @@
 import AppDataTable from '@/components/AppDataTable.vue'
 import { makeDataTableFiltering, type TableFiltering } from '@/components/AppDataTable/filters'
-import { Indicator } from '@/components/AppDataTable/filters/base'
+import { createIndicator } from '@/components/AppDataTable/filters/base'
 import type { ActiveFilter } from '@/components/AppDataTable/useAbstractTableFilters'
 import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
@@ -158,7 +158,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
     return [
       {
         key: 'search',
-        indicator: Indicator.make(`Search: ${params.search.value}`),
+        indicator: createIndicator(`Search: ${params.search.value}`),
         remove: () => {
           params.search.value = undefined
         },

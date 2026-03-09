@@ -1,8 +1,8 @@
 import type { TableFilter } from '@/components/AppDataTable/filters/base'
-import { DateRangeFilter } from '@/components/AppDataTable/filters/DateRangeFilter'
-import { SelectFilter } from '@/components/AppDataTable/filters/SelectFilter'
-import { TextFilter } from '@/components/AppDataTable/filters/TextFilter'
-import { startCase } from 'lodash'
+import { useDateRangeFilter } from '@/components/AppDataTable/filters/useDateRangeFilter'
+import { useSelectFilter } from '@/components/AppDataTable/filters/useSelectFilter'
+import { useTextFilter } from '@/components/AppDataTable/filters/useTextFilter'
+import { pick, startCase } from 'lodash'
 import { z, type ZodObject, type ZodRawShape } from 'zod'
 import type { FilterOverride } from './types'
 
@@ -111,9 +111,9 @@ function humanizeKey(key: string): string {
  * Explicit `overrides` take priority over schema `.meta()`.
  *
  * Inference rules:
- * - `z.string().nullable()` -> TextFilter
- * - `z.object({ from: z.number().nullable(), to: z.number().nullable() })` -> DateRangeFilter
- * - `options` in meta or override -> SelectFilter
+ * - `z.string().nullable()` -> useTextFilter
+ * - `z.object({ from: z.number().nullable(), to: z.number().nullable() })` -> useDateRangeFilter
+ * - `options` in meta or override -> useSelectFilter
  * - explicit `type` in meta or override -> that type
  *
  * Title is auto-generated from key via `startCase()` unless overridden.
@@ -148,21 +148,15 @@ export function defineFilters<T extends ZodRawShape>(
 
     switch (filterType) {
       case 'text': {
-        const filter = TextFilter.make(key, title)
-        if (merged.placeholder) filter.withPlaceholder(merged.placeholder)
-        filters.push(filter.toTableFilter())
+        filters.push(useTextFilter(key, title, pick(merged, ['placeholder'])))
         break
       }
       case 'daterange': {
-        const filter = DateRangeFilter.make(key, title)
-        filters.push(filter.toTableFilter())
+        filters.push(useDateRangeFilter(key, title))
         break
       }
       case 'select': {
-        const filter = SelectFilter.make(key, title)
-        if (merged.options) filter.withOptions(merged.options)
-        if (merged.placeholder) filter.withPlaceholder(merged.placeholder)
-        filters.push(filter.toTableFilter())
+        filters.push(useSelectFilter(key, title, pick(merged, ['options', 'placeholder'])))
         break
       }
     }

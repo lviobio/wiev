@@ -11,5 +11,5 @@ export const trashedOptions = [
 
 export const zFilterTrashed = z
   .enum(FilterTrashedValues)
-  .optional()
+  .nullable()
   .meta({ options: trashedOptions })
