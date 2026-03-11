@@ -1,11 +1,17 @@
 <script setup lang="ts" generic="D extends Record<string, any>, FS extends Record<string, unknown>">
 import AppDataTableActiveFilters from '@/components/AppDataTable/AppDataTableActiveFilters.vue'
+import AppDataTableCursorPagination from '@/components/AppDataTable/AppDataTableCursorPagination.vue'
 import AppDataTableFiltersFunnelButton from '@/components/AppDataTable/AppDataTableFiltersFunnelButton.vue'
 import { TableFiltering } from '@/components/AppDataTable/filters'
 import {
   type ActiveFilter,
   useDataTableFilters,
 } from '@/components/AppDataTable/useDataTableFilters'
+import {
+  CursorPaginationProps,
+  isNaiveUiCursorPagination,
+  isNaiveUiPagePagination,
+} from '@/core/pagination/naive-ui'
 import { useForwardRef } from '@/core/utils/useForwardRef'
 import { pick } from 'lodash'
 import {
@@ -15,6 +21,7 @@ import {
   dataTableProps,
   NDataTable,
 } from 'naive-ui'
+import { PaginationProps } from 'naive-ui/es/pagination/src/Pagination'
 import { VNodeChild } from 'vue'
 import { ComponentSlots } from 'vue-component-type-helpers'
 
@@ -31,6 +38,7 @@ export interface AppDataTableProps<
   columns: DataTableColumns<RowData>
   filtering?: TableFiltering<FS>
   extraActiveFilters?: ActiveFilter[]
+  pagination?: PaginationProps | CursorPaginationProps | false
 }
 
 defineOptions({
@@ -61,6 +69,7 @@ const forwarded = computed(() => ({
       ...customizeColumnForFilters(column),
     }
   }),
+  pagination: undefined,
   ...attrs,
 }))
 
@@ -114,6 +123,18 @@ onMounted(() => {
           </NEmpty>
         </template>
       </NDataTable>
+      <template v-if="props.pagination">
+        <div class="flex justify-end gap-2 py-2 pr-2">
+          <AppDataTableCursorPagination
+            v-if="isNaiveUiCursorPagination(props.pagination)"
+            :pagination="props.pagination"
+          />
+          <NPagination
+            v-else-if="isNaiveUiPagePagination(props.pagination)"
+            v-bind="props.pagination"
+          />
+        </div>
+      </template>
     </tbody>
   </NTable>
 </template>

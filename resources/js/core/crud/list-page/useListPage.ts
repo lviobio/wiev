@@ -2,7 +2,7 @@ import AppDataTable from '@/components/AppDataTable.vue'
 import { makeDataTableFiltering, type TableFiltering } from '@/components/AppDataTable/filters'
 import { createIndicator } from '@/components/AppDataTable/filters/base'
 import type { ActiveFilter } from '@/components/AppDataTable/useAbstractTableFilters'
-import { useNaiveUiPagination } from '@/core/pagination/naive-ui'
+import { useNaiveUiCursorPagination, useNaiveUiPagePagination } from '@/core/pagination/naive-ui'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
@@ -85,7 +85,8 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
 
   // ── Naive UI adapters ─────────────────────────────────────────
 
-  const dataTablePagination = useNaiveUiPagination(params.pagination)
+  const dataTablePagination = useNaiveUiPagePagination(params.pagination)
+  const dataTableCursorPagination = useNaiveUiCursorPagination(params.pagination)
   const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(params.sorting)
 
   // ── Filter integration ────────────────────────────────────────
@@ -214,7 +215,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
               loading: loading.value,
               loader: load,
               size: tableConfig?.size ?? 'small',
-              pagination: dataTablePagination.value,
+              pagination: dataTablePagination.value || dataTableCursorPagination.value,
               filtering,
               extraActiveFilters: searchActiveFilters.value,
               remote: tableConfig?.remote ?? true,

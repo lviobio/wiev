@@ -84,7 +84,7 @@ function isPagePaginationMeta(meta: PaginationMetaInput): meta is PagePagination
 }
 
 function isCursorPaginationMeta(meta: PaginationMetaInput): meta is CursorPaginationMeta {
-  return 'cursor' in meta
+  return 'next_cursor' in meta
 }
 
 function isCursorPaginationState(data?: PaginationState): data is CursorPaginationState {
@@ -120,7 +120,7 @@ export interface PaginationComposable {
   params: ComputedRef<Record<string, unknown>>
 
   setPage: (page: number) => void
-  setCursor: (cursor: string) => void
+  setCursor: (cursor: string | undefined) => void
   setPerPage: (perPage: number) => void
   resetPage: () => void
 
@@ -161,7 +161,7 @@ export const usePagination = () //options?: UsePaginationOptions
     }
   }
 
-  function setCursor(cursor: string) {
+  function setCursor(cursor: string | undefined) {
     const s = state.value
     if (s?.type === 'cursor') {
       state.value = { ...s, cursor }
