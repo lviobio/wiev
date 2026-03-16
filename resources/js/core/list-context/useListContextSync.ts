@@ -1,6 +1,6 @@
 import { castAsCursor, castAsPage, PaginationComposable } from '@/core/pagination/base'
 import { SortField, SortingComposable } from '@/core/sorting/base'
-import { Reactive, Ref, toRaw, watch } from 'vue'
+import { Reactive, Ref, watch } from 'vue'
 
 type WatchHandle = ReturnType<typeof watch>
 
@@ -112,7 +112,7 @@ export function useListContextSync<F extends Record<string, any>>(
         (newVal) => {
           const raw = toRaw(newVal)
           if (JSON.stringify(raw) === JSON.stringify(toRaw(filters))) return
-          guarded(() => deepAssign(filters as Record<string, any>, raw))
+          deepAssign(filters as Record<string, any>, raw)
         },
         { deep: true },
       ),
@@ -143,9 +143,7 @@ export function useListContextSync<F extends Record<string, any>>(
         () => context.value.search,
         (newVal) => {
           if (newVal === search.value) return
-          guarded(() => {
-            search.value = newVal
-          })
+          search.value = newVal
         },
       ),
     )
@@ -159,28 +157,22 @@ export function useListContextSync<F extends Record<string, any>>(
     // Initialization: context -> pagination.state
     // Direct write because setPage()/setPerPage() are no-ops
     // when state is undefined (before first applyMeta).
-    if (context.value.page !== null || context.value.per_page !== null) {
-      pagination.state.value = {
-        type: 'page',
-        page: context.value.page,
-        per_page: context.value.per_page,
-      }
-    } else if (context.value.cursor !== null) {
-      pagination.state.value = {
-        type: 'cursor',
-        cursor: context.value.cursor,
-        per_page: context.value.per_page,
-      }
+    if (typeof context.value.page === 'number') {
+      pagination.setPage(context.value.page)
+    } else if (typeof context.value.cursor === 'string') {
+      pagination.setCursor(context.value.cursor)
+    }
+
+    if (pagination.state.value && typeof context.value.per_page === 'number') {
+      pagination.setPerPage(context.value.per_page)
     }
 
     // pagination.state -> context
     watchers.push(
       watch(pagination.state, (state) => {
-        const page = castAsPage(state)
-        const cursor = castAsCursor(state)
         guarded(() => {
-          context.value.page = page?.page
-          context.value.cursor = cursor?.cursor
+          context.value.page = castAsPage(state)?.page
+          context.value.cursor = castAsCursor(state)?.cursor
           context.value.per_page = state?.per_page
         })
       }),
@@ -190,18 +182,16 @@ export function useListContextSync<F extends Record<string, any>>(
     watchers.push(
       watch(
         () => [context.value.page, context.value.per_page, context.value.cursor] as const,
-        ([page, perPage, cursor], [oldPage, oldPerPage, oldCursor]) => {
-          guarded(() => {
-            if (page !== oldPage && page !== undefined) {
-              pagination.setPage(page)
-            }
-            if (perPage !== oldPerPage && perPage !== undefined) {
-              pagination.setPerPage(perPage)
-            }
-            if (cursor !== oldCursor && cursor !== undefined) {
-              pagination.setCursor(cursor)
-            }
-          })
+        ([newPage, newPerPage, newCursor], [oldPage, oldPerPage, oldCursor]) => {
+          if (newPage !== oldPage && newPage !== undefined) {
+            pagination.setPage(newPage)
+          }
+          if (newCursor !== oldCursor && newCursor !== undefined) {
+            pagination.setCursor(newCursor)
+          }
+          if (newPerPage !== oldPerPage && newPerPage !== undefined) {
+            pagination.setPerPage(newPerPage)
+          }
         },
       ),
     )
@@ -235,9 +225,7 @@ export function useListContextSync<F extends Record<string, any>>(
         (newVal) => {
           const raw = toRaw(newVal ?? [])
           if (JSON.stringify(raw) === JSON.stringify(toRaw(sorting.state.value))) return
-          guarded(() => {
-            sorting.state.value = [...raw]
-          })
+          sorting.state.value = [...raw]
         },
         { deep: true },
       ),

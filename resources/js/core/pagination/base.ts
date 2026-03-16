@@ -117,7 +117,7 @@ export function castAsCursor(data?: PaginationState): CursorPaginationState | un
 
 export interface PaginationComposable {
   state: ShallowRef<PaginationState | undefined>
-  params: ComputedRef<Record<string, unknown>>
+  params: ComputedRef<{ page?: number; cursor?: string; per_page?: number }>
 
   setPage: (page: number) => void
   setCursor: (cursor: string | undefined) => void
@@ -134,6 +134,9 @@ export interface PaginationComposable {
 export const usePagination = () //options?: UsePaginationOptions
 : PaginationComposable => {
   const state = shallowRef<PaginationState | undefined>(undefined)
+  function setState(value: PaginationState | undefined) {
+    state.value = value
+  }
 
   const params = computed<Record<string, unknown>>(() => {
     const s = state.value
@@ -146,7 +149,7 @@ export const usePagination = () //options?: UsePaginationOptions
   function setPage(page: number) {
     const s = state.value
     if (s?.type === 'page') {
-      state.value = {
+      setState({
         ...s,
         meta: s.meta
           ? {
@@ -155,18 +158,28 @@ export const usePagination = () //options?: UsePaginationOptions
             }
           : undefined,
         page: page,
-      }
+      })
     } else if (s) {
       console.warn('setPage is not supported on non-page pagination')
+    } else {
+      setState({
+        type: 'page',
+        page,
+      })
     }
   }
 
   function setCursor(cursor: string | undefined) {
     const s = state.value
     if (s?.type === 'cursor') {
-      state.value = { ...s, cursor }
+      setState({ ...s, cursor })
     } else if (s) {
       console.warn('setCursor is not supported on non-cursor pagination')
+    } else {
+      setState({
+        type: 'cursor',
+        cursor,
+      })
     }
   }
 
@@ -174,9 +187,9 @@ export const usePagination = () //options?: UsePaginationOptions
     const s = state.value
     if (!s) return
     if (s.type === 'page') {
-      state.value = { ...s, per_page: perPage, page: 1 }
+      setState({ ...s, per_page: perPage })
     } else if (s.type === 'cursor') {
-      state.value = { ...s, per_page: perPage, cursor: undefined }
+      setState({ ...s, per_page: perPage })
     }
   }
 
@@ -184,33 +197,33 @@ export const usePagination = () //options?: UsePaginationOptions
     const s = state.value
     if (!s) return
     if (s.type === 'page') {
-      state.value = { ...s, page: 1 }
+      setState({ ...s, page: 1 })
     } else if (s.type === 'cursor') {
-      state.value = { ...s, cursor: undefined }
+      setState({ ...s, cursor: undefined })
     }
   }
 
   function applyPageMeta(data: PagePaginationMeta) {
-    state.value = {
+    setState({
       type: 'page',
       page: data.current_page,
       per_page: data.per_page,
       meta: pick(data, pagePaginationMetaKeys),
-    }
+    })
   }
 
   function applyCursorMeta(data: CursorPaginationMeta) {
-    state.value = {
+    setState({
       type: 'cursor',
       cursor: isCursorPaginationState(state.value) ? state.value.cursor : undefined,
       per_page: data.per_page,
       meta: pick(data, cursorPaginationMetaKeys),
-    }
+    })
   }
 
   function applyMeta(meta: PaginationMetaInput | undefined) {
     if (!meta) {
-      state.value = undefined
+      setState(undefined)
       return
     }
 
@@ -222,7 +235,7 @@ export const usePagination = () //options?: UsePaginationOptions
   }
 
   return {
-    state,
+    state: readonly(state),
     params,
     setPage,
     setCursor,

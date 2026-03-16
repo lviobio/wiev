@@ -42,8 +42,8 @@ export const useNaiveUiPagePagination = (
         return `Total: ${info.itemCount}`
       },
 
-      onChange: (page: number) => pagination.setPage(page),
-      onUpdatePageSize: (pageSize: number) => pagination.setPerPage(pageSize),
+      'onUpdate:page': (page: number) => pagination.setPage(page),
+      'onUpdate:pageSize': (pageSize: number) => pagination.setPerPage(pageSize),
     }
   })
 }

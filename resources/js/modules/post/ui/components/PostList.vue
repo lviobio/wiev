@@ -54,5 +54,7 @@ ListPage.actions.enableWatchers()
 </script>
 
 <template>
-  <ListPage.Component />
+  <div>
+    <ListPage.Component />
+  </div>
 </template>

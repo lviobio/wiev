@@ -105,6 +105,8 @@ export interface FilterOverride {
 
 // ── Options & Return ────────────────────────────────────────────
 
+export const ListContextSymbol = Symbol()
+
 export interface UseListPageOptions<
   T extends Record<string, any>,
   S extends ZodObject<ZodRawShape> = ZodObject<ZodRawShape>,
@@ -121,6 +123,7 @@ export interface UseListPageOptions<
     remote: boolean
   }>
   debounceMs?: number
+  contextSymbol?: symbol | false
 }
 
 export interface UseListPageState<T, F extends Record<string, unknown>> {

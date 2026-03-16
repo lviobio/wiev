@@ -19,9 +19,9 @@ useContextStorage('query', contextData, {
 </script>
 
 <template>
-  <NFlex>
+  <div>
     <List.Component :callback="(params) => useListContextSync(context.get(), params)" />
-  </NFlex>
+  </div>
 </template>
 
 <style scoped></style>

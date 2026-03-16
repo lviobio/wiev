@@ -11,14 +11,15 @@ import { computed, defineComponent, h, markRaw, toValue, type Component } from '
 import { z, type ZodObject, type ZodRawShape } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
 import { defineFilters } from './filters'
-import type {
+import {
   ActionsColumnMarker,
+  LIST_PAGE_ACTIONS_SYMBOL,
   ListComposables,
+  ListContextSymbol,
   ListPageColumn,
   UseListPageOptions,
   UseListPageReturn,
 } from './types'
-import { LIST_PAGE_ACTIONS_SYMBOL } from './types'
 import { useList } from './useList'
 
 /**
@@ -55,7 +56,10 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
     filters: filterItems,
     search: searchConfig,
     table: tableConfig,
+    contextSymbol = ListContextSymbol,
   } = options
+
+  // const context = inject(contextSymbol)
 
   const composables: ListComposables = {
     router: useRouter(),
@@ -85,7 +89,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
 
   // ── Naive UI adapters ─────────────────────────────────────────
 
-  const dataTablePagination = useNaiveUiPagePagination(params.pagination)
+  const dataTablePagePagination = useNaiveUiPagePagination(params.pagination)
   const dataTableCursorPagination = useNaiveUiCursorPagination(params.pagination)
   const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(params.sorting)
 
@@ -215,7 +219,7 @@ export function useListPage<T extends Record<string, any>, S extends ZodObject<Z
               loading: loading.value,
               loader: load,
               size: tableConfig?.size ?? 'small',
-              pagination: dataTablePagination.value || dataTableCursorPagination.value,
+              pagination: dataTablePagePagination.value || dataTableCursorPagination.value,
               filtering,
               extraActiveFilters: searchActiveFilters.value,
               remote: tableConfig?.remote ?? true,
