@@ -4,7 +4,7 @@ import type { SortingComposable } from '@/core/sorting/base'
 import type { DialogApi, MessageApi } from 'naive-ui'
 import type { Component, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
 import type { Router } from 'vue-router'
-import { z, type ZodObject, type ZodRawShape } from 'zod'
+import { z, type ZodObject } from 'zod'
 import type { UseListParams } from './useList'
 
 // ── Composables ─────────────────────────────────────────────────
@@ -107,13 +107,10 @@ export interface FilterOverride {
 
 export const ListContextSymbol = Symbol()
 
-export interface UseListPageOptions<
-  T extends Record<string, any>,
-  S extends ZodObject<ZodRawShape> = ZodObject<ZodRawShape>,
-> {
+export interface UseListPageOptions<T extends Record<string, any>, S extends ZodObject> {
   dataHandler: DataLoader<T, z.infer<S>>
   filtersSchema: S
-  filters?: TableFilter<string, any>[]
+  filters?: TableFilter[]
   columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>
   actions?: ActionDef<T>[]
   search?: { placeholder?: MaybeRefOrGetter<string> } | false

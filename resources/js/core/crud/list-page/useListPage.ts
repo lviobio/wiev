@@ -8,7 +8,7 @@ import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
 import { computed, defineComponent, h, markRaw, toValue, type Component } from 'vue'
-import { z, type ZodObject, type ZodRawShape } from 'zod'
+import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
 import { defineFilters } from './filters'
 import {
@@ -46,7 +46,7 @@ import { useList } from './useList'
  * // <ListPage.Partial.Wrapper />    — wrapper with slots
  * ```
  */
-export function useListPage<T extends Record<string, any>, S extends ZodObject<ZodRawShape>>(
+export function useListPage<T extends Record<string, any>, S extends z.ZodObject>(
   options: UseListPageOptions<T, S>,
 ): UseListPageReturn<T, z.infer<S>> {
   type F = z.infer<S>
