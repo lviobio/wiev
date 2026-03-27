@@ -7,15 +7,15 @@ import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
-import { computed, defineComponent, h, markRaw, toValue, type Component } from 'vue'
+import { type Component, computed, defineComponent, h, markRaw, toValue } from 'vue'
 import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
+import { withFilters, withPagination, withSearch, withSorting } from './features'
 import { defineFilters } from './filters'
 import {
   ActionsColumnMarker,
   LIST_PAGE_ACTIONS_SYMBOL,
   ListComposables,
-  ListContextSymbol,
   ListPageColumn,
   UseListPageOptions,
   UseListPageReturn,
@@ -56,10 +56,7 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
     filters: filterItems,
     search: searchConfig,
     table: tableConfig,
-    contextSymbol = ListContextSymbol,
   } = options
-
-  // const context = inject(contextSymbol)
 
   const composables: ListComposables = {
     router: useRouter(),
@@ -71,10 +68,10 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
 
   // ── Core list state ───────────────────────────────────────────
 
-  const list = useList<T, F>({
-    filters,
+  const list = useList({
+    features: [withPagination(), withSorting(), withSearch(), withFilters(filters)],
     debounceMs: options.debounceMs,
-    loader: async ({ filters, pagination, sorting, search, signal }) => {
+    loader: async ({ features: { pagination, sorting, search, filters }, signal }) => {
       return dataHandler({
         filters: toRaw(filters) as F,
         pagination,
@@ -85,13 +82,13 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
     },
   })
 
-  const { items, loading, params, load, enableWatchers } = list
+  const { items, loading, pagination, sorting, search, load, enableWatchers } = list
 
   // ── Naive UI adapters ─────────────────────────────────────────
 
-  const dataTablePagePagination = useNaiveUiPagePagination(params.pagination)
-  const dataTableCursorPagination = useNaiveUiCursorPagination(params.pagination)
-  const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(params.sorting)
+  const dataTablePagePagination = useNaiveUiPagePagination(pagination)
+  const dataTableCursorPagination = useNaiveUiCursorPagination(pagination)
+  const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(sorting)
 
   // ── Filter integration ────────────────────────────────────────
 
@@ -158,14 +155,14 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
   // ── Search active filter indicator ─────────────────────────────
 
   const searchActiveFilters = computed<ActiveFilter[]>(() => {
-    if (!params.search.value) return []
+    if (!search.value) return []
 
     return [
       {
         key: 'search',
-        indicator: createIndicator(`Search: ${params.search.value}`),
+        indicator: createIndicator(`Search: ${search.value}`),
         remove: () => {
-          params.search.value = undefined
+          search.value = undefined
         },
       },
     ]
@@ -185,9 +182,9 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
           return h(
             NInput,
             {
-              value: params.search.value || '',
+              value: search.value || '',
               'onUpdate:value': (val: string) => {
-                params.search.value = val !== '' ? val : undefined
+                search.value = val !== '' ? val : undefined
               },
               placeholder: toValue(placeholder),
               clearable: true,
@@ -270,17 +267,15 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
     state: {
       items,
       loading,
-      filters: params.filters,
-      search: params.search,
-      pagination: params.pagination,
-      sorting: params.sorting,
+      filters,
+      search,
+      pagination,
+      sorting,
     },
 
     actions: {
       load,
       enableWatchers,
     },
-
-    params,
   }
 }

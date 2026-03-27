@@ -5,7 +5,6 @@ import type { DialogApi, MessageApi } from 'naive-ui'
 import type { Component, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
 import type { Router } from 'vue-router'
 import { z, type ZodObject } from 'zod'
-import type { UseListParams } from './useList'
 
 // ── Composables ─────────────────────────────────────────────────
 
@@ -169,5 +168,4 @@ export interface UseListPageReturn<T, F extends Record<string, unknown>> {
 
   state: UseListPageState<T, F>
   actions: UseListPageActions
-  params: UseListParams<F>
 }

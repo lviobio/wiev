@@ -1,7 +1,19 @@
 // Core composables
 export { useList } from './useList'
-export type { UseListOptions, UseListParams, UseListResult } from './useList'
+export type { UseListBaseResult, UseListOptions, UseListResult } from './useList'
 export { useListPage } from './useListPage'
+
+// Features
+export { withFilters, withPagination, withSearch, withSorting } from './features'
+export type {
+  FeatureContext,
+  FiltersFeature,
+  ListFeature,
+  MergedState,
+  PaginationFeature,
+  SearchFeature,
+  SortingFeature,
+} from './features'
 
 // Helpers
 export { defineFilters } from './filters'
