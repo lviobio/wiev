@@ -5,7 +5,7 @@ export function withSearch(): SearchFeature {
   return {
     brand: 'search',
     install(ctx: FeatureContext) {
-      const search = ref<string | undefined>('') as Ref<string | undefined>
+      const search = ref<string | undefined>(undefined) as Ref<string | undefined>
 
       watch(search, (newVal, oldVal) => {
         if (newVal === oldVal) return
