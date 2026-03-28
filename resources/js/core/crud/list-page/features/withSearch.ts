@@ -1,5 +1,5 @@
-import { ref, type Ref, watch } from 'vue'
-import type { FeatureContext, SearchFeature } from './types'
+import { ref, watch, type Ref } from 'vue'
+import { ResetPageKey, type FeatureContext, type SearchFeature } from './types'
 
 export function withSearch(): SearchFeature {
   return {
@@ -11,7 +11,7 @@ export function withSearch(): SearchFeature {
         watch(search, (newVal, oldVal) => {
           if (newVal === oldVal) return
 
-          ctx.resetPage()
+          ctx.resolve<() => void>(ResetPageKey)?.()
           ctx.loadDebounced()
         })
       })

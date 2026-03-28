@@ -1,5 +1,5 @@
-import { type Reactive, watch } from 'vue'
-import type { FeatureContext, FiltersFeature } from './types'
+import { watch, type Reactive } from 'vue'
+import { ResetPageKey, type FeatureContext, type FiltersFeature } from './types'
 
 export function withFilters<F extends Record<string, unknown>>(
   filters: Reactive<F>,
@@ -11,7 +11,7 @@ export function withFilters<F extends Record<string, unknown>>(
         watch(
           filters,
           () => {
-            ctx.resetPage()
+            ctx.resolve<() => void>(ResetPageKey)?.()
             ctx.loadDebounced()
           },
           { deep: true },

@@ -9,12 +9,14 @@ export interface FeatureContext {
   loadDebounced(): void
   /** Cancel pending debounce and reload immediately (for sorting, pagination) */
   loadImmediate(): void
-  /** Reset pagination to first page. No-op when pagination feature is absent. */
-  resetPage(): void
   /** Register a watcher setup that runs when enableWatchers() is called. */
   onEnableWatchers(setup: () => void): void
   /** Register a handler called after each successful load. */
   onAfterLoad(handler: (result: MaybePaginatedData<unknown>) => void): void
+  /** Publish a capability for other features to consume. */
+  provide(key: symbol, value: unknown): void
+  /** Retrieve a capability published by another feature. Safe to call at runtime (inside watchers). */
+  resolve<T = unknown>(key: symbol): T | undefined
 }
 
 // ── Feature interface ───────────────────────────────────────────
@@ -34,6 +36,11 @@ export type SortingFeature = ListFeature<'sorting', { sorting: SortingComposable
 export type SearchFeature = ListFeature<'search', { search: Ref<string | undefined> }>
 export type FiltersFeature<F extends Record<string, unknown> = Record<string, unknown>> =
   ListFeature<'filters', { filters: Reactive<F> }>
+
+// ── Shared feature keys ─────────────────────────────────────────
+
+/** Key used by pagination to publish its resetPage function. */
+export const ResetPageKey: unique symbol = Symbol('resetPage')
 
 // ── Type utilities for merging feature states ───────────────────
 

@@ -1,3 +1,4 @@
+export { ResetPageKey } from './types'
 export type {
   FeatureContext,
   FiltersFeature,

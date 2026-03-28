@@ -1,7 +1,7 @@
 import { usePagination } from '@/core/pagination/base'
 import { watchIgnorable, type WatchIgnorableReturn } from '@vueuse/core'
 import { isEqual } from 'lodash'
-import type { FeatureContext, PaginationFeature } from './types'
+import { ResetPageKey, type FeatureContext, type PaginationFeature } from './types'
 
 export function withPagination(): PaginationFeature {
   return {
@@ -9,6 +9,8 @@ export function withPagination(): PaginationFeature {
     install(ctx: FeatureContext) {
       const pagination = usePagination()
       let paginationWatch: WatchIgnorableReturn | undefined
+
+      ctx.provide(ResetPageKey, () => pagination.resetPage())
 
       ctx.onAfterLoad((result) => {
         paginationWatch?.ignoreUpdates(() => {

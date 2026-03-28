@@ -1,5 +1,5 @@
 import { isCancel } from '@/core/errors'
-import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
+import type { MaybePaginatedData } from '@/core/pagination/base'
 import { debounce } from 'lodash'
 import { onScopeDispose, ref, type Ref, shallowRef, type ShallowRef } from 'vue'
 import type { FeatureContext, ListFeature, MergedState } from './features'
@@ -44,10 +44,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
   const watcherSetups: (() => void)[] = []
   const afterLoadHandlers: ((result: MaybePaginatedData<unknown>) => void)[] = []
 
-  // ── Reset page (replaced by pagination feature if present) ────
-
-  let resetPageFn: () => void = () => {}
-
   // ── Load functions ────────────────────────────────────────────
 
   const load = async (): Promise<void> => {
@@ -88,12 +84,15 @@ export function useList<T, const Features extends readonly ListFeature[]>(
 
   // ── Feature context ───────────────────────────────────────────
 
+  const shared = new Map<symbol, unknown>()
+
   const ctx: FeatureContext = {
     loadDebounced,
     loadImmediate,
-    resetPage: () => resetPageFn(),
     onEnableWatchers: (setup) => watcherSetups.push(setup),
     onAfterLoad: (handler) => afterLoadHandlers.push(handler),
+    provide: (key, value) => shared.set(key, value),
+    resolve: <T = unknown>(key: symbol) => shared.get(key) as T | undefined,
   }
 
   // ── Install features ──────────────────────────────────────────
@@ -103,11 +102,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
   for (const feature of options.features) {
     const state = feature.install(ctx)
     Object.assign(mergedState, state)
-
-    if (feature.brand === 'pagination' && 'pagination' in state) {
-      const pagination = state.pagination as PaginationComposable
-      resetPageFn = () => pagination.resetPage()
-    }
   }
 
   // ── Watchers ──────────────────────────────────────────────────
