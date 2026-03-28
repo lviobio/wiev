@@ -50,7 +50,6 @@ const ListPage = useListPage({
 })
 
 props.callback?.(ListPage.state)
-ListPage.actions.enableWatchers()
 </script>
 
 <template>

@@ -7,16 +7,14 @@ export function withFilters<F extends Record<string, unknown>>(
   return {
     brand: 'filters',
     install(ctx: FeatureContext) {
-      ctx.onEnableWatchers(() => {
-        watch(
-          filters,
-          () => {
-            ctx.resolve<() => void>(ResetPageKey)?.()
-            ctx.loadDebounced()
-          },
-          { deep: true },
-        )
-      })
+      watch(
+        filters,
+        () => {
+          ctx.resolve<() => void>(ResetPageKey)?.()
+          ctx.loadDebounced()
+        },
+        { deep: true },
+      )
 
       return { filters }
     },

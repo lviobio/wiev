@@ -9,17 +9,15 @@ export function withSorting(options?: UseSortingOptions): SortingFeature {
     install(ctx: FeatureContext) {
       const sorting = useSorting(options)
 
-      ctx.onEnableWatchers(() => {
-        watch(
-          () => sorting.state.value,
-          (newVal, oldVal) => {
-            if (isEqual(newVal, oldVal)) return
+      watch(
+        () => sorting.state.value,
+        (newVal, oldVal) => {
+          if (isEqual(newVal, oldVal)) return
 
-            ctx.resolve<() => void>(ResetPageKey)?.()
-            ctx.loadImmediate()
-          },
-        )
-      })
+          ctx.resolve<() => void>(ResetPageKey)?.()
+          ctx.loadImmediate()
+        },
+      )
 
       return { sorting }
     },

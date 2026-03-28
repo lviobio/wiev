@@ -133,7 +133,6 @@ export interface UseListPageState<T, F extends Record<string, unknown>> {
 
 export interface UseListPageActions {
   load: () => Promise<void>
-  enableWatchers: () => void
 }
 
 /**

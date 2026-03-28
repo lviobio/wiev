@@ -82,7 +82,7 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
     },
   })
 
-  const { items, loading, pagination, sorting, search, load, enableWatchers } = list
+  const { items, loading, pagination, sorting, search, load } = list
 
   // ── Naive UI adapters ─────────────────────────────────────────
 
@@ -275,7 +275,6 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
 
     actions: {
       load,
-      enableWatchers,
     },
   }
 }

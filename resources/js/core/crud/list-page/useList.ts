@@ -21,7 +21,6 @@ export interface UseListBaseResult<T> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
   load: () => Promise<void>
-  enableWatchers: () => void
 }
 
 export type UseListResult<T, Features extends readonly ListFeature[]> = UseListBaseResult<T> &
@@ -41,7 +40,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
 
   // ── Lifecycle registries ──────────────────────────────────────
 
-  const watcherSetups: (() => void)[] = []
   const afterLoadHandlers: ((result: MaybePaginatedData<unknown>) => void)[] = []
 
   // ── Load functions ────────────────────────────────────────────
@@ -89,7 +87,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
   const ctx: FeatureContext = {
     loadDebounced,
     loadImmediate,
-    onEnableWatchers: (setup) => watcherSetups.push(setup),
     onAfterLoad: (handler) => afterLoadHandlers.push(handler),
     provide: (key, value) => shared.set(key, value),
     resolve: <T = unknown>(key: symbol) => shared.get(key) as T | undefined,
@@ -102,14 +99,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
   for (const feature of options.features) {
     const state = feature.install(ctx)
     Object.assign(mergedState, state)
-  }
-
-  // ── Watchers ──────────────────────────────────────────────────
-
-  const enableWatchers = () => {
-    for (const setup of watcherSetups) {
-      setup()
-    }
   }
 
   // ── Cleanup ───────────────────────────────────────────────────
@@ -125,7 +114,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
     items,
     loading,
     load,
-    enableWatchers,
     ...mergedState,
   } as UseListResult<T, Features>
 }

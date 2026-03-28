@@ -7,13 +7,11 @@ export function withSearch(): SearchFeature {
     install(ctx: FeatureContext) {
       const search = ref<string | undefined>('') as Ref<string | undefined>
 
-      ctx.onEnableWatchers(() => {
-        watch(search, (newVal, oldVal) => {
-          if (newVal === oldVal) return
+      watch(search, (newVal, oldVal) => {
+        if (newVal === oldVal) return
 
-          ctx.resolve<() => void>(ResetPageKey)?.()
-          ctx.loadDebounced()
-        })
+        ctx.resolve<() => void>(ResetPageKey)?.()
+        ctx.loadDebounced()
       })
 
       return { search }

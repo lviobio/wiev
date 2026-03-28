@@ -9,8 +9,6 @@ export interface FeatureContext {
   loadDebounced(): void
   /** Cancel pending debounce and reload immediately (for sorting, pagination) */
   loadImmediate(): void
-  /** Register a watcher setup that runs when enableWatchers() is called. */
-  onEnableWatchers(setup: () => void): void
   /** Register a handler called after each successful load. */
   onAfterLoad(handler: (result: MaybePaginatedData<unknown>) => void): void
   /** Publish a capability for other features to consume. */
