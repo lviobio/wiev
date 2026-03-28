@@ -46,10 +46,10 @@ import { useList } from './useList'
  * // <ListPage.Partial.Wrapper />    — wrapper with slots
  * ```
  */
-export function useListPage<T extends Record<string, any>, S extends z.ZodObject>(
-  options: UseListPageOptions<T, S>,
-): UseListPageReturn<T, z.infer<S>> {
-  type F = z.infer<S>
+export function useListPage<T extends Record<string, any>, FS extends z.ZodObject>(
+  options: UseListPageOptions<T, FS>,
+): UseListPageReturn<T, z.infer<FS>> {
+  type FST = z.infer<FS>
   const {
     dataHandler,
     filtersSchema,
@@ -64,7 +64,7 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
     dialog: useDialog(),
   }
 
-  const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as F)
+  const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as FST)
 
   // ── Core list state ───────────────────────────────────────────
 
@@ -73,7 +73,7 @@ export function useListPage<T extends Record<string, any>, S extends z.ZodObject
     debounceMs: options.debounceMs,
     loader: async ({ features: { pagination, sorting, search, filters }, signal }) => {
       return dataHandler({
-        filters: toRaw(filters) as F,
+        filters: toRaw(filters) as FST,
         pagination,
         sorting,
         search: search.value,

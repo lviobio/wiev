@@ -106,9 +106,9 @@ export interface FilterOverride {
 
 export const ListContextSymbol = Symbol()
 
-export interface UseListPageOptions<T extends Record<string, any>, S extends ZodObject> {
-  dataHandler: DataLoader<T, z.infer<S>>
-  filtersSchema: S
+export interface UseListPageOptions<T extends Record<string, any>, FS extends ZodObject> {
+  dataHandler: DataLoader<T, z.infer<FS>>
+  filtersSchema: FS
   filters?: TableFilter[]
   columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>
   actions?: ActionDef<T>[]
