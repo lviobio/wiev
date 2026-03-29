@@ -1,9 +1,10 @@
 import type { TableFilter } from '@/components/AppDataTable/filters/base'
 import { ListFeature } from '@/core/crud/list-page/features'
+import type { ListContextConstraint } from '@/core/list-context/useListContextSync'
 import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
 import type { SortingComposable } from '@/core/sorting/base'
 import type { DialogApi, MessageApi } from 'naive-ui'
-import type { Component, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
+import type { Component, InjectionKey, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
 import type { Router } from 'vue-router'
 import { z, type ZodObject } from 'zod'
 
@@ -105,7 +106,11 @@ export interface FilterOverride {
 
 // ── Options & Return ────────────────────────────────────────────
 
-export const ListContextSymbol = Symbol()
+export interface ListContextProvider {
+  get(): Ref<ListContextConstraint<Record<string, unknown>>>
+}
+
+export const ListContextSymbol: InjectionKey<ListContextProvider> = Symbol('ListContext')
 
 export interface UseListPageOptions<
   T extends Record<string, any>,
@@ -125,7 +130,7 @@ export interface UseListPageOptions<
   }>
   features?: ListFeature[]
   debounceMs?: number
-  contextSymbol?: symbol | false
+  contextSymbol?: InjectionKey<ListContextProvider> | false
 }
 
 export interface UseListPageState<T, F extends Record<string, unknown>> {

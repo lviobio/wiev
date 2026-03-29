@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useListContextSync } from '@/core/list-context/useListContextSync'
+import { ListContextSymbol } from '@/core/crud/list-page/types'
 import { postListDataSchema, usePostListContext } from '@/modules/post/composables/usePostListData'
 import { List } from '@/modules/post/ui/components'
 import { useContextStorage } from 'vue-context-storage'
@@ -16,11 +16,13 @@ useContextStorage('query', contextData, {
     per_page: 15,
   },
 })
+
+provide(ListContextSymbol, context)
 </script>
 
 <template>
   <div>
-    <List.Component :callback="(params) => useListContextSync(context.get(), params)" />
+    <List.Component />
   </div>
 </template>
 

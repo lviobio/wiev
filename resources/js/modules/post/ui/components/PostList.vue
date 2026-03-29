@@ -4,17 +4,9 @@ import {
   linkColumn,
   makeDataHandlerFromRepositoryAdapter,
   useListPage,
-  type UseListPageState,
 } from '@/core/crud/list-page'
-import { z } from 'zod'
 import { postListFiltersSchema, usePostRepository } from '../../repositories/PostRepository'
 import { postRouteNames } from '../../router/names'
-
-type Filters = z.infer<typeof postListFiltersSchema>
-
-const props = defineProps<{
-  callback?: (state: UseListPageState<Record<string, any>, Filters>) => void
-}>()
 
 const repository = usePostRepository()
 
@@ -49,7 +41,6 @@ const ListPage = useListPage({
   ],
 })
 
-props.callback?.(ListPage.state)
 </script>
 
 <template>

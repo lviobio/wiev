@@ -2,23 +2,31 @@ import AppDataTable from '@/components/AppDataTable.vue'
 import { makeDataTableFiltering, type TableFiltering } from '@/components/AppDataTable/filters'
 import { createIndicator } from '@/components/AppDataTable/filters/base'
 import type { ActiveFilter } from '@/components/AppDataTable/useAbstractTableFilters'
-import type { PaginationComposable } from '@/core/pagination/base'
+import { useListContextSync } from '@/core/list-context/useListContextSync'
 import { useNaiveUiCursorPagination, useNaiveUiPagePagination } from '@/core/pagination/naive-ui'
-import type { SortingComposable } from '@/core/sorting/base'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
-import { computed, defineComponent, h, markRaw, toValue, type Component, type Ref } from 'vue'
+import { type Component, computed, defineComponent, h, markRaw, toValue } from 'vue'
 import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
-import { withFilters, withPagination, withSearch, withSorting } from './features'
+import {
+  hasPagination,
+  hasSearch,
+  hasSorting,
+  withFilters,
+  withPagination,
+  withSearch,
+  withSorting,
+} from './features'
 import { defineFilters } from './filters'
 import {
   ActionsColumnMarker,
   DefaultListFeaturesState,
   LIST_PAGE_ACTIONS_SYMBOL,
   ListComposables,
+  ListContextSymbol,
   ListPageColumn,
   UseListPageOptions,
   UseListPageReturn,
@@ -61,7 +69,10 @@ export function useListPage<
     filters: filterItems,
     search: searchConfig,
     table: tableConfig,
+    contextSymbol = ListContextSymbol,
   } = options
+
+  const context = contextSymbol ? inject(contextSymbol, undefined) : undefined
 
   const composables: ListComposables = {
     router: useRouter(),
@@ -91,10 +102,20 @@ export function useListPage<
 
   const { items, loading, load, features } = list
 
-  const pagination =
-    'pagination' in features ? (features.pagination as PaginationComposable) : undefined
-  const sorting = 'sorting' in features ? (features.sorting as SortingComposable) : undefined
-  const search = 'search' in features ? (features.search as Ref<string | undefined>) : undefined
+  const pagination = hasPagination(features) ? features.pagination : undefined
+  const sorting = hasSorting(features) ? features.sorting : undefined
+  const search = hasSearch(features) ? features.search : undefined
+
+  // ── Context sync ────────────────────────────────────────────────
+
+  if (context) {
+    useListContextSync(context.get(), {
+      filters,
+      pagination,
+      sorting,
+      search,
+    })
+  }
 
   // ── Naive UI adapters ─────────────────────────────────────────
 

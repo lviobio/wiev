@@ -35,6 +35,26 @@ export type SearchFeature = ListFeature<'search', { search: Ref<string | undefin
 export type FiltersFeature<F extends Record<string, unknown> = Record<string, unknown>> =
   ListFeature<'filters', { filters: Reactive<F> }>
 
+// ── Feature type guards ──────────────────────────────────────────
+
+export function hasPagination(
+  features: Record<string, unknown>,
+): features is { pagination: PaginationComposable } {
+  return 'pagination' in features
+}
+
+export function hasSorting(
+  features: Record<string, unknown>,
+): features is { sorting: SortingComposable } {
+  return 'sorting' in features
+}
+
+export function hasSearch(
+  features: Record<string, unknown>,
+): features is { search: Ref<string | undefined> } {
+  return 'search' in features
+}
+
 // ── Shared feature keys ─────────────────────────────────────────
 
 /** Key used by pagination to publish its resetPage function. */

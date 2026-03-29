@@ -1,4 +1,4 @@
-export { PaginationResetPageKey } from './types'
+export { hasPagination, hasSearch, hasSorting, PaginationResetPageKey } from './types'
 export type {
   FeatureContext,
   FiltersFeature,
