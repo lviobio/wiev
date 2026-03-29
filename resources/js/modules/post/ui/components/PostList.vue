@@ -2,7 +2,7 @@
 import {
   dateColumn,
   linkColumn,
-  makeDataHandlerFromRepository,
+  makeDataHandlerFromRepositoryAdapter,
   useListPage,
   type UseListPageState,
 } from '@/core/crud/list-page'
@@ -19,7 +19,7 @@ const props = defineProps<{
 const repository = usePostRepository()
 
 const ListPage = useListPage({
-  dataHandler: makeDataHandlerFromRepository(repository),
+  dataHandler: makeDataHandlerFromRepositoryAdapter(repository.list.bind(repository)),
   filtersSchema: postListFiltersSchema,
 
   columns: [

@@ -1,7 +1,7 @@
 import { useSorting, type UseSortingOptions } from '@/core/sorting/base'
 import { isEqual } from 'lodash'
 import { watch } from 'vue'
-import { ResetPageKey, type FeatureContext, type SortingFeature } from './types'
+import { PaginationResetPageKey, type FeatureContext, type SortingFeature } from './types'
 
 export function withSorting(options?: UseSortingOptions): SortingFeature {
   return {
@@ -14,7 +14,7 @@ export function withSorting(options?: UseSortingOptions): SortingFeature {
         (newVal, oldVal) => {
           if (isEqual(newVal, oldVal)) return
 
-          ctx.resolve<() => void>(ResetPageKey)?.()
+          ctx.resolve<() => void>(PaginationResetPageKey)?.()
           ctx.loadImmediate()
         },
       )

@@ -1,4 +1,4 @@
-export { ResetPageKey } from './types'
+export { PaginationResetPageKey } from './types'
 export type {
   FeatureContext,
   FiltersFeature,

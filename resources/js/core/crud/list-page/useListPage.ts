@@ -2,15 +2,17 @@ import AppDataTable from '@/components/AppDataTable.vue'
 import { makeDataTableFiltering, type TableFiltering } from '@/components/AppDataTable/filters'
 import { createIndicator } from '@/components/AppDataTable/filters/base'
 import type { ActiveFilter } from '@/components/AppDataTable/useAbstractTableFilters'
+import type { PaginationComposable } from '@/core/pagination/base'
 import { useNaiveUiCursorPagination, useNaiveUiPagePagination } from '@/core/pagination/naive-ui'
+import type { SortingComposable } from '@/core/sorting/base'
 import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
-import { type Component, computed, defineComponent, h, markRaw, toValue } from 'vue'
+import { computed, defineComponent, h, markRaw, toValue, type Component, type Ref } from 'vue'
 import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
-import { withFilters, withPagination, withSearch, withSorting } from './features'
+import { ListFeature, withFilters, withPagination, withSearch, withSorting } from './features'
 import { defineFilters } from './filters'
 import {
   ActionsColumnMarker,
@@ -32,7 +34,7 @@ import { useList } from './useList'
  * @example
  * ```ts
  * const ListPage = useListPage({
- *   dataHandler: makeDataHandlerFromRepository(repository),
+ *   dataHandler: makeDataHandlerFromRepositoryAdapter(repository.list.bind(repository)),
  *   filtersSchema: postListFiltersSchema,
  *   columns: [...],
  *   actions: [...],
@@ -66,28 +68,32 @@ export function useListPage<T extends Record<string, any>, FS extends z.ZodObjec
 
   const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as FST)
 
+  const features: ListFeature[] = options.features ?? [
+    withPagination(),
+    withSorting(),
+    withSearch(),
+    withFilters(filters),
+  ]
+
   // ── Core list state ───────────────────────────────────────────
 
   const list = useList({
-    features: [withPagination(), withSorting(), withSearch(), withFilters(filters)],
+    features: features,
     debounceMs: options.debounceMs,
-    loader: async ({ features: { pagination, sorting, search, filters }, signal }) => {
-      return dataHandler({
-        filters: toRaw(filters) as FST,
-        pagination,
-        sorting,
-        search: search.value,
-        signal,
-      })
+    loader: async (params) => {
+      return dataHandler({ features: params.features, signal: params.signal })
     },
   })
 
-  const { items, loading, pagination, sorting, search, load } = list
+  const { items, loading, load } = list
+  const pagination = (list as any).pagination as PaginationComposable | undefined
+  const sorting = (list as any).sorting as SortingComposable
+  const search = (list as any).search as Ref<string | undefined>
 
   // ── Naive UI adapters ─────────────────────────────────────────
 
-  const dataTablePagePagination = useNaiveUiPagePagination(pagination)
-  const dataTableCursorPagination = useNaiveUiCursorPagination(pagination)
+  const dataTablePagePagination = pagination ? useNaiveUiPagePagination(pagination) : ref()
+  const dataTableCursorPagination = pagination ? useNaiveUiCursorPagination(pagination) : ref()
   const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(sorting)
 
   // ── Filter integration ────────────────────────────────────────

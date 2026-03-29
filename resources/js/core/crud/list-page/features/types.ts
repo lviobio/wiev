@@ -38,7 +38,7 @@ export type FiltersFeature<F extends Record<string, unknown> = Record<string, un
 // ── Shared feature keys ─────────────────────────────────────────
 
 /** Key used by pagination to publish its resetPage function. */
-export const ResetPageKey: unique symbol = Symbol('resetPage')
+export const PaginationResetPageKey: unique symbol = Symbol('paginationResetPage')
 
 // ── Type utilities for merging feature states ───────────────────
 

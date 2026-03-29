@@ -1,5 +1,5 @@
 import { watch, type Reactive } from 'vue'
-import { ResetPageKey, type FeatureContext, type FiltersFeature } from './types'
+import { PaginationResetPageKey, type FeatureContext, type FiltersFeature } from './types'
 
 export function withFilters<F extends Record<string, unknown>>(
   filters: Reactive<F>,
@@ -10,7 +10,7 @@ export function withFilters<F extends Record<string, unknown>>(
       watch(
         filters,
         () => {
-          ctx.resolve<() => void>(ResetPageKey)?.()
+          ctx.resolve<() => void>(PaginationResetPageKey)?.()
           ctx.loadDebounced()
         },
         { deep: true },

@@ -1,48 +1,46 @@
-import type { MaybePaginatedData } from '@/core/pagination/base'
-import { toRaw } from 'vue'
+import type { DefaultListQueryContract } from '@/core/api/simple-repository-helpers-v1/main'
+import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
+import type { SortingComposable } from '@/core/sorting/base'
+import { toRaw, type Reactive, type Ref } from 'vue'
 import type { DataLoader, DataLoaderParams } from './types'
 
-/**
- * Repository contract expected by makeDataHandlerFromRepository.
- * The repository must have a `list()` method accepting an object with
- * `data`, `pagination`, `sorting` and `signal` fields.
- */
-interface ListableRepository<T, F> {
-  list(query: {
-    data: { filters: F; search?: string }
-    pagination?: any
-    sorting?: any
-    signal?: AbortSignal
-  }): Promise<MaybePaginatedData<T>>
+interface DefaultListFeatures<F extends Record<string, unknown>> {
+  filters: Reactive<F>
+  search: Ref<string | undefined>
+  pagination: PaginationComposable
+  sorting: SortingComposable
 }
 
 /**
- * Creates a DataLoader from a repository that follows the standard
- * list query contract (DefaultListQueryContract pattern).
+ * Adapts a function expecting `DefaultListQueryContract` into a `DataLoader`.
  *
- * Search is sent as a top-level `data.search` field (not inside filters),
- * matching the backend convention where `search` is a standalone parameter.
+ * Maps `DataLoaderParams.features` (pagination, sorting, search, filters)
+ * into the `{ data, pagination, sorting, signal }` shape that repositories expect.
  *
  * @example
  * ```ts
  * const repository = usePostRepository()
- * const dataHandler = makeDataHandlerFromRepository(repository)
+ * const dataHandler = makeDataHandlerFromRepositoryAdapter<Post, PostListFilters>(
+ *   repository.list.bind(repository),
+ * )
  * ```
  */
-export function makeDataHandlerFromRepository<T, F extends Record<string, unknown>>(
-  repository: ListableRepository<T, F>,
-): DataLoader<T, F> {
-  const loader = async ({ filters, pagination, sorting, search, signal }: DataLoaderParams<F>) => {
-    return repository.list({
+export function makeDataHandlerFromRepositoryAdapter<T, F extends Record<string, unknown>>(
+  listFn: (
+    query: DefaultListQueryContract<{ filters?: F; search?: string }>,
+  ) => Promise<MaybePaginatedData<T>>,
+): DataLoader<T> {
+  return async ({ features, signal }: DataLoaderParams) => {
+    const { filters, search, pagination, sorting } = features as unknown as DefaultListFeatures<F>
+
+    return listFn({
       data: {
         filters: toRaw(filters) as F,
-        ...(search ? { search } : {}),
+        ...(search?.value ? { search: search.value } : {}),
       },
       pagination,
       sorting,
       signal,
     })
   }
-
-  return loader as DataLoader<T, F>
 }

@@ -28,7 +28,8 @@ export const postListFiltersSchema = z.object({
 export type PostListFilters = z.infer<typeof postListFiltersSchema>
 
 interface PostListQuery extends DefaultListQueryContract<{
-  filters: PostListFilters
+  filters?: PostListFilters
+  search?: string
 }> {}
 
 type PostListQueryResult = MaybePaginatedData<Post>

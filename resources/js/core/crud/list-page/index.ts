@@ -17,7 +17,7 @@ export type {
 
 // Helpers
 export { defineFilters } from './filters'
-export { makeDataHandlerFromRepository } from './helpers'
+export { makeDataHandlerFromRepositoryAdapter } from './helpers'
 
 // Column helpers
 export {

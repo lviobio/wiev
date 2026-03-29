@@ -1,5 +1,5 @@
 import { ref, watch, type Ref } from 'vue'
-import { ResetPageKey, type FeatureContext, type SearchFeature } from './types'
+import { PaginationResetPageKey, type FeatureContext, type SearchFeature } from './types'
 
 export function withSearch(): SearchFeature {
   return {
@@ -10,7 +10,7 @@ export function withSearch(): SearchFeature {
       watch(search, (newVal, oldVal) => {
         if (newVal === oldVal) return
 
-        ctx.resolve<() => void>(ResetPageKey)?.()
+        ctx.resolve<() => void>(PaginationResetPageKey)?.()
         ctx.loadDebounced()
       })
 

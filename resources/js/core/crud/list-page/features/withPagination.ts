@@ -1,7 +1,7 @@
 import { usePagination } from '@/core/pagination/base'
 import { watchIgnorable } from '@vueuse/core'
 import { isEqual } from 'lodash'
-import { ResetPageKey, type FeatureContext, type PaginationFeature } from './types'
+import { PaginationResetPageKey, type FeatureContext, type PaginationFeature } from './types'
 
 export function withPagination(): PaginationFeature {
   return {
@@ -9,7 +9,7 @@ export function withPagination(): PaginationFeature {
     install(ctx: FeatureContext) {
       const pagination = usePagination()
 
-      ctx.provide(ResetPageKey, () => pagination.resetPage())
+      ctx.provide(PaginationResetPageKey, () => pagination.resetPage())
 
       const paginationWatch = watchIgnorable(
         () => pagination.params.value,
@@ -29,6 +29,7 @@ export function withPagination(): PaginationFeature {
 
       ctx.onAfterLoad((result) => {
         paginationWatch.ignoreUpdates(() => {
+          //TODO: Create schema for page & cursor pagination and validate result.meta before applying
           pagination.applyMeta(result.meta)
         })
       })
