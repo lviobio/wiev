@@ -38,6 +38,7 @@ export type {
   Column,
   DataLoader,
   DataLoaderParams,
+  DefaultListFeaturesState,
   DeleteActionDef,
   FilterOverride,
   ListPageColumn,

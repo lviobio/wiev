@@ -16,6 +16,7 @@ import { ListFeature, withFilters, withPagination, withSearch, withSorting } fro
 import { defineFilters } from './filters'
 import {
   ActionsColumnMarker,
+  DefaultListFeaturesState,
   LIST_PAGE_ACTIONS_SYMBOL,
   ListComposables,
   ListPageColumn,
@@ -48,8 +49,12 @@ import { useList } from './useList'
  * // <ListPage.Partial.Wrapper />    — wrapper with slots
  * ```
  */
-export function useListPage<T extends Record<string, any>, FS extends z.ZodObject>(
-  options: UseListPageOptions<T, FS>,
+export function useListPage<
+  T extends Record<string, any>,
+  FS extends z.ZodObject,
+  FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
+>(
+  options: UseListPageOptions<T, FS, FeaturesState>,
 ): UseListPageReturn<T, z.infer<FS>> {
   type FST = z.infer<FS>
   const {
@@ -81,7 +86,10 @@ export function useListPage<T extends Record<string, any>, FS extends z.ZodObjec
     features: features,
     debounceMs: options.debounceMs,
     loader: async (params) => {
-      return dataHandler({ features: params.features, signal: params.signal })
+      return dataHandler({
+        features: params.features as unknown as FeaturesState,
+        signal: params.signal,
+      })
     },
   })
 

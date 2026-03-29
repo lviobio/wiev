@@ -5,7 +5,7 @@ import type { SortingComposable } from '@/core/sorting/base'
 import type { DialogApi, MessageApi } from 'naive-ui'
 import type { Component, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
 import type { Router } from 'vue-router'
-import { type ZodObject } from 'zod'
+import { z, type ZodObject } from 'zod'
 
 // ── Composables ─────────────────────────────────────────────────
 
@@ -29,16 +29,21 @@ export interface Column<T> {
 
 // ── Data Loading ────────────────────────────────────────────────
 
-export type DataLoaderFn<T> = (params: DataLoaderParams) => Promise<MaybePaginatedData<T>>
-
-export type DataLoader<T> = DataLoaderFn<T> & {
-  /** @internal Phantom brand for type inference. Never set at runtime. */
-  readonly _type?: T
+export interface DataLoaderParams<FS = Record<string, unknown>> {
+  features: FS
+  signal: AbortSignal
 }
 
-export interface DataLoaderParams {
-  features: Record<string, unknown>
-  signal: AbortSignal
+export type DataLoader<T, FS = Record<string, unknown>> = (
+  params: DataLoaderParams<FS>,
+) => Promise<MaybePaginatedData<T>>
+
+/** Features state when default features (pagination, sorting, search, filters) are used. */
+export type DefaultListFeaturesState<F extends Record<string, unknown>> = {
+  pagination: PaginationComposable
+  sorting: SortingComposable
+  search: Ref<string | undefined>
+  filters: Reactive<F>
 }
 
 // ── Column Actions ──────────────────────────────────────────────
@@ -102,8 +107,12 @@ export interface FilterOverride {
 
 export const ListContextSymbol = Symbol()
 
-export interface UseListPageOptions<T extends Record<string, any>, FS extends ZodObject> {
-  dataHandler: DataLoader<T>
+export interface UseListPageOptions<
+  T extends Record<string, any>,
+  FS extends ZodObject,
+  FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
+> {
+  dataHandler: DataLoader<T, FeaturesState>
   filtersSchema: FS
   filters?: TableFilter[]
   columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>

@@ -2,14 +2,7 @@ import type { DefaultListQueryContract } from '@/core/api/simple-repository-help
 import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
 import type { SortingComposable } from '@/core/sorting/base'
 import { toRaw, type Reactive, type Ref } from 'vue'
-import type { DataLoader, DataLoaderParams } from './types'
-
-interface DefaultListFeatures<F extends Record<string, unknown>> {
-  filters: Reactive<F>
-  search: Ref<string | undefined>
-  pagination: PaginationComposable
-  sorting: SortingComposable
-}
+import type { DataLoader, DataLoaderParams, DefaultListFeaturesState } from './types'
 
 /**
  * Adapts a function expecting `DefaultListQueryContract` into a `DataLoader`.
@@ -29,9 +22,9 @@ export function makeDataHandlerFromRepositoryAdapter<T, F extends Record<string,
   listFn: (
     query: DefaultListQueryContract<{ filters?: F; search?: string }>,
   ) => Promise<MaybePaginatedData<T>>,
-): DataLoader<T> {
-  return async ({ features, signal }: DataLoaderParams) => {
-    const { filters, search, pagination, sorting } = features as unknown as DefaultListFeatures<F>
+): DataLoader<T, DefaultListFeaturesState<F>> {
+  return async ({ features, signal }: DataLoaderParams<DefaultListFeaturesState<F>>) => {
+    const { filters, search, pagination, sorting } = features
 
     return listFn({
       data: {
