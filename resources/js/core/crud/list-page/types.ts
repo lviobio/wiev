@@ -132,9 +132,9 @@ export interface UseListPageState<T, F extends Record<string, unknown>> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
   filters: Reactive<F>
-  search: Ref<string | undefined>
+  search?: Ref<string | undefined>
   pagination?: PaginationComposable
-  sorting: SortingComposable
+  sorting?: SortingComposable
 }
 
 export interface UseListPageActions {

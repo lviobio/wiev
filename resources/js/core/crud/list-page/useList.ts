@@ -17,14 +17,12 @@ export interface UseListOptions<T, Features extends readonly ListFeature[]> {
   debounceMs?: number
 }
 
-export interface UseListBaseResult<T> {
+export interface UseListResult<T, Features extends readonly ListFeature[]> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
   load: () => Promise<void>
+  features: MergedState<Features>
 }
-
-export type UseListResult<T, Features extends readonly ListFeature[]> = UseListBaseResult<T> &
-  MergedState<Features>
 
 // ── Composable ──────────────────────────────────────────────────
 
@@ -114,6 +112,6 @@ export function useList<T, const Features extends readonly ListFeature[]>(
     items,
     loading,
     load,
-    ...mergedState,
-  } as UseListResult<T, Features>
+    features: mergedState as MergedState<Features>,
+  }
 }

@@ -12,7 +12,7 @@ import { NFlex, NIcon, NInput } from 'naive-ui'
 import { computed, defineComponent, h, markRaw, toValue, type Component, type Ref } from 'vue'
 import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
-import { ListFeature, withFilters, withPagination, withSearch, withSorting } from './features'
+import { withFilters, withPagination, withSearch, withSorting } from './features'
 import { defineFilters } from './filters'
 import {
   ActionsColumnMarker,
@@ -53,9 +53,7 @@ export function useListPage<
   T extends Record<string, any>,
   FS extends z.ZodObject,
   FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
->(
-  options: UseListPageOptions<T, FS, FeaturesState>,
-): UseListPageReturn<T, z.infer<FS>> {
+>(options: UseListPageOptions<T, FS, FeaturesState>): UseListPageReturn<T, z.infer<FS>> {
   type FST = z.infer<FS>
   const {
     dataHandler,
@@ -73,17 +71,15 @@ export function useListPage<
 
   const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as FST)
 
-  const features: ListFeature[] = options.features ?? [
-    withPagination(),
-    withSorting(),
-    withSearch(),
-    withFilters(filters),
-  ]
-
   // ── Core list state ───────────────────────────────────────────
 
   const list = useList({
-    features: features,
+    features: options.features ?? [
+      withPagination(),
+      withSorting(),
+      withSearch(),
+      withFilters(filters),
+    ],
     debounceMs: options.debounceMs,
     loader: async (params) => {
       return dataHandler({
@@ -93,16 +89,20 @@ export function useListPage<
     },
   })
 
-  const { items, loading, load } = list
-  const pagination = (list as any).pagination as PaginationComposable | undefined
-  const sorting = (list as any).sorting as SortingComposable
-  const search = (list as any).search as Ref<string | undefined>
+  const { items, loading, load, features } = list
+
+  const pagination =
+    'pagination' in features ? (features.pagination as PaginationComposable) : undefined
+  const sorting = 'sorting' in features ? (features.sorting as SortingComposable) : undefined
+  const search = 'search' in features ? (features.search as Ref<string | undefined>) : undefined
 
   // ── Naive UI adapters ─────────────────────────────────────────
 
   const dataTablePagePagination = pagination ? useNaiveUiPagePagination(pagination) : ref()
   const dataTableCursorPagination = pagination ? useNaiveUiCursorPagination(pagination) : ref()
-  const { getSortOrder, onUpdateSorter } = useNaiveUiSorting(sorting)
+  const { getSortOrder, onUpdateSorter } = sorting
+    ? useNaiveUiSorting(sorting)
+    : { getSortOrder: () => false, onUpdateSorter: () => {} }
 
   // ── Filter integration ────────────────────────────────────────
 
@@ -169,7 +169,7 @@ export function useListPage<
   // ── Search active filter indicator ─────────────────────────────
 
   const searchActiveFilters = computed<ActiveFilter[]>(() => {
-    if (!search.value) return []
+    if (!search?.value) return []
 
     return [
       {
@@ -196,9 +196,9 @@ export function useListPage<
           return h(
             NInput,
             {
-              value: search.value || '',
+              value: search?.value || '',
               'onUpdate:value': (val: string) => {
-                search.value = val !== '' ? val : undefined
+                if (search) search.value = val !== '' ? val : undefined
               },
               placeholder: toValue(placeholder),
               clearable: true,
