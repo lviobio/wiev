@@ -1,26 +1,11 @@
 import AppDataTable from '@/components/AppDataTable.vue'
-import { makeDataTableFiltering, type TableFiltering } from '@/components/AppDataTable/filters'
-import { createIndicator } from '@/components/AppDataTable/filters/base'
-import type { ActiveFilter } from '@/components/AppDataTable/useAbstractTableFilters'
-import { useListContextSync } from '@/core/list-context/useListContextSync'
-import { useNaiveUiCursorPagination, useNaiveUiPagePagination } from '@/core/pagination/naive-ui'
-import { useNaiveUiSorting } from '@/core/sorting/naive-ui'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
 import { type Component, computed, defineComponent, h, markRaw, toValue } from 'vue'
 import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
-import {
-  hasPagination,
-  hasSearch,
-  hasSorting,
-  withFilters,
-  withPagination,
-  withSearch,
-  withSorting,
-} from './features'
-import { defineFilters } from './filters'
+import { withFilters, withPagination, withSearch, withSorting } from './features'
 import {
   ActionsColumnMarker,
   DefaultListFeaturesState,
@@ -32,6 +17,7 @@ import {
   UseListPageReturn,
 } from './types'
 import { useList } from './useList'
+import { useListAdapters } from './useListAdapters'
 
 /**
  * Create a full list page composable with ready-to-use components.
@@ -100,38 +86,17 @@ export function useListPage<
     },
   })
 
-  const { items, loading, load, features } = list
+  const { items, loading, load } = list
 
-  const pagination = hasPagination(features) ? features.pagination : undefined
-  const sorting = hasSorting(features) ? features.sorting : undefined
-  const search = hasSearch(features) ? features.search : undefined
+  // ── Adapters ──────────────────────────────────────────────────
 
-  // ── Context sync ────────────────────────────────────────────────
-
-  if (context) {
-    useListContextSync(context.get(), {
-      filters,
-      pagination,
-      sorting,
-      search,
-    })
-  }
-
-  // ── Naive UI adapters ─────────────────────────────────────────
-
-  const dataTablePagePagination = pagination ? useNaiveUiPagePagination(pagination) : ref()
-  const dataTableCursorPagination = pagination ? useNaiveUiCursorPagination(pagination) : ref()
-  const { getSortOrder, onUpdateSorter } = sorting
-    ? useNaiveUiSorting(sorting)
-    : { getSortOrder: () => false, onUpdateSorter: () => {} }
-
-  // ── Filter integration ────────────────────────────────────────
-
-  const resolvedFilterItems = filterItems ?? defineFilters(filtersSchema)
-
-  const filtering: TableFiltering | undefined = resolvedFilterItems.length
-    ? makeDataTableFiltering(toRef(filters) as any, resolvedFilterItems as any)
-    : undefined
+  const adapters = useListAdapters({
+    features: list.features,
+    filters,
+    filtersSchema,
+    filterItems,
+    context,
+  })
 
   // ── Column processing ─────────────────────────────────────────
 
@@ -155,7 +120,7 @@ export function useListPage<
 
       // Inject sortOrder for sortable columns
       if ('sorter' in processed && processed.sorter && 'key' in processed) {
-        processed.sortOrder = getSortOrder(String(processed.key))
+        processed.sortOrder = adapters.getSortOrder(String(processed.key))
       }
 
       // Inject actions render function into the marker column
@@ -176,8 +141,8 @@ export function useListPage<
       }
 
       // Auto-add filter: true for columns that have a matching filter
-      if (filtering && 'key' in processed) {
-        const hasFilter = filtering.items.some((f) => f.key === processed.key)
+      if (adapters.filtering && 'key' in processed) {
+        const hasFilter = adapters.filtering.items.some((f) => f.key === processed.key)
         if (hasFilter && processed.filter === undefined) {
           processed.filter = true
         }
@@ -185,22 +150,6 @@ export function useListPage<
 
       return processed
     })
-  })
-
-  // ── Search active filter indicator ─────────────────────────────
-
-  const searchActiveFilters = computed<ActiveFilter[]>(() => {
-    if (!search?.value) return []
-
-    return [
-      {
-        key: 'search',
-        indicator: createIndicator(`Search: ${search.value}`),
-        remove: () => {
-          search.value = undefined
-        },
-      },
-    ]
   })
 
   // ── Components ────────────────────────────────────────────────
@@ -217,9 +166,9 @@ export function useListPage<
           return h(
             NInput,
             {
-              value: search?.value || '',
+              value: adapters.search?.value || '',
               'onUpdate:value': (val: string) => {
-                if (search) search.value = val !== '' ? val : undefined
+                if (adapters.search) adapters.search.value = val !== '' ? val : undefined
               },
               placeholder: toValue(placeholder),
               clearable: true,
@@ -251,12 +200,12 @@ export function useListPage<
               loading: loading.value,
               loader: load,
               size: tableConfig?.size ?? 'small',
-              pagination: dataTablePagePagination.value || dataTableCursorPagination.value,
-              filtering,
-              extraActiveFilters: searchActiveFilters.value,
+              pagination: adapters.dataTablePagination.value,
+              filtering: adapters.filtering,
+              extraActiveFilters: adapters.searchActiveFilters.value,
               remote: tableConfig?.remote ?? true,
               striped: tableConfig?.striped ?? true,
-              'onUpdate:sorter': onUpdateSorter,
+              'onUpdate:sorter': adapters.onUpdateSorter,
             },
             {
               header: () => h('div', [searchConfig !== false ? h(SearchComponent) : null]),
@@ -303,9 +252,9 @@ export function useListPage<
       items,
       loading,
       filters,
-      search,
-      pagination,
-      sorting,
+      search: adapters.search,
+      pagination: adapters.pagination,
+      sorting: adapters.sorting,
     },
 
     actions: {

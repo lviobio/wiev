@@ -1,6 +1,7 @@
 // Core composables
 export { useList } from './useList'
 export type { UseListOptions, UseListResult } from './useList'
+export { useListAdapters } from './useListAdapters'
 export { useListPage } from './useListPage'
 
 // Features
