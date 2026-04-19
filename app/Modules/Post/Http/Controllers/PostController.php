@@ -10,7 +10,6 @@ use App\Modules\Post\Data\PostUpdateData;
 use App\Modules\Post\Http\Requests\DestroyPostRequest;
 use App\Modules\Post\Http\Requests\IndexPostRequest;
 use App\Modules\Post\Http\Requests\ShowPostRequest;
-use App\Modules\Post\Http\Requests\UpdatePostRequest;
 use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
 use App\Modules\Post\Services\PostService;
@@ -74,14 +73,11 @@ class PostController extends Controller
         return $this->resource($model);
     }
 
-    public function update(UpdatePostRequest $request): PostResource
+    public function update(PostUpdateData $data, Post $post): PostResource
     {
-        $model = $request->model;
-        $this->postService->update($model, PostUpdateData::from($request->validated() + [
-                'operatingUser' => $request->user(),
-            ]));
+        $this->postService->update($post, $data);
 
-        return $this->resource($model);
+        return $this->resource($post);
     }
 
     public function destroy(DestroyPostRequest $request): Response

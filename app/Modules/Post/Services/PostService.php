@@ -26,7 +26,7 @@ class PostService
 
     public function update(Post $model, PostUpdateData $data): void
     {
-        $model->update($data->except('cover', 'operatingUser')->toArray());
+        $model->update($data->except('cover', 'actorUser')->toArray());
 
         if (!$data->cover instanceof Optional) {
             if ($data->cover) {

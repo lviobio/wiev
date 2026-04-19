@@ -5,6 +5,7 @@ namespace App\Modules\Post\Data;
 
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Spatie\LaravelData\Attributes\FromAuthenticatedUser;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
@@ -14,7 +15,8 @@ class PostUpdateData extends Data
         public string                     $title,
         public ?string                    $content,
         public UploadedFile|null|Optional $cover,
-        public User                       $operatingUser,
+        #[FromAuthenticatedUser]
+        public User                       $actorUser,
     )
     {
     }
