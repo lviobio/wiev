@@ -10,7 +10,6 @@ use App\Modules\Post\Data\PostUpdateData;
 use App\Modules\Post\Http\Requests\DestroyPostRequest;
 use App\Modules\Post\Http\Requests\IndexPostRequest;
 use App\Modules\Post\Http\Requests\ShowPostRequest;
-use App\Modules\Post\Http\Requests\StorePostRequest;
 use App\Modules\Post\Http\Requests\UpdatePostRequest;
 use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
@@ -68,11 +67,9 @@ class PostController extends Controller
         return $this->resource($model);
     }
 
-    public function store(StorePostRequest $request): PostResource
+    public function store(PostCreateData $data): PostResource
     {
-        $model = $this->postService->create(PostCreateData::from($request->validated() + [
-                'author' => $request->user(),
-            ]));
+        $model = $this->postService->create($data);
 
         return $this->resource($model);
     }
