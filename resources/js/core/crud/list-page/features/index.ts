@@ -1,4 +1,5 @@
-export { hasFilters, hasPagination, hasSearch, hasSorting, PaginationResetPageKey } from './types'
+export { installFeatures, type InstallFeaturesResult } from './install'
+export { PaginationResetPageKey, hasFilters, hasPagination, hasSearch, hasSorting } from './types'
 export type {
   FeatureContext,
   FeatureInstallResult,
@@ -12,7 +13,6 @@ export type {
   SlotContributions,
   SortingFeature,
 } from './types'
-export { installFeatures, type InstallFeaturesResult } from './install'
 export { withFilters } from './withFilters'
 export { withPagination } from './withPagination'
 export { withSearch } from './withSearch'

@@ -1,13 +1,16 @@
+import type { ContextSyncChannel } from '@/core/list-context/useListContextSync'
 import type { FeatureContext, ListFeature, ListPageSlot, MergedContributions } from './types'
 
 export interface InstallFeaturesResult<State extends Record<string | symbol, unknown>> {
   state: State
   contributions: MergedContributions
+  contextSync: ContextSyncChannel[]
 }
 
 /**
  * Sort features by `priority` ascending, install each with the given context,
- * and return the merged state + shallow-merged contributions per render slot.
+ * and return merged state, per-slot contributions, and the aggregated list
+ * of context-sync channels in install order.
  */
 export function installFeatures<State extends Record<string | symbol, unknown>>(
   features: readonly ListFeature[],
@@ -19,6 +22,7 @@ export function installFeatures<State extends Record<string | symbol, unknown>>(
     search: {},
     wrapper: {},
   }
+  const contextSync: ContextSyncChannel[] = []
 
   const sorted = [...features].sort((a, b) => a.priority - b.priority)
 
@@ -32,7 +36,11 @@ export function installFeatures<State extends Record<string | symbol, unknown>>(
         if (slotProps) Object.assign(contributions[slot], slotProps)
       }
     }
+
+    if (result.contextSync?.length) {
+      contextSync.push(...result.contextSync)
+    }
   }
 
-  return { state, contributions }
+  return { state, contributions, contextSync }
 }

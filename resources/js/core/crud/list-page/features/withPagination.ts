@@ -1,3 +1,4 @@
+import { createPaginationSyncChannel } from '@/core/list-context/channels'
 import { usePagination } from '@/core/pagination/base'
 import { watchIgnorable } from '@vueuse/core'
 import { isEqual } from 'lodash'
@@ -35,7 +36,10 @@ export function withPagination(): PaginationFeature {
         })
       })
 
-      return { state: { pagination } }
+      return {
+        state: { pagination },
+        contextSync: [createPaginationSyncChannel(pagination)],
+      }
     },
   }
 }

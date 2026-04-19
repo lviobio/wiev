@@ -1,7 +1,6 @@
 import type { DefaultListQueryContract } from '@/core/api/simple-repository-helpers-v1/main'
-import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
-import type { SortingComposable } from '@/core/sorting/base'
-import { toRaw, type Reactive, type Ref } from 'vue'
+import type { MaybePaginatedData } from '@/core/pagination/base'
+import { toRaw } from 'vue'
 import type { DataLoader, DataLoaderParams, DefaultListFeaturesState } from './types'
 
 /**

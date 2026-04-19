@@ -1,6 +1,7 @@
 import { makeDataTableFiltering } from '@/components/AppDataTable/filters'
 import type { TableFilter } from '@/components/AppDataTable/filters/base'
 import { defineFilters } from '@/core/crud/list-page/filters'
+import { createFiltersSyncChannel } from '@/core/list-context/channels'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { reactive, toRef, watch } from 'vue'
 import type { z } from 'zod'
@@ -43,6 +44,7 @@ export function withFilters<FS extends z.ZodObject>(
       return {
         state: { filters } as { filters: import('vue').Reactive<F> },
         contributions: filtering ? { table: { filtering } } : undefined,
+        contextSync: [createFiltersSyncChannel(filters)],
       }
     },
   }

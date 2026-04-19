@@ -109,7 +109,7 @@ export function useListPage<
     withFilters(options.filtersSchema!, { items: options.filters }),
   ]
 
-  const { state: installedState, contributions } = installFeatures(featuresList, ctx)
+  const { state: installedState, contributions, contextSync } = installFeatures(featuresList, ctx)
   Object.assign(features as object, installedState)
 
   // ── Adapters ──────────────────────────────────────────────────
@@ -117,6 +117,7 @@ export function useListPage<
   const adapters = useListAdapters({
     features,
     context,
+    contextSyncChannels: contextSync,
   })
 
   // ── Feature-contributed filtering (if withFilters is installed) ─

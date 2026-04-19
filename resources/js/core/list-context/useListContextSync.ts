@@ -1,12 +1,15 @@
-import { castAsCursor, castAsPage, PaginationComposable } from '@/core/pagination/base'
-import { SortField, SortingComposable } from '@/core/sorting/base'
-import { Reactive, Ref, watch } from 'vue'
+import type { SortField } from '@/core/sorting/base'
+import { Ref, watch } from 'vue'
 
 type WatchHandle = ReturnType<typeof watch>
 
-// ── Types ──
+// ── Types ────────────────────────────────────────────────────────
 
-/** Minimal shape the context must satisfy for sync to work. */
+/**
+ * Conventional shape for a list-page context. Individual channels
+ * read/write only the keys they care about — features can extend
+ * the context freely as long as their own channels handle it.
+ */
 export interface ListContextConstraint<F> {
   page?: number
   cursor?: string
@@ -16,23 +19,39 @@ export interface ListContextConstraint<F> {
   filters: F
 }
 
-export interface ListContextSyncOptions<F extends Record<string, any>> {
-  filters?: Reactive<F>
-  pagination?: PaginationComposable
-  sorting?: SortingComposable
-  search?: Ref<string | undefined>
+export interface ContextSyncChannelContext {
+  /** The unified context ref. A channel reads/writes only its own keys on it. */
+  context: Ref<Record<string, any>>
+  /**
+   * Run `fn` with every channel's watchers paused — use when writing to
+   * context from a local watcher to prevent feedback loops.
+   */
+  guarded: (fn: () => void) => void
+  /**
+   * Register a watch handle so the runner can pause it during `guarded`.
+   * Every watcher a channel creates should be registered.
+   */
+  register: (handle: WatchHandle) => void
 }
 
-// ── Deep assign utility ──
+export interface ContextSyncChannel {
+  /**
+   * Wire up bidirectional sync between a feature's state and the shared
+   * context. Called once per channel by `useListContextSync`.
+   */
+  install(ctx: ContextSyncChannelContext): void
+}
+
+// ── Deep assign utility (shared with channels) ───────────────────
 
 /**
- * Recursively assigns values from `source` to `target` property-by-property.
+ * Recursively assign `source` onto `target` property-by-property.
  * Preserves Vue reactivity on nested objects (e.g. `created_at: { from, to }`)
  * instead of replacing them wholesale.
  *
- * Only iterates own enumerable string keys (skips symbols like SCHEMA_SYMBOL).
+ * Only iterates own enumerable string keys (skips symbols).
  */
-function deepAssign(target: Record<string, any>, source: Record<string, any>): void {
+export function deepAssign(target: Record<string, any>, source: Record<string, any>): void {
   for (const key of Object.keys(source)) {
     const srcVal = source[key]
     const tgtVal = target[key]
@@ -52,183 +71,42 @@ function deepAssign(target: Record<string, any>, source: Record<string, any>): v
   }
 }
 
-// ── Composable ──
+// ── Composable ───────────────────────────────────────────────────
 
 /**
- * Bidirectional sync between a unified list context and separated
- * state sources (filters ref, PaginationComposable, etc.).
- *
- * @param context - The unified context ref (required first argument).
- * @param options - Sync channels to wire up. All are optional — only
- *                  provided channels are synced. Extend this interface
- *                  to add new sync channels in the future.
+ * Bidirectional sync between a unified list context and feature-owned
+ * state, driven by pluggable channels. Each channel is a self-contained
+ * description of what to read/write for one concern (filters, search,
+ * pagination, etc.). Features register their own channels — the runner
+ * is agnostic to the context shape.
  *
  * @example
  * ```ts
- * useListContextSync(context, {
- *   filters,
- *   pagination,
- * })
+ * useListContextSync(context, [
+ *   createFiltersSyncChannel(filters),
+ *   createSearchSyncChannel(search),
+ * ])
  * ```
  */
-export function useListContextSync<F extends Record<string, any>>(
-  context: Ref<ListContextConstraint<F>>,
-  options: ListContextSyncOptions<F>,
+export function useListContextSync(
+  context: Ref<Record<string, any>>,
+  channels: ContextSyncChannel[],
 ): void {
   const watchers: WatchHandle[] = []
 
-  /** Pause all watchers, run `fn`, then resume — prevents bidirectional loops. */
-  function guarded(fn: () => void): void {
+  const guarded = (fn: () => void): void => {
     watchers.forEach((w) => w.pause())
     fn()
     watchers.forEach((w) => w.resume())
   }
 
-  // ── Filters ──
-
-  if (options.filters) {
-    const filters = options.filters
-
-    // Initialization: context filters -> local filters
-    deepAssign(filters, toRaw(context.value.filters))
-
-    // filters -> context.filters
-    watchers.push(
-      watch(
-        filters,
-        (newVal) => {
-          const raw = toRaw(newVal)
-          if (JSON.stringify(raw) === JSON.stringify(toRaw(context.value.filters))) return
-          guarded(() => deepAssign(context.value.filters as Record<string, any>, raw))
-        },
-        { deep: true },
-      ),
-    )
-
-    // context.filters -> filters
-    watchers.push(
-      watch(
-        () => context.value.filters,
-        (newVal) => {
-          const raw = toRaw(newVal)
-          if (JSON.stringify(raw) === JSON.stringify(toRaw(filters))) return
-          deepAssign(filters as Record<string, any>, raw)
-        },
-        { deep: true },
-      ),
-    )
+  const channelCtx: ContextSyncChannelContext = {
+    context,
+    guarded,
+    register: (handle) => watchers.push(handle),
   }
 
-  // ── Search ──
-
-  if (options.search) {
-    const search = options.search
-
-    // Initialization: context search -> local ref
-    search.value = context.value.search
-
-    // search -> context.search
-    watchers.push(
-      watch(search, (newVal) => {
-        if (newVal === context.value.search) return
-        guarded(() => {
-          context.value.search = newVal
-        })
-      }),
-    )
-
-    // context.search -> search
-    watchers.push(
-      watch(
-        () => context.value.search,
-        (newVal) => {
-          if (newVal === search.value) return
-          search.value = newVal
-        },
-      ),
-    )
-  }
-
-  // ── Pagination ─────────────────────────────────────────────
-
-  if (options.pagination) {
-    const pagination = options.pagination
-
-    // Initialization: context -> pagination.state
-    // Direct write because setPage()/setPerPage() are no-ops
-    // when state is undefined (before first applyMeta).
-    if (typeof context.value.page === 'number') {
-      pagination.setPage(context.value.page)
-    } else if (typeof context.value.cursor === 'string') {
-      pagination.setCursor(context.value.cursor)
-    }
-
-    if (pagination.state.value && typeof context.value.per_page === 'number') {
-      pagination.setPerPage(context.value.per_page)
-    }
-
-    // pagination.state -> context
-    watchers.push(
-      watch(pagination.state, (state) => {
-        guarded(() => {
-          context.value.page = castAsPage(state)?.page
-          context.value.cursor = castAsCursor(state)?.cursor
-          context.value.per_page = state?.per_page
-        })
-      }),
-    )
-
-    // context -> pagination
-    watchers.push(
-      watch(
-        () => [context.value.page, context.value.per_page, context.value.cursor] as const,
-        ([newPage, newPerPage, newCursor], [oldPage, oldPerPage, oldCursor]) => {
-          if (newPage !== oldPage && newPage !== undefined) {
-            pagination.setPage(newPage)
-          }
-          if (newCursor !== oldCursor && newCursor !== undefined) {
-            pagination.setCursor(newCursor)
-          }
-          if (newPerPage !== oldPerPage && newPerPage !== undefined) {
-            pagination.setPerPage(newPerPage)
-          }
-        },
-      ),
-    )
-  }
-
-  // ── Sorting ──────────────────────────────────────────────────
-
-  if (options.sorting) {
-    const sorting = options.sorting
-
-    // Initialization: context sort -> local sorting
-    if (context.value.sort?.length) {
-      sorting.state.value = [...context.value.sort]
-    }
-
-    // sorting.state -> context.sort
-    watchers.push(
-      watch(sorting.state, (newVal) => {
-        const raw = toRaw(newVal)
-        if (JSON.stringify(raw) === JSON.stringify(toRaw(context.value.sort ?? []))) return
-        guarded(() => {
-          context.value.sort = [...raw]
-        })
-      }),
-    )
-
-    // context.sort -> sorting.state
-    watchers.push(
-      watch(
-        () => context.value.sort,
-        (newVal) => {
-          const raw = toRaw(newVal ?? [])
-          if (JSON.stringify(raw) === JSON.stringify(toRaw(sorting.state.value))) return
-          sorting.state.value = [...raw]
-        },
-        { deep: true },
-      ),
-    )
+  for (const channel of channels) {
+    channel.install(channelCtx)
   }
 }

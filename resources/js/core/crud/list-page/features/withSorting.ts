@@ -1,3 +1,4 @@
+import { createSortingSyncChannel } from '@/core/list-context/channels'
 import { useSorting, type UseSortingOptions } from '@/core/sorting/base'
 import { isEqual } from 'lodash'
 import { watch } from 'vue'
@@ -20,7 +21,10 @@ export function withSorting(options?: UseSortingOptions): SortingFeature {
         },
       )
 
-      return { state: { sorting } }
+      return {
+        state: { sorting },
+        contextSync: [createSortingSyncChannel(sorting)],
+      }
     },
   }
 }

@@ -40,7 +40,6 @@ const ListPage = useListPage({
     },
   ],
 })
-
 </script>
 
 <template>

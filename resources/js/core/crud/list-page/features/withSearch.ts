@@ -1,3 +1,4 @@
+import { createSearchSyncChannel } from '@/core/list-context/channels'
 import { ref, watch, type Ref } from 'vue'
 import { PaginationResetPageKey, type FeatureContext, type SearchFeature } from './types'
 
@@ -15,7 +16,10 @@ export function withSearch(): SearchFeature {
         ctx.loadDebounced()
       })
 
-      return { state: { search } }
+      return {
+        state: { search },
+        contextSync: [createSearchSyncChannel(search)],
+      }
     },
   }
 }

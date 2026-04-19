@@ -1,3 +1,4 @@
+import type { ContextSyncChannel } from '@/core/list-context/useListContextSync'
 import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
 import type { SortingComposable } from '@/core/sorting/base'
 import type { Reactive, Ref } from 'vue'
@@ -37,6 +38,8 @@ export interface FeatureInstallResult<
 > {
   state: State
   contributions?: SlotContributions
+  /** Channels to sync feature state with the shared list context. */
+  contextSync?: ContextSyncChannel[]
 }
 
 // ── Feature interface ───────────────────────────────────────────
@@ -60,9 +63,8 @@ export interface ListFeature<
 export type PaginationFeature = ListFeature<'pagination', { pagination: PaginationComposable }>
 export type SortingFeature = ListFeature<'sorting', { sorting: SortingComposable }>
 export type SearchFeature = ListFeature<'search', { search: Ref<string | undefined> }>
-export type FiltersFeature<
-  F extends Record<string, unknown> = Record<string, unknown>,
-> = ListFeature<'filters', { filters: Reactive<F> }>
+export type FiltersFeature<F extends Record<string, unknown> = Record<string, unknown>> =
+  ListFeature<'filters', { filters: Reactive<F> }>
 
 // ── Feature type guards ──────────────────────────────────────────
 

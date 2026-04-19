@@ -1,5 +1,5 @@
 import type { TableFilter } from '@/components/AppDataTable/filters/base'
-import { ListFeature } from '@/core/crud/list-page/features'
+import type { ListFeature } from '@/core/crud/list-page/features/types'
 import type { ListContextConstraint } from '@/core/list-context/useListContextSync'
 import type { MaybePaginatedData, PaginationComposable } from '@/core/pagination/base'
 import type { SortingComposable } from '@/core/sorting/base'
