@@ -6,6 +6,7 @@ import { PaginationResetPageKey, type FeatureContext, type PaginationFeature } f
 export function withPagination(): PaginationFeature {
   return {
     brand: 'pagination',
+    priority: 1000,
     install(ctx: FeatureContext) {
       const pagination = usePagination()
 
@@ -34,7 +35,7 @@ export function withPagination(): PaginationFeature {
         })
       })
 
-      return { pagination }
+      return { state: { pagination } }
     },
   }
 }

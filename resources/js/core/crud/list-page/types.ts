@@ -118,7 +118,7 @@ export interface UseListPageOptions<
   FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
 > {
   dataHandler: DataLoader<T, FeaturesState>
-  filtersSchema: FS
+  filtersSchema?: FS
   filters?: TableFilter[]
   columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>
   actions?: ActionDef<T>[]
@@ -136,7 +136,7 @@ export interface UseListPageOptions<
 export interface UseListPageState<T, F extends Record<string, unknown>> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
-  filters: Reactive<F>
+  filters?: Reactive<F>
   search?: Ref<string | undefined>
   pagination?: PaginationComposable
   sorting?: SortingComposable

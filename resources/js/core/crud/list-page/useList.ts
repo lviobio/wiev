@@ -2,41 +2,36 @@ import { isCancel } from '@/core/errors'
 import type { MaybePaginatedData } from '@/core/pagination/base'
 import { debounce } from 'lodash'
 import { onScopeDispose, ref, type Ref, shallowRef, type ShallowRef } from 'vue'
-import type { FeatureContext, ListFeature, MergedState } from './features'
 
 // ── Types ───────────────────────────────────────────────────────
 
-export interface UseListLoaderParams<Features extends readonly ListFeature[]> {
-  features: MergedState<Features>
-  signal: AbortSignal
-}
-
-export interface UseListOptions<T, Features extends readonly ListFeature[]> {
-  features: [...Features]
-  loader: (params: UseListLoaderParams<Features>) => Promise<MaybePaginatedData<T>>
+export interface UseListOptions<T> {
+  loader: (signal: AbortSignal) => Promise<MaybePaginatedData<T>>
   debounceMs?: number
 }
 
-export interface UseListResult<T, Features extends readonly ListFeature[]> {
+export interface UseListResult<T> {
   items: ShallowRef<T[]>
   loading: Ref<boolean>
+  /** Immediate load (cancels any pending debounce). */
   load: () => Promise<void>
-  features: MergedState<Features>
+  /** Debounced load (useful for search/filter changes). */
+  loadDebounced: () => void
+  /** Cancels pending debounce and triggers load immediately. */
+  loadImmediate: () => void
+  /** Register a handler invoked after each successful load. */
+  onAfterLoad: (handler: (result: MaybePaginatedData<unknown>) => void) => void
 }
 
 // ── Composable ──────────────────────────────────────────────────
 
-export function useList<T, const Features extends readonly ListFeature[]>(
-  options: UseListOptions<T, Features>,
-): UseListResult<T, Features> {
+export function useList<T>(options: UseListOptions<T>): UseListResult<T> {
   const { loader, debounceMs = 400 } = options
 
   const items = shallowRef<T[]>([])
   const loading = ref(false)
 
   let abortController: AbortController | undefined
-
-  // ── Lifecycle registries ──────────────────────────────────────
 
   const afterLoadHandlers: ((result: MaybePaginatedData<unknown>) => void)[] = []
 
@@ -49,11 +44,7 @@ export function useList<T, const Features extends readonly ListFeature[]>(
     abortController = currentController
 
     try {
-      const loaderParams = {
-        features: mergedState as MergedState<Features>,
-        signal: currentController.signal,
-      }
-      const result = await loader(loaderParams)
+      const result = await loader(currentController.signal)
       items.value = result.data
 
       for (const handler of afterLoadHandlers) {
@@ -72,46 +63,28 @@ export function useList<T, const Features extends readonly ListFeature[]>(
     }
   }
 
-  const loadDebounced = debounce(load, debounceMs)
+  const loadDebouncedFn = debounce(load, debounceMs)
+  const loadDebounced = () => {
+    loadDebouncedFn()
+  }
   const loadImmediate = () => {
-    loadDebounced.cancel()
+    loadDebouncedFn.cancel()
     load()
-  }
-
-  // ── Feature context ───────────────────────────────────────────
-
-  const shared = new Map<symbol, unknown>()
-
-  const ctx: FeatureContext = {
-    loadDebounced,
-    loadImmediate,
-    onAfterLoad: (handler) => afterLoadHandlers.push(handler),
-    provide: (key, value) => shared.set(key, value),
-    resolve: <T = unknown>(key: symbol) => shared.get(key) as T | undefined,
-  }
-
-  // ── Install features ──────────────────────────────────────────
-
-  const mergedState = {} as Record<string, unknown>
-
-  for (const feature of options.features) {
-    const state = feature.install(ctx)
-    Object.assign(mergedState, state)
   }
 
   // ── Cleanup ───────────────────────────────────────────────────
 
   onScopeDispose(() => {
-    loadDebounced.cancel()
+    loadDebouncedFn.cancel()
     abortController?.abort()
   })
-
-  // ── Return ────────────────────────────────────────────────────
 
   return {
     items,
     loading,
     load,
-    features: mergedState as MergedState<Features>,
+    loadDebounced,
+    loadImmediate,
+    onAfterLoad: (handler) => afterLoadHandlers.push(handler),
   }
 }

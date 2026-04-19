@@ -17,14 +17,42 @@ export interface FeatureContext {
   resolve<T = unknown>(key: symbol): T | undefined
 }
 
+// ── Render slots (extension points in useListPage render tree) ──
+
+/**
+ * Named extension points in the render tree produced by `useListPage`.
+ * A feature can contribute props to any of these via `install().contributions`.
+ */
+export type ListPageSlot = 'table' | 'search' | 'wrapper'
+
+export type SlotContributions = Partial<Record<ListPageSlot, Record<string, unknown>>>
+
+/** Result of merging all features' contributions, shallow-merged per slot. */
+export type MergedContributions = Record<ListPageSlot, Record<string, unknown>>
+
+// ── Feature install result ──────────────────────────────────────
+
+export interface FeatureInstallResult<
+  State extends Record<string | symbol, unknown> = Record<string | symbol, unknown>,
+> {
+  state: State
+  contributions?: SlotContributions
+}
+
 // ── Feature interface ───────────────────────────────────────────
 
 export interface ListFeature<
   Brand extends string = string,
-  State extends Record<string, unknown> = Record<string, unknown>,
+  State extends Record<string | symbol, unknown> = Record<string | symbol, unknown>,
 > {
   readonly brand: Brand
-  install(ctx: FeatureContext): State
+  /**
+   * Install order (ascending). Lower runs first.
+   * Built-in features are spaced by 1000 to leave room for user features:
+   * pagination=1000, sorting=2000, search=3000, filters=4000.
+   */
+  readonly priority: number
+  install(ctx: FeatureContext): FeatureInstallResult<State>
 }
 
 // ── Concrete feature type aliases ───────────────────────────────
@@ -32,8 +60,9 @@ export interface ListFeature<
 export type PaginationFeature = ListFeature<'pagination', { pagination: PaginationComposable }>
 export type SortingFeature = ListFeature<'sorting', { sorting: SortingComposable }>
 export type SearchFeature = ListFeature<'search', { search: Ref<string | undefined> }>
-export type FiltersFeature<F extends Record<string, unknown> = Record<string, unknown>> =
-  ListFeature<'filters', { filters: Reactive<F> }>
+export type FiltersFeature<
+  F extends Record<string, unknown> = Record<string, unknown>,
+> = ListFeature<'filters', { filters: Reactive<F> }>
 
 // ── Feature type guards ──────────────────────────────────────────
 
@@ -53,6 +82,12 @@ export function hasSearch(
   features: Record<string, unknown>,
 ): features is { search: Ref<string | undefined> } {
   return 'search' in features
+}
+
+export function hasFilters<F extends Record<string, unknown> = Record<string, unknown>>(
+  features: Record<string, unknown>,
+): features is { filters: Reactive<F> } {
+  return 'filters' in features
 }
 
 // ── Shared feature keys ─────────────────────────────────────────

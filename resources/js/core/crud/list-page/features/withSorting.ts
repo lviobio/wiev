@@ -6,6 +6,7 @@ import { PaginationResetPageKey, type FeatureContext, type SortingFeature } from
 export function withSorting(options?: UseSortingOptions): SortingFeature {
   return {
     brand: 'sorting',
+    priority: 2000,
     install(ctx: FeatureContext) {
       const sorting = useSorting(options)
 
@@ -19,7 +20,7 @@ export function withSorting(options?: UseSortingOptions): SortingFeature {
         },
       )
 
-      return { sorting }
+      return { state: { sorting } }
     },
   }
 }

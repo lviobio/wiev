@@ -1,11 +1,18 @@
 import AppDataTable from '@/components/AppDataTable.vue'
-import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
+import type { TableFiltering } from '@/components/AppDataTable/filters'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
-import { type Component, computed, defineComponent, h, markRaw, toValue } from 'vue'
+import { computed, defineComponent, h, markRaw, toValue, type Component, type Reactive } from 'vue'
 import { z } from 'zod'
 import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
-import { withFilters, withPagination, withSearch, withSorting } from './features'
+import {
+  installFeatures,
+  withFilters,
+  withPagination,
+  withSearch,
+  withSorting,
+  type FeatureContext,
+} from './features'
 import {
   ActionsColumnMarker,
   DefaultListFeaturesState,
@@ -51,8 +58,6 @@ export function useListPage<
   type FST = z.infer<FS>
   const {
     dataHandler,
-    filtersSchema,
-    filters: filterItems,
     search: searchConfig,
     table: tableConfig,
     contextSymbol = ListContextSymbol,
@@ -66,37 +71,57 @@ export function useListPage<
     dialog: useDialog(),
   }
 
-  const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as FST)
+  if (!options.filtersSchema && !options.features) {
+    throw new Error('useListPage - filtersSchema or features must be provided')
+  }
 
   // ── Core list state ───────────────────────────────────────────
 
+  const features = {} as FeaturesState
+
   const list = useList({
-    features: options.features ?? [
-      withPagination(),
-      withSorting(),
-      withSearch(),
-      withFilters(filters),
-    ],
     debounceMs: options.debounceMs,
-    loader: async (params) => {
-      return dataHandler({
-        features: params.features as unknown as FeaturesState,
-        signal: params.signal,
-      })
-    },
+    loader: (signal) =>
+      dataHandler({
+        features,
+        signal,
+      }),
   })
 
   const { items, loading, load } = list
 
+  // ── Feature installation ──────────────────────────────────────
+
+  const shared = new Map<symbol, unknown>()
+
+  const ctx: FeatureContext = {
+    loadDebounced: list.loadDebounced,
+    loadImmediate: list.loadImmediate,
+    onAfterLoad: list.onAfterLoad,
+    provide: (key, value) => shared.set(key, value),
+    resolve: <R = unknown>(key: symbol) => shared.get(key) as R | undefined,
+  }
+
+  const featuresList = options.features ?? [
+    withPagination(),
+    withSorting(),
+    withSearch(),
+    withFilters(options.filtersSchema!, { items: options.filters }),
+  ]
+
+  const { state: installedState, contributions } = installFeatures(featuresList, ctx)
+  Object.assign(features as object, installedState)
+
   // ── Adapters ──────────────────────────────────────────────────
 
   const adapters = useListAdapters({
-    features: list.features,
-    filters,
-    filtersSchema,
-    filterItems,
+    features,
     context,
   })
+
+  // ── Feature-contributed filtering (if withFilters is installed) ─
+
+  const filtering = contributions.table.filtering as TableFiltering | undefined
 
   // ── Column processing ─────────────────────────────────────────
 
@@ -141,8 +166,8 @@ export function useListPage<
       }
 
       // Auto-add filter: true for columns that have a matching filter
-      if (adapters.filtering && 'key' in processed) {
-        const hasFilter = adapters.filtering.items.some((f) => f.key === processed.key)
+      if (filtering && 'key' in processed) {
+        const hasFilter = filtering.items.some((f) => f.key === processed.key)
         if (hasFilter && processed.filter === undefined) {
           processed.filter = true
         }
@@ -201,11 +226,11 @@ export function useListPage<
               loader: load,
               size: tableConfig?.size ?? 'small',
               pagination: adapters.dataTablePagination.value,
-              filtering: adapters.filtering,
               extraActiveFilters: adapters.searchActiveFilters.value,
               remote: tableConfig?.remote ?? true,
               striped: tableConfig?.striped ?? true,
               'onUpdate:sorter': adapters.onUpdateSorter,
+              ...contributions.table,
             },
             {
               header: () => h('div', [searchConfig !== false ? h(SearchComponent) : null]),
@@ -251,7 +276,7 @@ export function useListPage<
     state: {
       items,
       loading,
-      filters,
+      filters: adapters.filters as Reactive<FST> | undefined,
       search: adapters.search,
       pagination: adapters.pagination,
       sorting: adapters.sorting,
