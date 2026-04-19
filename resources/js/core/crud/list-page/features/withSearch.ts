@@ -4,7 +4,6 @@ import { PaginationResetPageKey, type FeatureContext, type SearchFeature } from 
 
 export function withSearch(): SearchFeature {
   return {
-    brand: 'search',
     priority: 3000,
     install(ctx: FeatureContext) {
       const search = ref<string | undefined>(undefined) as Ref<string | undefined>

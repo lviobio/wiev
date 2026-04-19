@@ -45,10 +45,8 @@ export interface FeatureInstallResult<
 // ── Feature interface ───────────────────────────────────────────
 
 export interface ListFeature<
-  Brand extends string = string,
   State extends Record<string | symbol, unknown> = Record<string | symbol, unknown>,
 > {
-  readonly brand: Brand
   /**
    * Install order (ascending). Lower runs first.
    * Built-in features are spaced by 1000 to leave room for user features:
@@ -60,11 +58,11 @@ export interface ListFeature<
 
 // ── Concrete feature type aliases ───────────────────────────────
 
-export type PaginationFeature = ListFeature<'pagination', { pagination: PaginationComposable }>
-export type SortingFeature = ListFeature<'sorting', { sorting: SortingComposable }>
-export type SearchFeature = ListFeature<'search', { search: Ref<string | undefined> }>
+export type PaginationFeature = ListFeature<{ pagination: PaginationComposable }>
+export type SortingFeature = ListFeature<{ sorting: SortingComposable }>
+export type SearchFeature = ListFeature<{ search: Ref<string | undefined> }>
 export type FiltersFeature<F extends Record<string, unknown> = Record<string, unknown>> =
-  ListFeature<'filters', { filters: Reactive<F> }>
+  ListFeature<{ filters: Reactive<F> }>
 
 // ── Feature type guards ──────────────────────────────────────────
 
@@ -105,7 +103,7 @@ type UnionToIntersection<U> = (U extends unknown ? (x: U) => void : never) exten
   ? I
   : never
 
-type ExtractState<F> = F extends ListFeature<string, infer S> ? S : never
+type ExtractState<F> = F extends ListFeature<infer S> ? S : never
 
 export type MergedState<Features extends readonly ListFeature[]> = UnionToIntersection<
   ExtractState<Features[number]>

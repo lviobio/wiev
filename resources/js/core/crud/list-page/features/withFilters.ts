@@ -22,7 +22,6 @@ export function withFilters<FS extends z.ZodObject>(
   type F = z.infer<FS>
 
   return {
-    brand: 'filters',
     priority: 4000,
     install(ctx: FeatureContext) {
       const filters = reactive(createEmptyObjectFromSchema(filtersSchema) as F)
