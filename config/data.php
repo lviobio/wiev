@@ -48,6 +48,7 @@ return [
     'casts' => [
         DateTimeInterface::class => App\Support\Spatie\Data\SmartDateTimeInterfaceCast::class,
         BackedEnum::class => Spatie\LaravelData\Casts\EnumCast::class,
+        App\Support\VO\NumberIdentifier::class => App\Support\Spatie\Data\NumberIdentifierCast::class,
 //        Enumerable::class => Spatie\LaravelData\Casts\EnumerableCast::class,
     ],
 
