@@ -32,7 +32,7 @@ class Post extends BaseModel implements HasMedia
     ];
 
     protected $casts = [
-        'published_at' => 'datetime',
+        'published_at' => 'immutable_datetime',
     ];
 
     public function registerMediaCollections(): void

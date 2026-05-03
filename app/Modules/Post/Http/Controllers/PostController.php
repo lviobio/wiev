@@ -5,19 +5,18 @@ namespace App\Modules\Post\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Modules\Post\Actions\CreatePost\CreatePostAction;
+use App\Modules\Post\Actions\CreatePost\CreatePostData;
 use App\Modules\Post\Actions\ShowPost\ShowPostAction;
 use App\Modules\Post\Actions\ShowPost\ShowPostData;
-use App\Modules\Post\Data\PostCreateData;
 use App\Modules\Post\Data\PostUpdateData;
 use App\Modules\Post\Http\Requests\DestroyPostRequest;
 use App\Modules\Post\Http\Requests\IndexPostRequest;
 use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
 use App\Modules\Post\Services\PostService;
-use App\Modules\Post\VO\PostIdentifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
@@ -67,11 +66,9 @@ class PostController extends Controller
         return $this->resource($action->handle($data));
     }
 
-    public function store(PostCreateData $data): PostResource
+    public function store(CreatePostAction $action, CreatePostData $data): PostResource
     {
-        $model = $this->postService->create($data);
-
-        return $this->resource($model);
+        return $this->resource($action($data));
     }
 
     public function update(PostUpdateData $data, Post $post): PostResource

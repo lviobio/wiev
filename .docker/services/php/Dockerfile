@@ -6,7 +6,7 @@ ENV ENV=/root/.bashrc
 # Устанавливаем зависимости
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libpng-dev \
+    libjpeg-dev libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     locales \
@@ -25,7 +25,8 @@ RUN apt-get clean
 # Устанавливаем расширения PHP
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug \
-    && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl
+    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install pdo_pgsql mbstring zip exif pcntl gd
 
 # Загружаем актуальную версию Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
