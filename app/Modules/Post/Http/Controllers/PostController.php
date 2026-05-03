@@ -63,7 +63,7 @@ class PostController extends Controller
 
     public function show(ShowPostAction $action, ShowPostData $data): PostResource
     {
-        return $this->resource($action->handle($data));
+        return $this->resource($action($data));
     }
 
     public function store(CreatePostAction $action, CreatePostData $data): PostResource

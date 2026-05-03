@@ -7,7 +7,7 @@ use App\Modules\Post\Models\Post;
 
 class ShowPostAction
 {
-    public function handle(ShowPostData $data): Post
+    public function __invoke(ShowPostData $data): Post
     {
         return Post::query()
             ->withTrashed()
