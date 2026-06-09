@@ -18,17 +18,17 @@ import type { DataLoader, DataLoaderParams, DefaultListFeaturesState } from './t
  * ```
  */
 export function makeDataHandlerFromRepositoryAdapter<T, F extends Record<string, unknown>>(
-  listFn: (
-    query: DefaultListQueryContract<{ filters?: F; search?: string }>,
-  ) => Promise<MaybePaginatedData<T>>,
+  listFn: (query: DefaultListQueryContract<{ filter?: F }>) => Promise<MaybePaginatedData<T>>,
 ): DataLoader<T, DefaultListFeaturesState<F>> {
   return async ({ features, signal }: DataLoaderParams<DefaultListFeaturesState<F>>) => {
     const { filters, search, pagination, sorting } = features
 
     return listFn({
       data: {
-        filters: toRaw(filters) as F,
-        ...(search?.value ? { search: search.value } : {}),
+        filter: {
+          ...(toRaw(filters) as F),
+          ...(search?.value ? { search: search.value } : {}),
+        },
       },
       pagination,
       sorting,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Modules\Post\Http\Resources;
 
 use App\Http\Resources\JsonResource;
+use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,7 @@ class PostResource extends JsonResource
             'id' => $this->whenHas('id'),
             'title' => $this->whenHas('title'),
             'content' => $this->whenHas('content'),
-            'cover' => $this->whenHasMediaToUrl(Post::MEDIA_COLLECTION_COVER),
+            'cover' => $this->whenHasMediaToUrl(PostMediaCollectionEnum::Cover->value),
             $this->mergeWhenHasDeletedAt(),
             $this->mergeWhenHasTimestamps(),
         ];

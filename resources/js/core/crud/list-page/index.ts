@@ -21,15 +21,7 @@ export { defineFilters } from './filters'
 export { makeDataHandlerFromRepositoryAdapter } from './helpers'
 
 // Column helpers
-export {
-  actionGroup,
-  actionsColumn,
-  dateColumn,
-  defineColumns,
-  deleteAction,
-  linkColumn,
-  openAction,
-} from './columns'
+export { actionGroup, actionsColumn, deleteAction, openAction } from './columns'
 
 // Types
 export type {
@@ -37,13 +29,19 @@ export type {
   ActionGroupDef,
   ActionsColumnCallback,
   Column,
+  ColumnHelpers,
+  ColumnsFactory,
+  DataColumn,
   DataLoader,
   DataLoaderParams,
+  DateColumnOptions,
   DefaultListFeaturesState,
   DeleteActionDef,
   FilterOverride,
+  LinkColumnOptions,
   ListPageColumn,
   OpenActionDef,
+  RenderedColumn,
   UseListPageActions,
   UseListPageOptions,
   UseListPageReturn,

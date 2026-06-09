@@ -24,8 +24,11 @@ down:
 	@echo Stopping containers
 	@docker compose down $(INPUT_ARGS)
 check:
-	@echo Running TypeScript check.
+	@echo Running all checks.
 	@docker compose exec vite npm run check
+check-ts:
+	@echo Running TypeScript check.
+	@docker compose exec vite npm run ts:check
 fix:
 	@echo Running ESLint fix \& Prettier format
 	@docker compose exec vite npm run format

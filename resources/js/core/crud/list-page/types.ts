@@ -6,7 +6,7 @@ import type { SortingComposable } from '@/core/sorting/base'
 import type { DialogApi, MessageApi } from 'naive-ui'
 import type { Component, InjectionKey, MaybeRefOrGetter, Reactive, Ref, VNodeChild } from 'vue'
 import type { Router } from 'vue-router'
-import { z, type ZodObject } from 'zod'
+import { type ZodObject } from 'zod'
 
 // ── Composables ─────────────────────────────────────────────────
 
@@ -93,7 +93,70 @@ export interface ActionsColumnDef {
 
 // ── List Page Column ────────────────────────────────────────────
 
-export type ListPageColumn<T> = Column<T> | (Column<T> & ActionsColumnDef)
+/** A column whose `key` is a field of `T` — the cell is rendered from row data. */
+export type DataColumn<T> = Column<T> & { key: Extract<keyof T, string> }
+
+/** A column that renders itself — `key` may be any string (e.g. computed columns). */
+export type RenderedColumn<T> = Column<T> & { render: NonNullable<Column<T>['render']> }
+
+/**
+ * Column accepted by `useListPage`: either its `key` exists in `T`,
+ * or it must provide a `render` function (nothing to auto-render otherwise),
+ * or it is an actions column placeholder.
+ *
+ * `DataColumn` is deliberately the LAST constituent: when none match,
+ * TypeScript elaborates the error against the last one, so the final
+ * message is about the invalid `key` — the most likely mistake.
+ */
+export type ListPageColumn<T> =
+  | (Column<T> & ActionsColumnDef)
+  | RenderedColumn<T>
+  | DataColumn<T>
+
+// ── Column Helpers ──────────────────────────────────────────────
+
+export interface LinkColumnOptions<T> {
+  width?: number
+  title?: string
+  sorter?: boolean
+  to: (row: T) => any // RouteLocationRaw
+  windowed?: boolean | ((row: T) => { title: string })
+}
+
+export interface DateColumnOptions {
+  width?: number
+  title?: string
+  sorter?: boolean
+}
+
+/**
+ * Column helper functions with the row type `T` already bound.
+ *
+ * Passed to the `columns` factory callback of `useListPage` so that helper
+ * calls are fully typed (`key` is checked against `keyof T`, `row` callbacks
+ * receive `T`) without explicit type arguments. Inlining generic helpers like
+ * `linkColumn(...)` directly into the options object would collapse their
+ * inference to `Record<string, any>` — TypeScript resolves nested generic
+ * calls before the outer `T` is fixed.
+ */
+export interface ColumnHelpers<T extends Record<string, any>> {
+  /**
+   * Plain data column. Prefer this over an object literal — an invalid key
+   * produces a short, precise error at the call site instead of a long
+   * union-assignability chain on the whole `columns` factory.
+   * `title` defaults to a humanized key.
+   */
+  column(key: Extract<keyof T, string>, options?: Omit<Column<T>, 'key'>): DataColumn<T>
+  linkColumn(key: Extract<keyof T, string>, options: LinkColumnOptions<T>): RenderedColumn<T>
+  dateColumn(key: Extract<keyof T, string>, options?: DateColumnOptions): RenderedColumn<T>
+  actionsColumn(
+    optionsOrCallback?: { width?: number; title?: string } | ActionsColumnCallback,
+  ): ListPageColumn<T>
+}
+
+export type ColumnsFactory<T extends Record<string, any>> = (
+  helpers: ColumnHelpers<T>,
+) => ListPageColumn<T>[]
 
 // ── Filter Override ─────────────────────────────────────────────
 
@@ -112,15 +175,20 @@ export interface ListContextProvider {
 
 export const ListContextSymbol: InjectionKey<ListContextProvider> = Symbol('ListContext')
 
-export interface UseListPageOptions<
-  T extends Record<string, any>,
-  FS extends ZodObject,
-  FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
-> {
-  dataHandler: DataLoader<T, FeaturesState>
+export interface UseListPageOptions<T extends Record<string, any>, FS extends ZodObject> {
   filtersSchema?: FS
   filters?: TableFilter[]
-  columns?: MaybeRefOrGetter<ListPageColumn<NoInfer<T>>[]>
+  /**
+   * Factory returning the column list. Receives typed column helpers
+   * (`linkColumn`, `dateColumn`, `actionsColumn`) with the row type bound.
+   *
+   * Deliberately NOT a plain array: a union type here (`array | factory`)
+   * makes TypeScript report errors against the whole option instead of the
+   * exact invalid column. Static columns are simply `columns: () => [...]`.
+   * The factory runs inside a computed, so reactive values used in it are
+   * tracked automatically.
+   */
+  columns?: ColumnsFactory<T>
   actions?: ActionDef<T>[]
   search?: { placeholder?: MaybeRefOrGetter<string> } | false
   table?: Partial<{
@@ -151,7 +219,7 @@ export interface UseListPageActions {
  *
  * Usage:
  * ```vue
- * const ListPage = useListPage({ ... })
+ * const ListPage = useListPage(dataHandler, { ... })
  *
  * <ListPage.Component />              <!-- full page -->
  * <ListPage.Partial.Wrapper />        <!-- wrapper only -->

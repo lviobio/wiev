@@ -21,7 +21,7 @@ class CreatePostData extends Data
         public ?UploadedFile $cover,
 
         #[FromAuthenticatedUser]
-        public User          $author,
+        public User          $authorUser,
     )
     {
     }

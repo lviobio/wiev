@@ -5,6 +5,7 @@ namespace App\Modules\Post\Models;
 
 use App\Models\BaseModel;
 use App\Models\User;
+use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,10 +21,6 @@ class Post extends BaseModel implements HasMedia
     use SoftDeletes;
     use InteractsWithMedia;
 
-    public const string
-        MEDIA_COLLECTION_COVER = 'cover',
-        MEDIA_COLLECTION_COVER_CONVERSION_THUMB = 'thumb';
-
     protected $fillable = [
         'title',
         'content',
@@ -38,11 +35,11 @@ class Post extends BaseModel implements HasMedia
     public function registerMediaCollections(): void
     {
         $this
-            ->addMediaCollection(self::MEDIA_COLLECTION_COVER)
+            ->addMediaCollection(PostMediaCollectionEnum::Cover->value)
             ->singleFile()
             ->registerMediaConversions(function () {
                 $this
-                    ->addMediaConversion(self::MEDIA_COLLECTION_COVER_CONVERSION_THUMB)
+                    ->addMediaConversion(PostMediaCollectionEnum::CoverConversionThumb->value)
                     ->width(50)
                     ->height(50);
             });

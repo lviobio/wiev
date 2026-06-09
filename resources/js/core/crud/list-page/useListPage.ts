@@ -4,7 +4,12 @@ import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
 import { computed, defineComponent, h, markRaw, toValue, type Component, type Reactive } from 'vue'
 import { z } from 'zod'
-import { actionsColumn, isActionsColumn, processActionsColumn } from './columns'
+import {
+  actionsColumn,
+  createColumnHelpers,
+  isActionsColumn,
+  processActionsColumn,
+} from './columns'
 import {
   installFeatures,
   withFilters,
@@ -15,6 +20,7 @@ import {
 } from './features'
 import {
   ActionsColumnMarker,
+  DataLoader,
   DefaultListFeaturesState,
   LIST_PAGE_ACTIONS_SYMBOL,
   ListComposables,
@@ -33,15 +39,32 @@ import { useListAdapters } from './useListAdapters'
  * - `T` (row type) from `dataHandler`'s return type
  * - `F` (filters) from `filtersSchema` via `z.infer`
  *
+ * `dataHandler` is a separate argument (not an option) on purpose: when a
+ * generic call like `makeDataHandlerFromRepositoryAdapter(...)` sits in the
+ * same object literal as untyped callbacks (`(row) => ...` in columns/actions),
+ * TypeScript fixes `T` to its constraint before resolving the inner call and
+ * inference collapses to `Record<string, any>`. As a standalone first argument
+ * it is processed first, so `T` flows into all column/action callbacks.
+ *
+ * For the same reason `columns` accepts a factory callback that receives
+ * column helpers with `T` pre-bound — calling generic helpers like
+ * `linkColumn(...)` directly inside the options object would lose `T`.
+ *
  * @example
  * ```ts
- * const ListPage = useListPage({
- *   dataHandler: makeDataHandlerFromRepositoryAdapter(repository.list.bind(repository)),
- *   filtersSchema: postListFiltersSchema,
- *   columns: [...],
- *   actions: [...],
- *   search: { placeholder: 'Search' },
- * })
+ * const ListPage = useListPage(
+ *   makeDataHandlerFromRepositoryAdapter(repository.list.bind(repository)),
+ *   {
+ *     filtersSchema: postListFiltersSchema,
+ *     columns: ({ column, linkColumn, dateColumn }) => [
+ *       linkColumn('id', { to: (row) => ({ name: 'posts.show', params: { id: row.id } }) }),
+ *       column('title', { sorter: true }),
+ *       dateColumn('created_at', { width: 200 }),
+ *     ],
+ *     actions: [...],
+ *     search: { placeholder: 'Search' },
+ *   },
+ * )
  *
  * // Template:
  * // <ListPage.Component />          — full page
@@ -54,10 +77,12 @@ export function useListPage<
   T extends Record<string, any>,
   FS extends z.ZodObject,
   FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
->(options: UseListPageOptions<T, FS, FeaturesState>): UseListPageReturn<T, z.infer<FS>> {
+>(
+  dataHandler: DataLoader<T, FeaturesState>,
+  options: UseListPageOptions<T, FS>,
+): UseListPageReturn<T, z.infer<FS>> {
   type FST = z.infer<FS>
   const {
-    dataHandler,
     search: searchConfig,
     table: tableConfig,
     contextSymbol = ListContextSymbol,
@@ -133,8 +158,10 @@ export function useListPage<
    * 3. Inject render function into actionsColumn marker from `options.actions`
    * 4. Auto-add `filter: true` for columns matching a filter definition
    */
+  const columnHelpers = createColumnHelpers<T>(composables)
+
   const processedColumns = computed(() => {
-    const rawColumns = [...(toValue(options.columns) ?? [])]
+    const rawColumns = [...(options.columns?.(columnHelpers) ?? [])]
 
     // Auto-append actions column if actions are provided but no marker exists
     if (options.actions?.length && !rawColumns.some(isActionsColumn)) {

@@ -28,7 +28,7 @@ export const postListFiltersSchema = z.object({
 export type PostListFilters = z.infer<typeof postListFiltersSchema>
 
 interface PostListQuery extends DefaultListQueryContract<{
-  filters?: PostListFilters
+  filter?: PostListFilters
   search?: string
 }> {}
 

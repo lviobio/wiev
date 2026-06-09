@@ -1,57 +1,25 @@
 import AppDateTime from '@/components/AppDateTime.vue'
 import { MoreVertical24Regular } from '@vicons/fluent'
+import { startCase } from 'lodash'
 import { NA, NButton, NDropdown, NFlex, NIcon, NPopconfirm } from 'naive-ui'
 import { h } from 'vue'
+import type { Router } from 'vue-router'
 import type {
   ActionDef,
   ActionGroupDef,
   ActionsColumnCallback,
   ActionsColumnDef,
   Column,
+  ColumnHelpers,
+  DateColumnOptions,
   DeleteActionDef,
+  LinkColumnOptions,
   ListComposables,
   ListPageColumn,
   OpenActionDef,
+  RenderedColumn,
 } from './types'
 import { LIST_PAGE_ACTIONS_SYMBOL } from './types'
-
-// ── defineColumns ───────────────────────────────────────────────
-
-/**
- * Narrowed key type: shows autocomplete suggestions from `T`'s keys
- * while still accepting arbitrary strings (e.g. `'actions'`).
- *
- * The `(string & {})` trick prevents TypeScript from collapsing
- * the union into plain `string`, preserving literal suggestions.
- */
-type TypedColumnKey<T> = Extract<keyof T, string> | (string & {})
-
-/** A base column definition with narrowed `key` for autocomplete. */
-type TypedBaseColumn<T> = Omit<Column<T>, 'key'> & {
-  key: TypedColumnKey<T>
-}
-
-/** Items accepted by `defineColumns` — plain objects get key autocomplete. */
-type DefineColumnsItem<T> = TypedBaseColumn<T> | ListPageColumn<T>
-
-/**
- * Identity helper that provides autocomplete for `key` in plain column objects.
- *
- * @example
- * ```ts
- * const columns = defineColumns<Post>([
- *   linkColumn('id', { to: (row) => ({ ... }), windowed: true }),
- *   { title: 'Title', key: 'title', sorter: true },        // ← autocomplete for key
- *   { title: 'Content', key: 'content', ellipsis: true },   // ← autocomplete for key
- *   dateColumn('created_at', { width: 200 }),
- * ])
- * ```
- */
-export function defineColumns<T extends Record<string, any>>(
-  columns: DefineColumnsItem<T>[],
-): ListPageColumn<T>[] {
-  return columns as ListPageColumn<T>[]
-}
 
 // ── Action definition helpers ───────────────────────────────────
 
@@ -142,29 +110,13 @@ export function actionGroup<T>(
  * Create a clickable link column that navigates via router.push.
  * Renders the cell value wrapped in `<NA>` (Naive UI anchor).
  *
- * Must be called during component setup (uses `useRouter()`).
- *
- * @example
- * ```ts
- * linkColumn<Post>('id', {
- *   width: 50,
- *   to: (row) => ({ name: 'posts.show', params: { id: row.id } }),
- *   windowed: (row) => ({ title: `Post #${row.id}` }),
- * })
- * ```
+ * Internal — exposed to list pages via `ColumnHelpers.linkColumn`.
  */
-export function linkColumn<T extends Record<string, any>>(
+function buildLinkColumn<T extends Record<string, any>>(
+  router: Router,
   key: string & keyof T,
-  options: {
-    width?: number
-    title?: string
-    sorter?: boolean
-    to: (row: T) => any // RouteLocationRaw
-    windowed?: boolean | ((row: T) => { title: string })
-  },
-): Column<Record<string, any>> {
-  const router = useRouter()
-
+  options: LinkColumnOptions<T>,
+): RenderedColumn<T> {
   return {
     title: options.title ?? key.toUpperCase(),
     key,
@@ -196,21 +148,14 @@ export function linkColumn<T extends Record<string, any>>(
 /**
  * Create a column that renders a date/time value using AppDateTime.
  *
- * @example
- * ```ts
- * dateColumn<Post>('created_at', { width: 200, sorter: true })
- * ```
+ * Internal — exposed to list pages via `ColumnHelpers.dateColumn`.
  */
-export function dateColumn<T extends Record<string, any>>(
+function buildDateColumn<T extends Record<string, any>>(
   key: string & keyof T,
-  options?: {
-    width?: number
-    title?: string
-    sorter?: boolean
-  },
-): Column<Record<string, any>> {
+  options?: DateColumnOptions,
+): RenderedColumn<T> {
   return {
-    title: options?.title ?? humanizeKey(key),
+    title: options?.title ?? startCase(key),
     key,
     width: options?.width,
     sorter: options?.sorter,
@@ -246,14 +191,14 @@ export function dateColumn<T extends Record<string, any>>(
  */
 export function actionsColumn(
   optionsOrCallback?: { width?: number; title?: string } | ActionsColumnCallback,
-): ListPageColumn<any> {
+): Column<any> & ActionsColumnDef {
   if (typeof optionsOrCallback === 'function') {
     return {
       title: '',
       key: 'actions',
       width: 100,
       [LIST_PAGE_ACTIONS_SYMBOL]: optionsOrCallback,
-    } as ListPageColumn<any>
+    }
   }
 
   return {
@@ -261,7 +206,27 @@ export function actionsColumn(
     key: 'actions',
     width: optionsOrCallback?.width ?? 100,
     [LIST_PAGE_ACTIONS_SYMBOL]: true,
-  } as ListPageColumn<any>
+  }
+}
+
+/**
+ * Create column helpers with the row type `T` pre-bound.
+ *
+ * Used by `useListPage` to pass typed helpers into the `columns` factory
+ * callback, so helper calls need no explicit type arguments and `row`
+ * callbacks / keys are checked against `T`. The router is captured here
+ * (during setup) because the factory itself runs lazily inside a computed,
+ * where `useRouter()` is no longer available.
+ */
+export function createColumnHelpers<T extends Record<string, any>>(
+  composables: ListComposables,
+): ColumnHelpers<T> {
+  return {
+    column: (key, options) => ({ title: startCase(key), ...options, key }),
+    linkColumn: (key, options) => buildLinkColumn(composables.router, key, options),
+    dateColumn: (key, options) => buildDateColumn<T>(key, options),
+    actionsColumn,
+  }
 }
 
 // ── Internal: process actions column ────────────────────────────
@@ -430,10 +395,4 @@ export function processActionsColumn<T>(
       return h(NFlex, { align: 'center', justify: 'end' }, { default: () => elements })
     },
   }
-}
-
-// ── Utils ───────────────────────────────────────────────────────
-
-function humanizeKey(key: string): string {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
