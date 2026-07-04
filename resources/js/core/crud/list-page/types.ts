@@ -154,8 +154,17 @@ export interface ColumnHelpers<T extends Record<string, any>> {
   ): ListPageColumn<T>
 }
 
-export type ColumnsFactory<T extends Record<string, any>> = (
+/** Persistent bag passed as the third argument to the `columns` factory. */
+export type ColumnsStorage = Record<string, unknown>
+
+export type ColumnsFactory<
+  T extends Record<string, any>,
+  S extends Record<string, unknown> = ColumnsStorage,
+> = (
   helpers: ColumnHelpers<T>,
+  /** The whole last successful server response (`{ data, meta }`); empty `data` before the first load. */
+  data: MaybePaginatedData<T>,
+  storage: S,
 ) => ListPageColumn<T>[]
 
 // ── Filter Override ─────────────────────────────────────────────
@@ -175,12 +184,25 @@ export interface ListContextProvider {
 
 export const ListContextSymbol: InjectionKey<ListContextProvider> = Symbol('ListContext')
 
-export interface UseListPageOptions<T extends Record<string, any>, FS extends ZodObject> {
+export interface UseListPageOptions<
+  T extends Record<string, any>,
+  FS extends ZodObject,
+  S extends Record<string, unknown> = ColumnsStorage,
+> {
   filtersSchema?: FS
   filters?: TableFilter[]
   /**
+   * Initial value of the persistent storage bag. Its type also types the
+   * `storage` argument passed to the `columns` factory. The object lives for
+   * the whole lifetime of the list, so data written to it survives reloads.
+   */
+  storage?: S
+  /**
    * Factory returning the column list. Receives typed column helpers
-   * (`linkColumn`, `dateColumn`, `actionsColumn`) with the row type bound.
+   * (`linkColumn`, `dateColumn`, `actionsColumn`) with the row type bound,
+   * a `data` argument holding the whole last server response (`{ data, meta }`),
+   * and a persistent `storage` bag for data that must survive reloads
+   * (e.g. column config that only arrives in some responses).
    *
    * Deliberately NOT a plain array: a union type here (`array | factory`)
    * makes TypeScript report errors against the whole option instead of the
@@ -188,7 +210,7 @@ export interface UseListPageOptions<T extends Record<string, any>, FS extends Zo
    * The factory runs inside a computed, so reactive values used in it are
    * tracked automatically.
    */
-  columns?: ColumnsFactory<T>
+  columns?: ColumnsFactory<T, S>
   actions?: ActionDef<T>[]
   search?: { placeholder?: MaybeRefOrGetter<string> } | false
   table?: Partial<{

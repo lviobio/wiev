@@ -31,6 +31,7 @@ export type {
   Column,
   ColumnHelpers,
   ColumnsFactory,
+  ColumnsStorage,
   DataColumn,
   DataLoader,
   DataLoaderParams,

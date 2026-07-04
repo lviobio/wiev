@@ -1,8 +1,18 @@
 import AppDataTable from '@/components/AppDataTable.vue'
 import type { TableFiltering } from '@/components/AppDataTable/filters'
+import type { MaybePaginatedData } from '@/core/pagination/base'
 import { Search24Regular } from '@vicons/fluent'
 import { NFlex, NIcon, NInput } from 'naive-ui'
-import { computed, defineComponent, h, markRaw, toValue, type Component, type Reactive } from 'vue'
+import {
+  computed,
+  defineComponent,
+  h,
+  markRaw,
+  shallowRef,
+  toValue,
+  type Component,
+  type Reactive,
+} from 'vue'
 import { z } from 'zod'
 import {
   actionsColumn,
@@ -20,6 +30,7 @@ import {
 } from './features'
 import {
   ActionsColumnMarker,
+  ColumnsStorage,
   DataLoader,
   DefaultListFeaturesState,
   LIST_PAGE_ACTIONS_SYMBOL,
@@ -76,10 +87,11 @@ import { useListAdapters } from './useListAdapters'
 export function useListPage<
   T extends Record<string, any>,
   FS extends z.ZodObject,
+  S extends Record<string, unknown> = ColumnsStorage,
   FeaturesState extends Record<string, unknown> = DefaultListFeaturesState<z.infer<FS>>,
 >(
   dataHandler: DataLoader<T, FeaturesState>,
-  options: UseListPageOptions<T, FS>,
+  options: UseListPageOptions<T, FS, S>,
 ): UseListPageReturn<T, z.infer<FS>> {
   type FST = z.infer<FS>
   const {
@@ -114,6 +126,20 @@ export function useListPage<
   })
 
   const { items, loading, load } = list
+
+  // ── Last server response for columns ──────────────────────────
+  // Holds the whole last successful load so the `columns` factory can build
+  // columns from server data. Read inside the `processedColumns` computed,
+  // so columns rebuild automatically after each load.
+  const data = shallowRef<MaybePaginatedData<T>>({ data: [] })
+  list.onAfterLoad((result) => {
+    data.value = result as MaybePaginatedData<T>
+  })
+
+  // Persistent, non-reactive bag handed to the `columns` factory. The factory
+  // owns what it writes here, so data can survive reloads (e.g. column config
+  // that only arrives in some responses). Created once, per composable.
+  const storage: S = options.storage ?? ({} as S)
 
   // ── Feature installation ──────────────────────────────────────
 
@@ -161,7 +187,7 @@ export function useListPage<
   const columnHelpers = createColumnHelpers<T>(composables)
 
   const processedColumns = computed(() => {
-    const rawColumns = [...(options.columns?.(columnHelpers) ?? [])]
+    const rawColumns = [...(options.columns?.(columnHelpers, data.value, storage) ?? [])]
 
     // Auto-append actions column if actions are provided but no marker exists
     if (options.actions?.length && !rawColumns.some(isActionsColumn)) {
