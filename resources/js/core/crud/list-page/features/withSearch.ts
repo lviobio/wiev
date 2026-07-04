@@ -10,6 +10,7 @@ export function withSearch(): SearchFeature {
 
       watch(search, (newVal, oldVal) => {
         if (newVal === oldVal) return
+        if (ctx.isHydrating()) return
 
         ctx.resolve<() => void>(PaginationResetPageKey)?.()
         ctx.loadDebounced()

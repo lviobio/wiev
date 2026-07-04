@@ -14,6 +14,7 @@ export function withSorting(options?: UseSortingOptions): SortingFeature {
         () => sorting.state.value,
         (newVal, oldVal) => {
           if (isEqual(newVal, oldVal)) return
+          if (ctx.isHydrating()) return
 
           ctx.resolve<() => void>(PaginationResetPageKey)?.()
           ctx.loadImmediate()

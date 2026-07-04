@@ -29,6 +29,8 @@ export function withFilters<FS extends z.ZodObject>(
       watch(
         filters,
         () => {
+          if (ctx.isHydrating()) return
+
           ctx.resolve<() => void>(PaginationResetPageKey)?.()
           ctx.loadDebounced()
         },

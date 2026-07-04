@@ -16,6 +16,13 @@ export interface FeatureContext {
   provide(key: symbol, value: unknown): void
   /** Retrieve a capability published by another feature. Safe to call at runtime (inside watchers). */
   resolve<T = unknown>(key: symbol): T | undefined
+  /**
+   * True while feature state is being hydrated from the shared context
+   * (e.g. initial values coming from the URL). Reload watchers must skip
+   * firing while this is true — hydration is not a user action, and the
+   * initial load is already performed once on mount.
+   */
+  isHydrating(): boolean
 }
 
 // ── Render slots (extension points in useListPage render tree) ──

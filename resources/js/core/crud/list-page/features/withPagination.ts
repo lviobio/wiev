@@ -16,6 +16,7 @@ export function withPagination(): PaginationFeature {
         () => pagination.params.value,
         (newVal, oldVal) => {
           if (isEqual(newVal, oldVal)) return
+          if (ctx.isHydrating()) return
 
           if (newVal?.per_page !== oldVal?.per_page) {
             paginationWatch.ignoreUpdates(() => {

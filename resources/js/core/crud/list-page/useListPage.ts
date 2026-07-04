@@ -8,6 +8,7 @@ import {
   defineComponent,
   h,
   markRaw,
+  nextTick,
   shallowRef,
   toValue,
   type Component,
@@ -145,12 +146,19 @@ export function useListPage<
 
   const shared = new Map<symbol, unknown>()
 
+  // While true, feature reload watchers skip firing. Set during the initial
+  // context hydration (URL -> feature state) so that seeding search/filters/
+  // sort/pagination from the URL does not schedule extra loads on top of the
+  // single load performed on mount. Cleared after the hydration flush.
+  let hydrating = true
+
   const ctx: FeatureContext = {
     loadDebounced: list.loadDebounced,
     loadImmediate: list.loadImmediate,
     onAfterLoad: list.onAfterLoad,
     provide: (key, value) => shared.set(key, value),
     resolve: <R = unknown>(key: symbol) => shared.get(key) as R | undefined,
+    isHydrating: () => hydrating,
   }
 
   const featuresList = options.features ?? [
@@ -169,6 +177,14 @@ export function useListPage<
     features,
     context,
     contextSyncChannels: contextSync,
+  })
+
+  // Context hydration above wrote initial values synchronously, which queued
+  // the feature reload watchers. Clear the guard only after that flush so those
+  // queued (pre-flush) watcher runs are skipped, while any later user-driven
+  // change reloads normally.
+  nextTick(() => {
+    hydrating = false
   })
 
   // ── Feature-contributed filtering (if withFilters is installed) ─
