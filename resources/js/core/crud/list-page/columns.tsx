@@ -118,7 +118,7 @@ function buildLinkColumn<T extends Record<string, any>>(
   options: LinkColumnOptions<T>,
 ): RenderedColumn<T> {
   return {
-    title: options.title ?? key.toUpperCase(),
+    title: options.title ?? startCase(key),
     key,
     width: options.width,
     sorter: options.sorter,
