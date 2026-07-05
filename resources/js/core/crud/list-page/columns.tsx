@@ -339,18 +339,21 @@ export function processActionsColumn<T>(
 
   /** Render an action group as a dropdown with a "⋮" trigger button. */
   function renderActionGroup(group: ActionGroupDef<T>, row: T) {
-    const dropdownOptions = group.actions
-      .filter((a) => {
-        if ((a as any).type === 'group') {
-          console.warn('[useListPage] Nested actionGroup is not supported — ignoring.')
-          return false
-        }
-        return true
-      })
-      .map((action, index) => ({
-        label: action.type === 'open' ? (action.label ?? 'Open') : (action.label ?? 'Delete'),
-        key: index,
-      }))
+    // Drop unsupported nested groups first, then index options against this
+    // filtered list — `onSelect` must resolve the action from the same array,
+    // otherwise a filtered-out group shifts the indices and fires the wrong action.
+    const flatActions = group.actions.filter((a) => {
+      if ((a as any).type === 'group') {
+        console.warn('[useListPage] Nested actionGroup is not supported — ignoring.')
+        return false
+      }
+      return true
+    })
+
+    const dropdownOptions = flatActions.map((action, index) => ({
+      label: action.type === 'open' ? (action.label ?? 'Open') : (action.label ?? 'Delete'),
+      key: index,
+    }))
 
     return h(
       NDropdown,
@@ -358,7 +361,7 @@ export function processActionsColumn<T>(
         options: dropdownOptions,
         trigger: 'click' as const,
         onSelect: (key: number) => {
-          const action = group.actions[key]
+          const action = flatActions[key]
           if (action.type === 'open') {
             navigateAction(action, row)
           } else if (action.type === 'delete') {
