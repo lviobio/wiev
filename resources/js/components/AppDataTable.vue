@@ -80,10 +80,6 @@ const slots = defineSlots<
 >()
 
 const typedSlot = (name: string | number) => name as keyof typeof slots
-
-onMounted(() => {
-  props.loader?.()
-})
 </script>
 
 <template>

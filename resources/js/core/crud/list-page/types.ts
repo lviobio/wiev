@@ -221,6 +221,12 @@ export interface UseListPageOptions<
   features?: ListFeature[]
   debounceMs?: number
   contextSymbol?: InjectionKey<ListContextProvider> | false
+  /**
+   * Perform the first load automatically when the composable is mounted.
+   * Defaults to `true`. Set to `false` for headless/custom-layout usage where
+   * the consumer controls the initial load via `actions.load()`.
+   */
+  autoLoad?: boolean
 }
 
 export interface UseListPageState<T, F extends Record<string, unknown>> {

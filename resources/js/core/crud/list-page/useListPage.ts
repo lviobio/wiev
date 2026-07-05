@@ -9,6 +9,7 @@ import {
   h,
   markRaw,
   nextTick,
+  onMounted,
   shallowRef,
   toValue,
   type Component,
@@ -99,6 +100,7 @@ export function useListPage<
     search: searchConfig,
     table: tableConfig,
     contextSymbol = ListContextSymbol,
+    autoLoad = true,
   } = options
 
   const context = contextSymbol ? inject(contextSymbol, undefined) : undefined
@@ -185,6 +187,14 @@ export function useListPage<
   // change reloads normally.
   nextTick(() => {
     hydrating = false
+  })
+
+  // The composable owns the initial load so that any usage — the full page,
+  // a lone `Partial.Table`, a custom layout, or headless `state` — loads the
+  // same way. Feature reload watchers stay guarded by `hydrating`, so this is
+  // the single load performed on mount.
+  onMounted(() => {
+    if (autoLoad) load()
   })
 
   // ── Feature-contributed filtering (if withFilters is installed) ─
