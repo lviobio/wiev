@@ -18,7 +18,9 @@ function unwrapZodType(schema: z.ZodType<any>): z.ZodType<any> {
     current instanceof z.ZodNullable ||
     current instanceof z.ZodDefault
   ) {
-    current = (current as any).unwrap()
+    // `.unwrap()` on the wrapper union is typed as the internal base schema;
+    // narrow it back to the public `ZodType` for the next loop iteration.
+    current = current.unwrap() as z.ZodType<any>
   }
   return current
 }
@@ -56,7 +58,7 @@ function isStringLike(schema: z.ZodType<any>): boolean {
  * Returns an empty object if no metadata is set.
  */
 function readSchemaMeta(schema: z.ZodType<any>): FilterOverride {
-  const meta = (schema as any).meta?.() as FilterOverride | undefined
+  const meta = schema.meta() as FilterOverride | undefined
   return meta ?? {}
 }
 

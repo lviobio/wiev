@@ -3,7 +3,7 @@ import type { TableFilter } from '@/components/AppDataTable/filters/base'
 import { defineFilters } from '@/core/crud/list-page/filters'
 import { createFiltersSyncChannel } from '@/core/list-context/channels'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
-import { reactive, toRef, watch } from 'vue'
+import { reactive, toRef, watch, type Ref } from 'vue'
 import type { z } from 'zod'
 import { type FeatureContext, type FiltersFeature, PaginationResetPageKey } from './types'
 
@@ -38,8 +38,14 @@ export function withFilters<FS extends z.ZodObject>(
       )
 
       const resolvedItems = options.items ?? defineFilters(filtersSchema)
+      // Bind the factory to the generic `Record<string, unknown>` state shape:
+      // the per-key mapped `items` type then collapses to plain `TableFilter[]`,
+      // which is what `defineFilters`/`options.items` produce.
       const filtering = resolvedItems.length
-        ? makeDataTableFiltering(toRef(() => filters) as any, resolvedItems as any)
+        ? makeDataTableFiltering<Record<string, unknown>>(
+            toRef(() => filters) as Ref<Record<string, unknown>>,
+            resolvedItems as TableFilter[],
+          )
         : undefined
 
       return {

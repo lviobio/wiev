@@ -340,7 +340,7 @@ export function processActionsColumn<T>(
     // filtered list — `onSelect` must resolve the action from the same array,
     // otherwise a filtered-out group shifts the indices and fires the wrong action.
     const flatActions = group.actions.filter((a) => {
-      if ((a as any).type === 'group') {
+      if ((a as ActionDef<T>).type === 'group') {
         console.warn('[useListPage] Nested actionGroup is not supported — ignoring.')
         return false
       }

@@ -2,7 +2,7 @@ import AppDataTable from '@/components/AppDataTable.vue'
 import type { TableFiltering } from '@/components/AppDataTable/filters'
 import type { MaybePaginatedData } from '@/core/pagination/base'
 import { Search24Regular } from '@vicons/fluent'
-import { NFlex, NIcon, NInput } from 'naive-ui'
+import { NFlex, NIcon, NInput, type DataTableColumns } from 'naive-ui'
 import {
   computed,
   defineComponent,
@@ -13,6 +13,7 @@ import {
   shallowRef,
   toValue,
   type Component,
+  type PropType,
   type Reactive,
 } from 'vue'
 import { z } from 'zod'
@@ -32,6 +33,7 @@ import {
 } from './features'
 import {
   ActionsColumnMarker,
+  Column,
   ColumnsStorage,
   DataLoader,
   DefaultListFeaturesState,
@@ -212,7 +214,15 @@ export function useListPage<
    */
   const columnHelpers = createColumnHelpers<T>(composables)
 
-  const processedColumns = computed(() => {
+  // Mutable working shape for a column while `useListPage` augments it (sort
+  // order, actions render, auto filter). The actions marker symbol is optional
+  // here because it is stripped before the column reaches the table.
+  type ProcessedColumn = Column<T> & {
+    sortOrder?: ReturnType<typeof adapters.getSortOrder>
+    [LIST_PAGE_ACTIONS_SYMBOL]?: ActionsColumnMarker
+  }
+
+  const processedColumns = computed<ProcessedColumn[]>(() => {
     const rawColumns = [...(options.columns?.(columnHelpers, data.value, storage) ?? [])]
 
     // Auto-append actions column if actions are provided but no marker exists
@@ -221,16 +231,16 @@ export function useListPage<
     }
 
     return rawColumns.map((col: ListPageColumn<T>) => {
-      const processed = { ...col } as any
+      const processed: ProcessedColumn = { ...col }
 
       // Inject sortOrder for sortable columns
-      if ('sorter' in processed && processed.sorter && 'key' in processed) {
+      if (processed.sorter && processed.key) {
         processed.sortOrder = adapters.getSortOrder(String(processed.key))
       }
 
       // Inject actions render function into the marker column
       if (isActionsColumn(col) && options.actions?.length) {
-        const marker = (col as any)[LIST_PAGE_ACTIONS_SYMBOL] as ActionsColumnMarker
+        const marker = col[LIST_PAGE_ACTIONS_SYMBOL]
         let finalActions = options.actions
 
         if (typeof marker === 'function') {
@@ -291,16 +301,18 @@ export function useListPage<
     defineComponent({
       name: 'ListPageTable',
       props: {
-        columns: { type: Array, default: undefined },
+        columns: { type: Array as PropType<ProcessedColumn[]>, default: undefined },
       },
       setup(props) {
         return () => {
-          const cols = (props.columns as any) ?? processedColumns.value
+          const cols = props.columns ?? processedColumns.value
 
+          // AppDataTable is a generic SFC; `h()` cannot unify its generic
+          // props/slots signature, so erase it to the base `Component` type.
           return h(
-            AppDataTable as any,
+            AppDataTable as unknown as Component,
             {
-              columns: cols,
+              columns: cols as DataTableColumns<T>,
               data: items.value,
               loading: loading.value,
               loader: load,
