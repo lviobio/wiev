@@ -11,14 +11,22 @@ class QueryBuilder extends BaseQueryBuilder
 
     public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, $total = null)
     {
-        if (!isset($perPage)) {
-            $perPage = $this->request->integer('per_page', 15);
+        return parent::paginate(perPage: $perPage ?? $this->resolvePerPage());
+    }
 
-            if (!in_array($perPage, $this->allowedPerPage, true)) {
-                $perPage = head($this->allowedPerPage);
-            }
+    public function cursorPaginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, $total = null)
+    {
+        return parent::cursorPaginate(perPage: $perPage ?? $this->resolvePerPage());
+    }
+
+    protected function resolvePerPage(): int
+    {
+        $perPage = $this->request->integer('per_page', 15);
+
+        if (!in_array($perPage, $this->allowedPerPage, true)) {
+            $perPage = head($this->allowedPerPage);
         }
 
-        return parent::paginate(perPage: $perPage);
+        return $perPage;
     }
 }
