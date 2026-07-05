@@ -265,27 +265,37 @@ export function processActionsColumn<T>(
     router.push(route)
   }
 
+  /** Resolve the confirmation text of a delete action for the given row. */
+  function resolveConfirmText(action: DeleteActionDef<T>, row: T) {
+    return typeof action.confirm === 'function'
+      ? action.confirm(row)
+      : (action.confirm ?? 'Are you sure?')
+  }
+
+  /**
+   * Run a confirmed delete: invoke the handler, reload the list, and show the
+   * success message (if any). Shared by every confirm surface (inline
+   * popconfirm and dropdown dialog) so the post-confirm behavior stays in sync.
+   */
+  function runDelete(action: DeleteActionDef<T>, row: T) {
+    return action.handler(row).then(() => {
+      load()
+      const successText =
+        typeof action.success === 'function' ? action.success(row) : action.success
+      if (successText) {
+        message.success(successText)
+      }
+    })
+  }
+
   /** Execute a delete action with confirmation via dialog. */
   function deleteWithDialog(action: DeleteActionDef<T>, row: T) {
-    const confirmText =
-      typeof action.confirm === 'function'
-        ? action.confirm(row)
-        : (action.confirm ?? 'Are you sure?')
-
     dialog.warning({
       title: 'Confirm',
-      content: confirmText,
+      content: resolveConfirmText(action, row),
       positiveText: 'Yes',
       negativeText: 'Cancel',
-      onPositiveClick: () =>
-        action.handler(row).then(() => {
-          load()
-          const successText =
-            typeof action.success === 'function' ? action.success(row) : action.success
-          if (successText) {
-            message.success(successText)
-          }
-        }),
+      onPositiveClick: () => runDelete(action, row),
     })
   }
 
@@ -304,26 +314,13 @@ export function processActionsColumn<T>(
     }
 
     if (action.type === 'delete') {
-      const confirmText =
-        typeof action.confirm === 'function'
-          ? action.confirm(row)
-          : (action.confirm ?? 'Are you sure?')
-
       return h(
         NPopconfirm,
         {
-          onPositiveClick: () =>
-            action.handler(row).then(() => {
-              load()
-              const successText =
-                typeof action.success === 'function' ? action.success(row) : action.success
-              if (successText) {
-                message.success(successText)
-              }
-            }),
+          onPositiveClick: () => runDelete(action, row),
         },
         {
-          default: () => confirmText,
+          default: () => resolveConfirmText(action, row),
           trigger: () =>
             h(
               NButton,
