@@ -108,10 +108,7 @@ export type RenderedColumn<T> = Column<T> & { render: NonNullable<Column<T>['ren
  * TypeScript elaborates the error against the last one, so the final
  * message is about the invalid `key` — the most likely mistake.
  */
-export type ListPageColumn<T> =
-  | (Column<T> & ActionsColumnDef)
-  | RenderedColumn<T>
-  | DataColumn<T>
+export type ListPageColumn<T> = (Column<T> & ActionsColumnDef) | RenderedColumn<T> | DataColumn<T>
 
 // ── Column Helpers ──────────────────────────────────────────────
 

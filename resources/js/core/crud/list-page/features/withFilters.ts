@@ -5,7 +5,7 @@ import { createFiltersSyncChannel } from '@/core/list-context/channels'
 import { createEmptyObjectFromSchema } from '@/core/utils/form-schemas'
 import { reactive, toRef, watch, type Ref } from 'vue'
 import type { z } from 'zod'
-import { type FeatureContext, type FiltersFeature, PaginationResetPageKey } from './types'
+import { PaginationResetPageKey, type FeatureContext, type FiltersFeature } from './types'
 
 export interface WithFiltersOptions {
   /**
