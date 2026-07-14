@@ -32,7 +32,7 @@ class PostController extends Controller
         ShowPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
         #[FillFromRouteParameter('id', 'post')]
-        ShowPostData $data,
+        ShowPostData   $data,
     ): PostResource
     {
         return PostResource::make($this->loadRelations($action($data)));
@@ -43,16 +43,21 @@ class PostController extends Controller
         return PostResource::make($this->loadRelations($action($data)));
     }
 
-    public function update(Post $post, UpdatePostAction $action, UpdatePostData $data): PostResource
+    public function update(
+        UpdatePostAction $action,
+        #[FillFromAuthenticatedUser('actorUser')]
+        #[FillFromRouteParameter('id', 'post')]
+        UpdatePostData   $data,
+    ): PostResource
     {
-        return $this->resource($action($post, $data));
+        return $this->resource($action($data));
     }
 
     public function destroy(
         DestroyPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
         #[FillFromRouteParameter('id', 'post')]
-        DestroyPostData $data,
+        DestroyPostData   $data,
     ): Response
     {
         $action($data);

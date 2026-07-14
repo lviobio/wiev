@@ -19,6 +19,7 @@ test('show post action', function () {
 
     $data = ShowPostData::from([
         'id' => $recent->getKey(),
+        'actorUser' => $user,
     ]);
 
     $model = $action($data);

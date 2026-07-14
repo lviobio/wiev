@@ -67,6 +67,11 @@ class DataFillingControllerDispatcher extends ControllerDispatcher
             $payload[$filler->property()] = $filler->resolveValue($request, $property);
         }
 
-        return $dataClass::from($payload);
+        // Merge the request body (drives validation of body fields) with the filler
+        // payload (the injected, non-body properties - auth user, route params).
+        // Injected values win on key collision. Validating the merged payload keeps
+        // the injected properties present, so their `required` rules pass instead of
+        // failing as "missing from the request".
+        return $dataClass::validateAndCreate(array_merge($request->all(), $payload));
     }
 }

@@ -10,10 +10,12 @@ use Spatie\LaravelData\Optional;
 
 class UpdatePostAction
 {
-    public function __invoke(Post $model, UpdatePostData $data): Post
+    public function __invoke(UpdatePostData $data): Post
     {
-        return DB::transaction(static function () use ($model, $data): Post {
-            $model->update($data->except('cover', 'actorUser')->toArray());
+        return DB::transaction(static function () use ($data): Post {
+            $model = Post::query()->findOrFail($data->id->value);
+
+            $model->update($data->except('id', 'actorUser', 'cover')->toArray());
 
             if (!$data->cover instanceof Optional) {
                 if ($data->cover) {
