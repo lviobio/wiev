@@ -16,6 +16,8 @@ use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Http\Queries\PostIndexQuery;
 use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
+use App\Modules\Post\VO\PostIdentifier;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
@@ -26,9 +28,14 @@ class PostController extends Controller
         return PostResource::collection($query->paginate());
     }
 
-    public function show(ShowPostAction $action, ShowPostData $data): PostResource
+    public function show(Request $request, ShowPostAction $action): PostResource
     {
-        return PostResource::make($this->loadRelations($action($data)));
+        return PostResource::make($this->loadRelations(
+            $action(ShowPostData::from([
+                'actorUser' => $request->user(),
+                'id' => PostIdentifier::fromRequestParameter($request, 'post'),
+            ]))
+        ));
     }
 
     public function store(CreatePostAction $action, CreatePostData $data): PostResource
@@ -41,9 +48,12 @@ class PostController extends Controller
         return $this->resource($action($post, $data));
     }
 
-    public function destroy(DestroyPostAction $action, DestroyPostData $data): Response
+    public function destroy(Request $request, DestroyPostAction $action): Response
     {
-        $action($data);
+        $action(DestroyPostData::from([
+            'actorUser' => $request->user(),
+            'id' => PostIdentifier::fromRequestParameter($request, 'post'),
+        ]));
 
         return response()->noContent();
     }

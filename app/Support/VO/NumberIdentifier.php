@@ -18,6 +18,12 @@ abstract readonly class NumberIdentifier
 
     public static function fromRequestParameter(Request $request, string $parameter): static
     {
+        $value = $request->route($parameter);
+
+        if (!is_numeric($value)) {
+            throw RouteParameterUnresolvableException::make($parameter);
+        }
+
         return new static((int)$request->route($parameter));
     }
 }
