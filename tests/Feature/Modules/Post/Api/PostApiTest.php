@@ -11,7 +11,7 @@ it('can retrieve a specific post', function () {
 
     $response = $this->getJson(route('api.v1.posts.show', [
         'post' => $model,
-    ]))->assertStatus(200);
+    ]))->assertOk();
 
     $response->assertExactJson([
         'data' => [
@@ -19,8 +19,45 @@ it('can retrieve a specific post', function () {
             'title' => $model->title,
             'content' => $model->content,
             'deleted_at' => null,
-            'created_at' => $model->created_at->getTimestampMs(),
-            'updated_at' => $model->updated_at->getTimestampMs(),
+            'created_at' => $this->castApiDate($model->created_at),
+            'updated_at' => $this->castApiDate($model->updated_at),
+        ]
+    ]);
+});
+
+it('can create a new post', function () {
+    $this->actingAsNewUser();
+    $model = Post::factory()->make();
+
+    $response = $this->postJson(route('api.v1.posts.store'), [
+        'title' => $model->title,
+        'content' => $model->content,
+    ]);
+
+    $response->assertCreated();
+});
+
+it('can update an existing post', function () {
+    $this->actingAsNewUser();
+    $model = Post::factory()->create();
+
+    $response = $this->putJson(route('api.v1.posts.update', [
+        'post' => $model,
+    ]), [
+        'title' => $model->title,
+        'content' => $model->content,
+    ]);
+
+    $response->assertOk();
+
+    $response->assertExactJson([
+        'data' => [
+            'id' => $model->getKey(),
+            'title' => $model->title,
+            'content' => $model->content,
+            'deleted_at' => null,
+            'created_at' => $this->castApiDate($model->created_at),
+            'updated_at' => $this->castApiDate($model->updated_at),
         ]
     ]);
 });
@@ -36,7 +73,7 @@ it('can list all posts', function () {
         'title' => $model->title,
         'content' => $model->content,
         'deleted_at' => null,
-        'created_at' => $model->created_at->getTimestampMs(),
-        'updated_at' => $model->updated_at->getTimestampMs(),
+        'created_at' => $this->castApiDate($model->created_at),
+        'updated_at' => $this->castApiDate($model->updated_at),
     ])->all());
 });

@@ -16,8 +16,8 @@ use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Http\Queries\PostIndexQuery;
 use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
-use App\Modules\Post\VO\PostIdentifier;
-use Illuminate\Http\Request;
+use App\Support\Data\Filling\FillFromAuthenticatedUser;
+use App\Support\Data\Filling\FillFromRouteParameter;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
@@ -28,14 +28,14 @@ class PostController extends Controller
         return PostResource::collection($query->paginate());
     }
 
-    public function show(Request $request, ShowPostAction $action): PostResource
+    public function show(
+        ShowPostAction $action,
+        #[FillFromAuthenticatedUser('actorUser')]
+        #[FillFromRouteParameter('id', 'post')]
+        ShowPostData $data,
+    ): PostResource
     {
-        return PostResource::make($this->loadRelations(
-            $action(ShowPostData::from([
-                'actorUser' => $request->user(),
-                'id' => PostIdentifier::fromRequestParameter($request, 'post'),
-            ]))
-        ));
+        return PostResource::make($this->loadRelations($action($data)));
     }
 
     public function store(CreatePostAction $action, CreatePostData $data): PostResource
@@ -48,12 +48,14 @@ class PostController extends Controller
         return $this->resource($action($post, $data));
     }
 
-    public function destroy(Request $request, DestroyPostAction $action): Response
+    public function destroy(
+        DestroyPostAction $action,
+        #[FillFromAuthenticatedUser('actorUser')]
+        #[FillFromRouteParameter('id', 'post')]
+        DestroyPostData $data,
+    ): Response
     {
-        $action(DestroyPostData::from([
-            'actorUser' => $request->user(),
-            'id' => PostIdentifier::fromRequestParameter($request, 'post'),
-        ]));
+        $action($data);
 
         return response()->noContent();
     }

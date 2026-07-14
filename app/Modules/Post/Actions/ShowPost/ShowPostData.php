@@ -9,7 +9,10 @@ use Spatie\LaravelData\Data;
 
 class ShowPostData extends Data
 {
-    public User $actorUser;
-
-    public PostIdentifier $id;
+    public function __construct(
+        public User           $actorUser,
+        public PostIdentifier $id,
+    )
+    {
+    }
 }

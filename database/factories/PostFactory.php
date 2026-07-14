@@ -15,8 +15,8 @@ class PostFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => $this->faker->word(),
-            'content' => $this->faker->word(),
+            'title' => $this->faker->words(2, true),
+            'content' => $this->faker->words(2, true),
             'published_at' => Carbon::now(),
 
             'author_user_id' => User::factory(),
