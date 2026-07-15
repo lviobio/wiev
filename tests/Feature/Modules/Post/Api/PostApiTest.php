@@ -5,6 +5,22 @@ namespace Tests\Feature\Modules\Post;
 
 use App\Modules\Post\Models\Post;
 
+it('can list all posts', function () {
+    $this->actingAsNewUser();
+    $collection = Post::factory()->count(10)->create();
+
+    $response = $this->getJson(route('api.v1.posts.index'));
+
+    expect($response->json('data'))->toBe($collection->map(fn(Post $model) => [
+        'id' => $model->getKey(),
+        'title' => $model->title,
+        'content' => $model->content,
+        'deleted_at' => null,
+        'created_at' => $this->castApiDate($model->created_at),
+        'updated_at' => $this->castApiDate($model->updated_at),
+    ])->all());
+});
+
 it('can retrieve a specific post', function () {
     $this->actingAsNewUser();
     $model = Post::factory()->create();
@@ -62,18 +78,13 @@ it('can update an existing post', function () {
     ]);
 });
 
-it('can list all posts', function () {
+it('can delete a post', function () {
     $this->actingAsNewUser();
-    $collection = Post::factory()->count(10)->create();
+    $model = Post::factory()->create();
 
-    $response = $this->getJson(route('api.v1.posts.index'));
+    $response = $this->deleteJson(route('api.v1.posts.destroy', [
+        'post' => $model,
+    ]));
 
-    expect($response->json('data'))->toBe($collection->map(fn(Post $model) => [
-        'id' => $model->getKey(),
-        'title' => $model->title,
-        'content' => $model->content,
-        'deleted_at' => null,
-        'created_at' => $this->castApiDate($model->created_at),
-        'updated_at' => $this->castApiDate($model->updated_at),
-    ])->all());
+    $response->assertNoContent();
 });
