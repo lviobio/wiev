@@ -18,16 +18,55 @@ use App\Modules\Post\Http\Resources\PostResource;
 use App\Modules\Post\Models\Post;
 use App\Support\Data\Filling\FillFromAuthenticatedUser;
 use App\Support\Data\Filling\FillFromRouteParameter;
+use App\Support\OpenApi\PaginatedResourceResponse;
+use App\Support\OpenApi\SingleResourceResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use OpenApi\Attributes as OA;
 
 class PostController extends Controller
 {
+    #[OA\Get(
+        path: '/api/v1/posts',
+        operationId: 'getPosts',
+        summary: 'List posts',
+        security: [['bearerAuth' => []]],
+        tags: ['posts'],
+        parameters: [
+            new OA\QueryParameter(name: 'page', schema: new OA\Schema(type: 'integer', default: 1, minimum: 1)),
+            new OA\QueryParameter(name: 'per_page', schema: new OA\Schema(type: 'integer', default: 15, enum: [15, 25, 50, 100])),
+            new OA\QueryParameter(
+                name: 'sort',
+                description: 'Sort field, prefix with `-` for descending order',
+                schema: new OA\Schema(type: 'string', default: 'id', enum: ['id', '-id', 'title', '-title', 'created_at', '-created_at']),
+            ),
+            new OA\QueryParameter(name: 'filter[title]', description: 'Partial title match', schema: new OA\Schema(type: 'string')),
+            new OA\QueryParameter(name: 'filter[search]', description: 'Partial match against title and content', schema: new OA\Schema(type: 'string')),
+            new OA\QueryParameter(name: 'filter[trashed]', description: 'Include soft-deleted posts', schema: new OA\Schema(type: 'string', enum: ['with', 'only'])),
+            new OA\QueryParameter(name: 'filter[created_at][from]', description: 'Unix timestamp in milliseconds', schema: new OA\Schema(type: 'integer', format: 'int64')),
+            new OA\QueryParameter(name: 'filter[created_at][to]', description: 'Unix timestamp in milliseconds', schema: new OA\Schema(type: 'integer', format: 'int64')),
+        ],
+        responses: [new PaginatedResourceResponse(PostResource::class)],
+    )]
     public function index(PostIndexQuery $query): AnonymousResourceCollection
     {
         return PostResource::collection($query->paginate());
     }
 
+    #[OA\Get(
+        path: '/api/v1/posts/{post}',
+        operationId: 'getPost',
+        summary: 'Show post',
+        security: [['bearerAuth' => []]],
+        tags: ['posts'],
+        parameters: [
+            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new SingleResourceResponse(PostResource::class),
+            new OA\Response(response: '404', description: 'Not found'),
+        ],
+    )]
     public function show(
         ShowPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -38,11 +77,69 @@ class PostController extends Controller
         return PostResource::make($this->loadRelations($action($data)));
     }
 
-    public function store(CreatePostAction $action, CreatePostData $data): PostResource
+    #[OA\Post(
+        path: '/api/v1/posts',
+        operationId: 'createPost',
+        summary: 'Create post',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(ref: CreatePostData::class),
+            ),
+        ),
+        tags: ['posts'],
+        responses: [
+            new SingleResourceResponse(PostResource::class, response: '201', description: 'Post created'),
+        ],
+    )]
+    public function store(
+        CreatePostAction $action,
+        #[FillFromAuthenticatedUser('authorUser')]
+        CreatePostData $data,
+    ): PostResource
     {
         return PostResource::make($this->loadRelations($action($data)));
     }
 
+    /**
+     * The route is registered as PUT, but PHP does not parse multipart bodies on PUT,
+     * so file uploads have to reach it through Laravel's method spoofing: POST the
+     * multipart body with a `_method=PUT` field. That is also what the frontend
+     * repository helpers send, hence the operation is documented as POST.
+     */
+    #[OA\Post(
+        path: '/api/v1/posts/{post}',
+        operationId: 'updatePost',
+        description: 'Send as POST with a `_method=PUT` field (Laravel method spoofing) so the multipart body, including the cover file, is parsed.',
+        summary: 'Update post',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(allOf: [
+                    new OA\Schema(ref: UpdatePostData::class),
+                    new OA\Schema(
+                        required: ['_method'],
+                        properties: [
+                            new OA\Property(property: '_method', type: 'string', default: 'PUT', enum: ['PUT']),
+                        ],
+                        type: 'object',
+                    ),
+                ]),
+            ),
+        ),
+        tags: ['posts'],
+        parameters: [
+            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new SingleResourceResponse(PostResource::class, description: 'Post updated'),
+            new OA\Response(response: '404', description: 'Post not found'),
+        ],
+    )]
     public function update(
         UpdatePostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -53,6 +150,20 @@ class PostController extends Controller
         return $this->resource($action($data));
     }
 
+    #[OA\Delete(
+        path: '/api/v1/posts/{post}',
+        operationId: 'deletePost',
+        summary: 'Delete post',
+        security: [['bearerAuth' => []]],
+        tags: ['posts'],
+        parameters: [
+            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: '204', description: 'Post deleted'),
+            new OA\Response(response: '404', description: 'Post not found'),
+        ],
+    )]
     public function destroy(
         DestroyPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]

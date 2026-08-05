@@ -18,6 +18,7 @@ test('create post action', function () {
         'title' => 'Test title',
         'content' => 'Test content',
         'cover' => UploadedFile::fake()->image('cover.jpg'),
+        'authorUser' => $user,
     ]);
 
     $model = $action($data);

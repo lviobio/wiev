@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Modules\Post;
 
 use App\Modules\Post\Models\Post;
+use Illuminate\Http\UploadedFile;
 
 it('can list all posts', function () {
     $this->actingAsNewUser();
@@ -76,6 +77,25 @@ it('can update an existing post', function () {
             'updated_at' => $this->castApiDate($model->updated_at),
         ]
     ]);
+});
+
+it('can update an existing post with a cover through method spoofing', function () {
+    $this->actingAsNewUser();
+    $model = Post::factory()->create();
+
+    $response = $this->post(route('api.v1.posts.update', [
+        'post' => $model,
+    ]), [
+        '_method' => 'PUT',
+        'title' => 'Updated title',
+        'content' => 'Updated content',
+        'cover' => UploadedFile::fake()->image('cover.jpg'),
+    ]);
+
+    $response->assertOk();
+
+    expect($response->json('data.title'))->toBe('Updated title')
+        ->and($response->json('data.cover'))->toBeString();
 });
 
 it('can delete a post', function () {

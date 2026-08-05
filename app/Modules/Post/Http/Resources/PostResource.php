@@ -7,10 +7,22 @@ use App\Http\Resources\JsonResource;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 /**
  * @property Post $resource
  */
+#[OA\Schema(
+    properties: [
+        new OA\Property(property: 'id', type: 'number'),
+        new OA\Property(property: 'title', type: 'string'),
+        new OA\Property(property: 'content', type: 'string', nullable: true),
+        new OA\Property(property: 'cover', type: 'string', nullable: true),
+        new OA\Property(property: 'deleted_at', type: 'number', nullable: true),
+        new OA\Property(property: 'created_at', type: 'number', nullable: true),
+        new OA\Property(property: 'updated_at', type: 'number', nullable: true),
+    ]
+)]
 class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
