@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
+    // `withRouting(commands: ...)` already calls withCommands() with a non-empty array,
+    // which suppresses the app/Console/Commands scan. Re-enable it explicitly.
+    ->withCommands()
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             AddLinkHeadersForPreloadedAssets::class,

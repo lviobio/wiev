@@ -16,6 +16,30 @@ use Spatie\MediaLibrary\HasMedia;
  */
 abstract class JsonResource extends BaseJsonResource
 {
+    /**
+     * Relations this resource reads while serialising.
+     *
+     * Declared here rather than in the controller so the eager-load list lives next
+     * to the code that consumes it, and so the generated HTTP layer does not have to
+     * express constrained loads - which are closures and cannot be code-generated.
+     *
+     * @return array<int|string, mixed>
+     */
+    public static function eagerLoads(): array
+    {
+        return [];
+    }
+
+    /**
+     * Wrap a model, loading whatever {@see static::eagerLoads()} declares.
+     */
+    public static function loaded(Model $model): static
+    {
+        $relations = static::eagerLoads();
+
+        return static::make($relations === [] ? $model : $model->load($relations));
+    }
+
     protected function whenHasToTimestamp(string $attribute): mixed
     {
         return $this->whenHas(

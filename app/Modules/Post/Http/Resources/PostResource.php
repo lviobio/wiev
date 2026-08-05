@@ -25,6 +25,14 @@ use OpenApi\Attributes as OA;
 )]
 class PostResource extends JsonResource
 {
+    public static function eagerLoads(): array
+    {
+        return [
+            'authorUser',
+            'media' => fn($q) => $q->whereCollectionName(PostMediaCollectionEnum::Cover->value),
+        ];
+    }
+
     public function toArray(Request $request): array
     {
         return [

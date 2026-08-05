@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Modules\Post\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
+// @generated-routes:start PostController
 Route::group(['prefix' => 'posts', 'as' => 'posts.', 'controller' => C\PostController::class], function () {
     Route::get('/', 'index')->name('index');
     Route::post('/', 'store')->name('store');
@@ -13,3 +14,4 @@ Route::group(['prefix' => 'posts', 'as' => 'posts.', 'controller' => C\PostContr
         Route::delete('/', 'destroy')->name('destroy');
     });
 });
+// @generated-routes:end PostController

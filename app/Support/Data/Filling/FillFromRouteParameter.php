@@ -30,9 +30,17 @@ final readonly class FillFromRouteParameter implements DataPropertyFiller
         return $this->property;
     }
 
+    /**
+     * Name of the route parameter this filler reads, defaulting to the property name.
+     */
+    public function parameter(): string
+    {
+        return $this->parameter ?? $this->property;
+    }
+
     public function resolveValue(Request $request, ReflectionProperty $property): mixed
     {
-        $parameter = $this->parameter ?? $this->property;
+        $parameter = $this->parameter();
 
         $type = $property->getType();
 
