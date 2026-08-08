@@ -9,6 +9,7 @@ use App\Support\Http\Generator\GeneratorException;
 use App\Support\Http\Generator\Introspection\FillerIntrospector;
 use App\Support\Http\Generator\Introspection\ReturnKind;
 use App\Support\Http\Generator\OpenApi\OperationFactory;
+use App\Support\Http\Generator\Php\CallbackPrinter;
 use App\Support\Http\Generator\Php\ImportCollector;
 use App\Support\Http\Generator\Php\Printer;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -40,6 +41,19 @@ final readonly class MethodRenderer
 
         if ($operation !== null) {
             $lines[] = $indent . $operation->render($imports, self::INDENT);
+        }
+
+        // A callback endpoint carries its own signature and body, straight from the
+        // closure the declaration wrote; there is no Action to delegate to.
+        if ($plan->callback !== null) {
+            $lines[] = (new CallbackPrinter())->render(
+                $plan->callback,
+                $plan->endpoint->controllerMethod,
+                $imports,
+                self::INDENT,
+            );
+
+            return implode(PHP_EOL, $lines);
         }
 
         $lines[] = $this->signature($definition, $plan, $imports);

@@ -12,7 +12,7 @@ final readonly class ClassRef implements Expr
     {
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         return $imports->reference($this->fqcn) . '::class';
     }

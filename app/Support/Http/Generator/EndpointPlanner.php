@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Support\Http\Generator;
 
 use App\Support\Http\Generator\Introspection\ActionIntrospector;
+use App\Support\Http\Generator\Introspection\CallbackIntrospector;
 use App\Support\Http\Generator\Introspection\DataIntrospector;
 use App\Support\Http\Generator\Introspection\ReturnKind;
 
@@ -15,10 +16,11 @@ final readonly class EndpointPlanner
     public function __construct(
         private ActionIntrospector $actions = new ActionIntrospector(),
         private DataIntrospector $data = new DataIntrospector(),
+        private CallbackIntrospector $callbacks = new CallbackIntrospector(),
     ) {
     }
 
-    public function plan(Endpoint $endpoint): EndpointPlan
+    public function plan(Endpoint $endpoint, string $routeParameter = ''): EndpointPlan
     {
         $warnings = [];
         $dataClass = null;
@@ -64,10 +66,26 @@ final readonly class EndpointPlanner
             returnKind: $returnKind,
             bodyProperties: $bodyProperties,
             hasUploadedFile: $hasUploadedFile,
-            routeParameters: $endpoint->routeParameters(),
+            // Documented from the URI rather than from the fillers: a callback endpoint has
+            // no fillers at all, yet its `{post}` still has to appear in the spec.
+            pathParameters: $this->pathParametersOf($endpoint, $routeParameter),
+            looksUpByRouteParameter: $endpoint->callback === null && $endpoint->routeParameters() !== [],
             documentedMethod: $documentedMethod,
             usesMethodSpoofing: $usesMethodSpoofing,
             warnings: $warnings,
+            callback: $endpoint->callback === null
+                ? null
+                : $this->callbacks->describe($endpoint->callback),
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function pathParametersOf(Endpoint $endpoint, string $routeParameter): array
+    {
+        preg_match_all('/\{(\w+)\??}/', $endpoint->resolvedUri($routeParameter), $matches);
+
+        return $matches[1];
     }
 }

@@ -62,6 +62,39 @@ final class GeneratorException extends RuntimeException
         return new self("[{$path}] has unbalanced @generated-routes markers for module [{$module}].");
     }
 
+    public static function callbackConflictsWithAction(string $controllerMethod): self
+    {
+        return new self(
+            "Endpoint [{$controllerMethod}] declares both a callback and an action; pick one.",
+        );
+    }
+
+    public static function callbackHasNoSource(): self
+    {
+        return new self('A callback endpoint must be a closure written in a declaration file.');
+    }
+
+    public static function callbackCapturesVariables(string $path, int $line): self
+    {
+        return new self(
+            "The callback at {$path}:{$line} captures variables with `use`, which cannot be "
+            . 'carried into a generated controller method. Inline the values instead.',
+        );
+    }
+
+    public static function callbackNotFoundInSource(string $path, int $line): self
+    {
+        return new self("Could not locate the callback declared at {$path}:{$line}.");
+    }
+
+    public static function callbackIsAmbiguous(string $path, int $line): self
+    {
+        return new self(
+            "Several callbacks share the same line span at {$path}:{$line}, so the right one "
+            . 'cannot be identified. Put each on its own lines.',
+        );
+    }
+
     public static function unknownModule(string $module): self
     {
         return new self("No app/**/Http/generator.php found for module [{$module}].");

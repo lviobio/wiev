@@ -25,7 +25,7 @@ final class PathParametersFactory
                 'required' => new Literal(true),
                 'schema' => new NewExpr(OA\Schema::class, ['type' => new Literal('string')]),
             ]),
-            $plan->routeParameters,
+            $plan->pathParameters,
         );
     }
 }

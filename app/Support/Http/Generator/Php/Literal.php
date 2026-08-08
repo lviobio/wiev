@@ -14,12 +14,12 @@ final readonly class Literal implements Expr
     {
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
-        return $this->renderValue($this->value, $imports, $indent);
+        return $this->renderValue($this->value, $imports, $indent, $reserved);
     }
 
-    private function renderValue(mixed $value, ImportCollector $imports, int $indent): string
+    private function renderValue(mixed $value, ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         if ($value === null) {
             return 'null';
@@ -38,7 +38,7 @@ final readonly class Literal implements Expr
         }
 
         if (is_array($value)) {
-            return $this->renderArray($value, $imports, $indent);
+            return $this->renderArray($value, $imports, $indent, $reserved);
         }
 
         throw GeneratorException::unrenderableLiteral(get_debug_type($value));
@@ -47,7 +47,7 @@ final readonly class Literal implements Expr
     /**
      * @param  array<array-key, mixed>  $value
      */
-    private function renderArray(array $value, ImportCollector $imports, int $indent): string
+    private function renderArray(array $value, ImportCollector $imports, int $indent, int $reserved): string
     {
         $isList = array_is_list($value);
 
@@ -55,10 +55,12 @@ final readonly class Literal implements Expr
 
         foreach ($value as $key => $item) {
             $prefix = $isList ? '' : $this->renderValue($key, $imports, $indent) . ' => ';
+            // The key prefix, plus the comma that follows once the array breaks.
+            $itemReserved = strlen($prefix) + 1;
 
-            $parts[] = fn(int $inner): string => $prefix . $this->renderValue($item, $imports, $inner);
+            $parts[] = fn(int $inner): string => $prefix . $this->renderValue($item, $imports, $inner, $itemReserved);
         }
 
-        return Printer::joinParts($parts, '[', ']', $indent);
+        return Printer::joinParts($parts, '[', ']', $indent, $reserved);
     }
 }

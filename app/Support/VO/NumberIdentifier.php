@@ -26,4 +26,9 @@ abstract readonly class NumberIdentifier
 
         return new static((int)$request->route($parameter));
     }
+
+    public function __toString(): string
+    {
+        return (string)$this->value;
+    }
 }

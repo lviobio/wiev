@@ -19,7 +19,11 @@ final class Arguments
         foreach ($arguments as $name => $value) {
             $prefix = is_string($name) ? "{$name}: " : '';
 
-            $parts[] = static fn(int $indent): string => $prefix . $value->render($imports, $indent);
+            // The prefix sits on the same line, and a comma follows when the list breaks;
+            // both eat into the width this value has to fit in.
+            $reserved = strlen($prefix) + 1;
+
+            $parts[] = static fn(int $indent): string => $prefix . $value->render($imports, $indent, $reserved);
         }
 
         return $parts;

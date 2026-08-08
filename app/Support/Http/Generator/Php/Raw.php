@@ -20,7 +20,7 @@ final readonly class Raw implements Expr
     ) {
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         foreach ($this->uses as $fqcn) {
             $imports->reference($fqcn);

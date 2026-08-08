@@ -13,18 +13,22 @@ use App\Modules\Post\Actions\CreatePost\CreatePostAction;
 use App\Modules\Post\Actions\CreatePost\CreatePostData;
 use App\Modules\Post\Actions\DestroyPost\DestroyPostAction;
 use App\Modules\Post\Actions\DestroyPost\DestroyPostData;
-use App\Modules\Post\Actions\RemoveCover\RemoveCoverAction;
-use App\Modules\Post\Actions\RemoveCover\RemoveCoverData;
+use App\Modules\Post\Actions\RestorePost\RestorePostAction;
+use App\Modules\Post\Actions\RestorePost\RestorePostData;
 use App\Modules\Post\Actions\ShowPost\ShowPostAction;
 use App\Modules\Post\Actions\ShowPost\ShowPostData;
 use App\Modules\Post\Actions\UpdatePost\UpdatePostAction;
 use App\Modules\Post\Actions\UpdatePost\UpdatePostData;
+use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Http\Queries\PostIndexQuery;
 use App\Modules\Post\Http\Resources\PostResource;
+use App\Modules\Post\Models\Post;
+use App\Modules\Post\VO\PostIdentifier;
 use App\Support\Data\Filling\FillFromAuthenticatedUser;
 use App\Support\Data\Filling\FillFromRouteParameter;
 use App\Support\OpenApi\PaginatedResourceResponse;
 use App\Support\OpenApi\SingleResourceResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use OpenApi\Attributes as OA;
@@ -147,7 +151,10 @@ class PostController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
-        responses: [new OA\Response(response: '204', description: 'Post deleted'), new OA\Response(response: '424', description: 'Post not found')],
+        responses: [
+            new OA\Response(response: '204', description: 'Post deleted'),
+            new OA\Response(response: '424', description: 'Post not found'),
+        ],
     )]
     public function destroy(
         DestroyPostAction $action,
@@ -161,6 +168,25 @@ class PostController extends Controller
         return response()->noContent();
     }
 
+    #[OA\Post(
+        path: '/api/v1/posts/{post}/restore',
+        operationId: 'restorePost',
+        summary: 'Restore post',
+        security: [['bearerAuth' => []]],
+        tags: ['posts'],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        responses: [new SingleResourceResponse(PostResource::class), new OA\Response(response: '424', description: 'Post not found')],
+    )]
+    public function restore(
+        RestorePostAction $action,
+        #[FillFromAuthenticatedUser('actorUser')]
+        #[FillFromRouteParameter('id', 'post')]
+        RestorePostData $data,
+    ): PostResource
+    {
+        return PostResource::loaded($action($data));
+    }
+
     #[OA\Delete(
         path: '/api/v1/posts/{post}/cover',
         operationId: 'removePostCover',
@@ -169,19 +195,14 @@ class PostController extends Controller
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
         responses: [
-            new OA\Response(response: '204', description: 'Successful operation'),
+            new OA\Response(response: '204', description: 'Post cover removed'),
             new OA\Response(response: '424', description: 'Post not found'),
         ],
     )]
-    public function removeCover(
-        RemoveCoverAction $action,
-        #[FillFromAuthenticatedUser('actorUser')]
-        #[FillFromRouteParameter('id', 'post')]
-        RemoveCoverData $data,
-    ): Response
+    public function removeCover(Request $request): Response
     {
-        $action($data);
-
+        $id = PostIdentifier::fromRequestParameter($request, 'post');
+        Post::query()->findOrFail($id)->clearMediaCollection(PostMediaCollectionEnum::Cover->value);
         return response()->noContent();
     }
 }

@@ -15,16 +15,17 @@ final readonly class MapLiteral implements Expr
     {
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         $parts = [];
 
         foreach ($this->entries as $key => $value) {
             $prefix = (new Literal($key))->render($imports, $indent) . ' => ';
+            $entryReserved = strlen($prefix) + 1;
 
-            $parts[] = static fn(int $inner): string => $prefix . $value->render($imports, $inner);
+            $parts[] = static fn(int $inner): string => $prefix . $value->render($imports, $inner, $entryReserved);
         }
 
-        return Printer::joinParts($parts, '[', ']', $indent);
+        return Printer::joinParts($parts, '[', ']', $indent, $reserved);
     }
 }

@@ -19,7 +19,7 @@ final readonly class NewExpr implements Expr
     ) {
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         $open = 'new ' . $imports->reference($this->fqcn) . '(';
 
@@ -28,6 +28,7 @@ final readonly class NewExpr implements Expr
             $open,
             ')',
             $indent,
+            $reserved,
         );
     }
 }

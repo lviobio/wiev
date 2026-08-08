@@ -12,6 +12,7 @@ Route::group(['prefix' => 'posts', 'as' => 'posts.', 'controller' => C\PostContr
         Route::get('/', 'show')->name('show');
         Route::put('/', 'update')->name('update');
         Route::delete('/', 'destroy')->name('destroy');
+        Route::post('restore', 'restore')->name('restore');
         Route::delete('cover', 'removeCover')->name('cover.destroy');
     });
 });

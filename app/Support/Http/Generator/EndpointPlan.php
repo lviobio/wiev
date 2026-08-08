@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Http\Generator;
 
+use App\Support\Http\Generator\Introspection\CallbackSource;
 use App\Support\Http\Generator\Introspection\ReturnKind;
 use ReflectionParameter;
 
@@ -17,7 +18,9 @@ final readonly class EndpointPlan
     /**
      * @param  class-string|null  $dataClass
      * @param  list<ReflectionParameter>  $bodyProperties
-     * @param  list<string>  $routeParameters
+     * @param  list<string>  $pathParameters  Placeholders in the URI, in order.
+     * @param  bool  $looksUpByRouteParameter  Whether the endpoint resolves a record from
+     *                                         a route parameter, and so can answer "missing".
      * @param  list<string>  $warnings
      */
     public function __construct(
@@ -26,16 +29,26 @@ final readonly class EndpointPlan
         public ReturnKind $returnKind,
         public array $bodyProperties,
         public bool $hasUploadedFile,
-        public array $routeParameters,
+        public array $pathParameters,
+        public bool $looksUpByRouteParameter,
         public HttpMethod $documentedMethod,
         public bool $usesMethodSpoofing,
         public array $warnings = [],
+        public ?CallbackSource $callback = null,
     ) {
     }
 
     public function hasRequestBody(): bool
     {
         return $this->endpoint->wantsRequestBody() && $this->bodyProperties !== [];
+    }
+
+    /**
+     * Whether the method body was written inline rather than delegated to an Action.
+     */
+    public function isCallback(): bool
+    {
+        return $this->callback !== null;
     }
 
     public function mediaType(): string

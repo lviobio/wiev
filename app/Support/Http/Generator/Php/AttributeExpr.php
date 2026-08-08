@@ -17,7 +17,7 @@ final readonly class AttributeExpr implements Expr
     ) {
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         $reference = $imports->reference($this->fqcn);
 
@@ -30,6 +30,7 @@ final readonly class AttributeExpr implements Expr
             "#[{$reference}(",
             ')]',
             $indent,
+            $reserved,
         );
     }
 }

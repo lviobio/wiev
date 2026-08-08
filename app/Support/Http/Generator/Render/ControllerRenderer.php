@@ -37,7 +37,7 @@ final class ControllerRenderer
         $methods = [];
 
         foreach ($definition->getEndpoints() as $endpoint) {
-            $plan = $this->planner->plan($endpoint);
+            $plan = $this->planner->plan($endpoint, $definition->getRouteParameter());
             $this->planWarnings = [...$this->planWarnings, ...$plan->warnings];
 
             $methods[] = $methodRenderer->render($definition, $plan, $imports);

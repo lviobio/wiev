@@ -36,7 +36,7 @@ final class ResponsesFactory
     {
         $responses = [$this->success($definition, $plan)];
 
-        if ($plan->routeParameters !== []) {
+        if ($plan->looksUpByRouteParameter) {
             $responses[] = new NewExpr(OA\Response::class, [
                 'response' => new Literal(self::NOT_FOUND_STATUS),
                 'description' => new Literal($definition->naming()->notFoundDescription()),
@@ -50,6 +50,15 @@ final class ResponsesFactory
     {
         $kind = $plan->endpoint->kind;
         $description = $definition->naming()->successDescription($kind);
+
+        // Nothing to reflect on for an inline callback: what it returns is arbitrary PHP.
+        // A bare 200 keeps the operation valid; describe it with ->addResponses().
+        if ($plan->isCallback()) {
+            return new NewExpr(OA\Response::class, [
+                'response' => new Literal('200'),
+                'description' => new Literal($description ?? 'Successful operation'),
+            ]);
+        }
 
         if ($plan->returnKind === ReturnKind::Void) {
             return new NewExpr(OA\Response::class, [

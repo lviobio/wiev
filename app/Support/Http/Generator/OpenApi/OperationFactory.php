@@ -90,7 +90,7 @@ final class OperationFactory
         }
 
         $arguments['responses'] = ListLiteral::of([
-            ...$this->responses->build($definition, $plan),
+            ...$endpoint->getResponsesOverride() ?? $this->responses->build($definition, $plan),
             ...$endpoint->getExtraResponses(),
         ]);
 

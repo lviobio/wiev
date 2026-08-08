@@ -6,6 +6,7 @@ namespace App\Support\Http\Generator;
 use App\Support\Data\Filling\DataPropertyFiller;
 use App\Support\Data\Filling\FillFromRouteParameter;
 use App\Support\Http\Generator\Php\Expr;
+use Closure;
 
 /**
  * One generated controller method plus the route that reaches it.
@@ -46,6 +47,9 @@ final class Endpoint
     /** @var list<Expr> */
     private array $extraResponses = [];
 
+    /** @var list<Expr>|null */
+    private ?array $responsesOverride = null;
+
     private ?Expr $openApiOverride = null;
 
     private bool $documented = true;
@@ -72,6 +76,7 @@ final class Endpoint
         public readonly string $routeName,
         public readonly ?string $actionClass = null,
         public readonly ?string $queryClass = null,
+        public readonly ?Closure $callback = null,
     ) {
     }
 
@@ -138,6 +143,9 @@ final class Endpoint
 
     /**
      * An endpoint outside the five CRUD shapes.
+     *
+     * Pass `callback:` instead of `actionClass:` to write the method inline; the closure's
+     * signature and body are lifted verbatim into the generated controller.
      */
     public static function make(
         HttpMethod $method,
@@ -146,7 +154,12 @@ final class Endpoint
         ?string $routeName = null,
         ?string $actionClass = null,
         ?string $queryClass = null,
+        ?Closure $callback = null,
     ): self {
+        if ($callback !== null && $actionClass !== null) {
+            throw GeneratorException::callbackConflictsWithAction($controllerMethod);
+        }
+
         return new self(
             kind: EndpointKind::Custom,
             method: $method,
@@ -155,6 +168,7 @@ final class Endpoint
             routeName: $routeName ?? $controllerMethod,
             actionClass: $actionClass,
             queryClass: $queryClass,
+            callback: $callback,
         );
     }
 
@@ -239,6 +253,25 @@ final class Endpoint
         $this->extraResponses = [...$this->extraResponses, ...array_values($responses)];
 
         return $this;
+    }
+
+    /**
+     * Replace the derived responses instead of appending to them.
+     *
+     * Needed when the derivation cannot be right - a callback endpoint answering 204,
+     * say, where the generator has no way of knowing what the body returns.
+     */
+    public function responses(Expr ...$responses): self
+    {
+        $this->responsesOverride = array_values($responses);
+
+        return $this;
+    }
+
+    /** @return list<Expr>|null */
+    public function getResponsesOverride(): ?array
+    {
+        return $this->responsesOverride;
     }
 
     /**

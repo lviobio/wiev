@@ -17,7 +17,12 @@ interface Expr
      *
      * The first line is returned unindented - the caller has already positioned it.
      * Continuation lines are indented relative to `$indent`, which is the column the
-     * first line starts at.
+     * node's line starts at.
+     *
+     * `$reserved` is how many columns of that first line the parent has already spent
+     * (a `name: ` prefix) or will spend afterwards (a trailing comma). It is deliberately
+     * separate from `$indent`: it must count towards "does this fit on one line", but
+     * must not shift the closing bracket, which stays aligned with `$indent`.
      */
-    public function render(ImportCollector $imports, int $indent): string;
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string;
 }

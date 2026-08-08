@@ -110,6 +110,31 @@ it('can delete a post', function () {
     $response->assertNoContent();
 });
 
+it('can restore a soft-deleted post', function () {
+    $this->actingAsNewUser();
+    $model = Post::factory()->create();
+    $model->delete();
+
+    expect($model->fresh()->trashed())->toBeTrue();
+
+    $response = $this->postJson(route('api.v1.posts.restore', [
+        'post' => $model,
+    ]));
+
+    $response->assertOk();
+
+    expect($model->fresh()->trashed())->toBeFalse()
+        ->and($response->json('data.id'))->toBe($model->getKey())
+        ->and($response->json('data.deleted_at'))->toBeNull();
+});
+
+it('cannot restore a missing post', function () {
+    $this->actingAsNewUser();
+
+    $this->postJson(route('api.v1.posts.restore', ['post' => 999999]))
+        ->assertStatus(424);
+});
+
 it('can remove a post cover', function () {
     $this->actingAsNewUser();
     $model = Post::factory()->create();

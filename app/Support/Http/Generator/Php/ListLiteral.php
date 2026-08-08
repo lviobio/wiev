@@ -29,13 +29,14 @@ final readonly class ListLiteral implements Expr
         return $this->items === [];
     }
 
-    public function render(ImportCollector $imports, int $indent): string
+    public function render(ImportCollector $imports, int $indent, int $reserved = 0): string
     {
         $parts = array_map(
-            static fn(Expr $item): callable => static fn(int $inner): string => $item->render($imports, $inner),
+            // Each item is followed by a comma once the list breaks.
+            static fn(Expr $item): callable => static fn(int $inner): string => $item->render($imports, $inner, 1),
             $this->items,
         );
 
-        return Printer::joinParts($parts, '[', ']', $indent);
+        return Printer::joinParts($parts, '[', ']', $indent, $reserved);
     }
 }
