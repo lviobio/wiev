@@ -55,13 +55,25 @@ final class QueryIntrospector
      */
     private function resolve(string $queryClass): AppQueryBuilder
     {
-        // A deterministic empty request: the query reads it while assembling its
-        // allow-lists, and whatever the CLI invocation happened to look like must
-        // not leak into the generated documentation.
-        $this->container->instance('request', Request::create('/', 'GET'));
-        $this->container->forgetInstance(\Spatie\QueryBuilder\QueryBuilderRequest::class);
+        $previous = $this->container->bound('request') ? $this->container->make('request') : null;
 
-        return $this->container->make($queryClass);
+        // A deterministic empty request: the query reads it while assembling its
+        // allow-lists, and whatever the caller's request happened to look like must
+        // not leak into the generated documentation. `QueryBuilderRequest` is a plain
+        // bind that re-derives from this one, so swapping it here is enough.
+        $this->container->instance('request', Request::create('/', 'GET'));
+
+        try {
+            return $this->container->make($queryClass);
+        } finally {
+            // Generation also runs inside tests and can run inside a request; leaving
+            // the stand-in bound would quietly corrupt whatever executes next.
+            if ($previous === null) {
+                $this->container->forgetInstance('request');
+            } else {
+                $this->container->instance('request', $previous);
+            }
+        }
     }
 
     private function describeFilter(AllowedFilter $filter): FilterIntrospection

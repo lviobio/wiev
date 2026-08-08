@@ -25,10 +25,10 @@ final class QueryParametersFactory
     /**
      * @return list<Expr>
      */
-    public function build(QueryDescriptor $query, Naming $naming): array
+    public function build(QueryDescriptor $query, Naming $naming, bool $cursorPaginated = false): array
     {
         $parameters = [
-            $this->page(),
+            $cursorPaginated ? $this->cursor() : $this->page(),
             $this->perPage($query),
         ];
 
@@ -64,6 +64,18 @@ final class QueryParametersFactory
                 'default' => new Literal(1),
                 'minimum' => new Literal(1),
             ]),
+        ]);
+    }
+
+    /**
+     * Cursor pagination has no page numbers - the client echoes back an opaque cursor.
+     */
+    private function cursor(): Expr
+    {
+        return new NewExpr(OA\QueryParameter::class, [
+            'name' => new Literal('cursor'),
+            'description' => new Literal('Opaque cursor from `meta.next_cursor` of the previous page'),
+            'schema' => new NewExpr(OA\Schema::class, ['type' => new Literal('string')]),
         ]);
     }
 

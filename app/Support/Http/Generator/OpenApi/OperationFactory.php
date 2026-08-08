@@ -117,6 +117,7 @@ final class OperationFactory
         $parameters = $this->queryParameters->build(
             $this->queries->describe($plan->endpoint->queryClass),
             $definition->naming(),
+            $plan->endpoint->isCursorPaginated(),
         );
 
         $this->warnings = [...$this->warnings, ...$this->queryParameters->warnings()];

@@ -190,7 +190,7 @@ class PostController extends Controller
     #[OA\Delete(
         path: '/api/v1/posts/{post}/cover',
         operationId: 'removePostCover',
-        summary: 'Remove post cover',
+        summary: 'Remove cover',
         security: [['bearerAuth' => []]],
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],

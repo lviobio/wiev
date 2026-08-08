@@ -56,8 +56,6 @@ return ControllerDefinition::make(PostController::class)
             controllerMethod: 'restore',
             actionClass: RestorePostAction::class,
         )
-            ->summary('Restore post')
-            ->operationId('restorePost')
             ->fill(
                 new FillFromAuthenticatedUser('actorUser'),
                 new FillFromRouteParameter('id', 'post'),
@@ -77,8 +75,6 @@ return ControllerDefinition::make(PostController::class)
                 return response()->noContent();
             },
         )
-            ->summary('Remove post cover')
-            ->operationId('removePostCover')
             ->responses(
                 Gh::response(204, 'Post cover removed'),
                 Gh::response(424, 'Post not found'),

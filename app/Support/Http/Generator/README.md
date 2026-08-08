@@ -105,6 +105,18 @@ return [
 
 Query-параметры `index` читаются из Query-класса: `page`, `per_page`, `sort` (enum из `allowedSorts` и их `-`-вариантов) и по параметру на каждый `allowedFilter`.
 
+Для кастомных эндпоинтов существительное подставляется по-разному в зависимости от имени метода: односложное имя его получает (`restore` → `Restore post` / `restorePost`), многословное уже само называет объект (`removeCover` → `Remove cover` / `removePostCover`). В operationId существительное есть всегда — идентификаторы операций глобальны, и `removeCover` может встретиться в двух модулях.
+
+### Курсорная пагинация
+
+`->cursor()` на listing-эндпоинте переключает и код, и документацию:
+
+```php
+Endpoint::index(PostIndexQuery::class)->cursor()
+```
+
+Тело становится `$query->cursorPaginate()`, в спеке `page` заменяется на `cursor`, а конверт ответа — на `CursorPagination`. Сортировки, фильтры и `per_page` работают как обычно.
+
 ---
 
 ## Сложные случаи

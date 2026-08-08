@@ -74,7 +74,13 @@ final class ResponsesFactory
             );
 
         if ($plan->returnKind === ReturnKind::Collection) {
-            return new NewExpr(PaginatedResourceResponse::class, [new ClassRef($resource)]);
+            $arguments = [new ClassRef($resource)];
+
+            if ($plan->endpoint->isCursorPaginated()) {
+                $arguments['paginationType'] = new Literal('CursorPagination');
+            }
+
+            return new NewExpr(PaginatedResourceResponse::class, $arguments);
         }
 
         $arguments = [new ClassRef($resource)];

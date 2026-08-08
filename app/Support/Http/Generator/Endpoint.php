@@ -60,6 +60,8 @@ final class Endpoint
 
     private ?HttpMethod $documentedAs = null;
 
+    private bool $cursorPaginated = false;
+
     private ?string $bodyOverride = null;
 
     /** @var list<string> */
@@ -303,6 +305,24 @@ final class Endpoint
         $this->mediaType = $mediaType;
 
         return $this;
+    }
+
+    /**
+     * Paginate by cursor rather than by page.
+     *
+     * Changes the generated body to `cursorPaginate()`, swaps the `page` parameter for
+     * `cursor`, and documents the `CursorPagination` envelope.
+     */
+    public function cursor(bool $cursor = true): self
+    {
+        $this->cursorPaginated = $cursor;
+
+        return $this;
+    }
+
+    public function isCursorPaginated(): bool
+    {
+        return $this->cursorPaginated;
     }
 
     /**

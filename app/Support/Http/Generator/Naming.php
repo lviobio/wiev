@@ -56,8 +56,23 @@ final readonly class Naming
             EndpointKind::Store => 'create' . $this->studlySingular,
             EndpointKind::Update => 'update' . $this->studlySingular,
             EndpointKind::Destroy => 'delete' . $this->studlySingular,
-            EndpointKind::Custom => Str::camel($controllerMethod) . $this->studlySingular,
+            EndpointKind::Custom => $this->customOperationId($controllerMethod),
         };
+    }
+
+    /**
+     * The noun goes after the verb, not at the end: `removeCover` reads as
+     * `removePostCover`, while a bare `restore` still reads as `restorePost`.
+     *
+     * It has to appear somewhere - OpenAPI operation ids are global, and two modules
+     * are free to both declare a `removeCover`.
+     */
+    private function customOperationId(string $controllerMethod): string
+    {
+        $words = explode(' ', Str::headline($controllerMethod));
+        $verb = Str::camel((string)array_shift($words));
+
+        return $verb . $this->studlySingular . implode('', array_map(Str::studly(...), $words));
     }
 
     public function summary(EndpointKind $kind, string $controllerMethod): string
@@ -68,11 +83,21 @@ final readonly class Naming
             EndpointKind::Store => "Create {$this->labelSingular}",
             EndpointKind::Update => "Update {$this->labelSingular}",
             EndpointKind::Destroy => "Delete {$this->labelSingular}",
-            // `removeCover` -> `Remove cover post`, matching the sentence case of the
-            // CRUD summaries above rather than headline-casing every word.
-            EndpointKind::Custom => Str::ucfirst(Str::lower(Str::headline($controllerMethod)))
-                . " {$this->labelSingular}",
+            EndpointKind::Custom => $this->customSummary($controllerMethod),
         };
+    }
+
+    /**
+     * A one-word method needs the noun to mean anything (`restore` -> `Restore post`),
+     * but a multi-word one already names its object, and appending would produce
+     * `Remove cover post`.
+     */
+    private function customSummary(string $controllerMethod): string
+    {
+        $headline = Str::headline($controllerMethod);
+        $sentence = Str::ucfirst(Str::lower($headline));
+
+        return str_contains($headline, ' ') ? $sentence : "{$sentence} {$this->labelSingular}";
     }
 
     /**

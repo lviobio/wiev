@@ -171,7 +171,8 @@ final readonly class MethodRenderer
         $resource = $imports->reference((string)$definition->getResourceClass());
 
         if ($plan->returnKind === ReturnKind::Collection) {
-            $source = $plan->endpoint->queryClass !== null ? '$query->paginate()' : '$action($data)';
+            $paginate = $plan->endpoint->isCursorPaginated() ? 'cursorPaginate' : 'paginate';
+            $source = $plan->endpoint->queryClass !== null ? "\$query->{$paginate}()" : '$action($data)';
 
             return $indent . "return {$resource}::collection({$source});";
         }
