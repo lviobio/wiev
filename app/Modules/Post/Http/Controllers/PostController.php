@@ -31,6 +31,7 @@ use App\Support\OpenApi\SingleResourceResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
 class PostController extends Controller
@@ -132,6 +133,7 @@ class PostController extends Controller
         responses: [
             new SingleResourceResponse(PostResource::class, description: 'Post updated'),
             new OA\Response(response: '424', description: 'Post not found'),
+            new OA\Response(response: '403', description: 'Only the author can edit this post'),
         ],
     )]
     public function update(
@@ -154,6 +156,7 @@ class PostController extends Controller
         responses: [
             new OA\Response(response: '204', description: 'Post deleted'),
             new OA\Response(response: '424', description: 'Post not found'),
+            new OA\Response(response: '403', description: 'Only the author can delete this post'),
         ],
     )]
     public function destroy(
@@ -175,7 +178,11 @@ class PostController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
-        responses: [new SingleResourceResponse(PostResource::class), new OA\Response(response: '424', description: 'Post not found')],
+        responses: [
+            new SingleResourceResponse(PostResource::class),
+            new OA\Response(response: '424', description: 'Post not found'),
+            new OA\Response(response: '403', description: 'Only the author can restore this post'),
+        ],
     )]
     public function restore(
         RestorePostAction $action,
@@ -196,13 +203,16 @@ class PostController extends Controller
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
         responses: [
             new OA\Response(response: '204', description: 'Post cover removed'),
+            new OA\Response(response: '403', description: 'Only the author can edit this post'),
             new OA\Response(response: '424', description: 'Post not found'),
         ],
     )]
     public function removeCover(Request $request): Response
     {
         $id = PostIdentifier::fromRequestParameter($request, 'post');
-        Post::query()->findOrFail($id)->clearMediaCollection(PostMediaCollectionEnum::Cover->value);
+        $model = Post::query()->findOrFail($id);
+        Gate::forUser($request->user())->authorize('update', $model);
+        $model->clearMediaCollection(PostMediaCollectionEnum::Cover->value);
         return response()->noContent();
     }
 }

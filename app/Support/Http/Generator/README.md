@@ -160,6 +160,22 @@ Endpoint::show(ShowPostAction::class)->public()
 
 > Имейте в виду: `security` в спеке и реальный `auth:sanctum` в `routes/api.php` — независимы. Их расхождение ловит тест `tests/Feature/Support/OpenApi/SpecMatchesRoutesTest.php`.
 
+`security` отвечает только за аутентификацию. Права проверяются в Action — там для этого уже лежит `actorUser`, заполняемый `FillFromAuthenticatedUser`:
+
+```php
+Gate::forUser($data->actorUser)->authorize('update', $model);
+```
+
+Именно `forUser($data->actorUser)`, а не `Gate::authorize()`: Action не должен зависеть от текущего запроса, иначе его нельзя вызвать из очереди или консоли. Пример — [PostPolicy](../../../Modules/Post/Policies/PostPolicy.php), зарегистрирована явным `Gate::policy()` в провайдере модуля (автодискавери Laravel ищет политики в `App\Policies`, а модуль держит свою рядом с моделью).
+
+Генератор про политики не знает, поэтому **403 объявляется руками**:
+
+```php
+->addResponses(Gh::response(403, 'Only the author can edit this post'))
+```
+
+Порядок важен: `findOrFail` должен идти до `authorize`, иначе по коду ответа можно перебирать существующие id.
+
 ### 3. Добавить параметр или ответ
 
 ```php

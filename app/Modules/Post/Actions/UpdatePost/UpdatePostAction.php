@@ -6,6 +6,7 @@ namespace App\Modules\Post\Actions\UpdatePost;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Spatie\LaravelData\Optional;
 
 class UpdatePostAction
@@ -14,6 +15,8 @@ class UpdatePostAction
     {
         return DB::transaction(static function () use ($data): Post {
             $model = Post::query()->findOrFail($data->id->value);
+
+            Gate::forUser($data->actorUser)->authorize('update', $model);
 
             $model->update($data->except('id', 'actorUser', 'cover')->toArray());
 

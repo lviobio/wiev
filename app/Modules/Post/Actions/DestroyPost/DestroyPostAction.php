@@ -5,16 +5,20 @@ namespace App\Modules\Post\Actions\DestroyPost;
 
 use App\Modules\Post\Models\Post;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class DestroyPostAction
 {
     public function __invoke(DestroyPostData $data): void
     {
         DB::transaction(static function () use ($data): void {
-            Post::query()
+            $model = Post::query()
                 ->withTrashed()
-                ->findOrFail($data->id->value)
-                ->delete();
+                ->findOrFail($data->id->value);
+
+            Gate::forUser($data->actorUser)->authorize('delete', $model);
+
+            $model->delete();
         });
     }
 }

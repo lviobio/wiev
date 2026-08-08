@@ -56,8 +56,8 @@ it('can create a new post', function () {
 });
 
 it('can update an existing post', function () {
-    $this->actingAsNewUser();
     $model = Post::factory()->create();
+    $this->actingAs($model->authorUser);
 
     $response = $this->putJson(route('api.v1.posts.update', [
         'post' => $model,
@@ -81,8 +81,8 @@ it('can update an existing post', function () {
 });
 
 it('can update an existing post with a cover through method spoofing', function () {
-    $this->actingAsNewUser();
     $model = Post::factory()->create();
+    $this->actingAs($model->authorUser);
 
     $response = $this->post(route('api.v1.posts.update', [
         'post' => $model,
@@ -100,8 +100,8 @@ it('can update an existing post with a cover through method spoofing', function 
 });
 
 it('can delete a post', function () {
-    $this->actingAsNewUser();
     $model = Post::factory()->create();
+    $this->actingAs($model->authorUser);
 
     $response = $this->deleteJson(route('api.v1.posts.destroy', [
         'post' => $model,
@@ -111,8 +111,8 @@ it('can delete a post', function () {
 });
 
 it('can restore a soft-deleted post', function () {
-    $this->actingAsNewUser();
     $model = Post::factory()->create();
+    $this->actingAs($model->authorUser);
     $model->delete();
 
     expect($model->fresh()->trashed())->toBeTrue();
@@ -136,8 +136,8 @@ it('cannot restore a missing post', function () {
 });
 
 it('can remove a post cover', function () {
-    $this->actingAsNewUser();
     $model = Post::factory()->create();
+    $this->actingAs($model->authorUser);
     $model->addMedia(UploadedFile::fake()->image('cover.jpg'))
         ->toMediaCollection(PostMediaCollectionEnum::Cover->value);
 
