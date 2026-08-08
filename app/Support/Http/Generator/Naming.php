@@ -68,7 +68,10 @@ final readonly class Naming
             EndpointKind::Store => "Create {$this->labelSingular}",
             EndpointKind::Update => "Update {$this->labelSingular}",
             EndpointKind::Destroy => "Delete {$this->labelSingular}",
-            EndpointKind::Custom => Str::ucfirst(Str::headline($controllerMethod)) . " {$this->labelSingular}",
+            // `removeCover` -> `Remove cover post`, matching the sentence case of the
+            // CRUD summaries above rather than headline-casing every word.
+            EndpointKind::Custom => Str::ucfirst(Str::lower(Str::headline($controllerMethod)))
+                . " {$this->labelSingular}",
         };
     }
 

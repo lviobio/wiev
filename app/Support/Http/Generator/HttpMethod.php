@@ -38,10 +38,12 @@ enum HttpMethod: string
     }
 
     /**
-     * Whether PHP refuses to parse a multipart body for this verb, forcing Laravel's
-     * `_method` spoofing - and with it a documented verb that differs from the real one.
+     * Whether a route on this verb can also be reached by POSTing `_method`.
+     *
+     * Only relevant when an endpoint explicitly asks to be documented as POST: browsers
+     * cannot send PUT/PATCH from a form, and PHP will not parse a multipart body on them.
      */
-    public function needsMethodSpoofingForUploads(): bool
+    public function supportsMethodSpoofing(): bool
     {
         return $this === self::Put || $this === self::Patch;
     }

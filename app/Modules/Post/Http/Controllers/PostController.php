@@ -13,6 +13,8 @@ use App\Modules\Post\Actions\CreatePost\CreatePostAction;
 use App\Modules\Post\Actions\CreatePost\CreatePostData;
 use App\Modules\Post\Actions\DestroyPost\DestroyPostAction;
 use App\Modules\Post\Actions\DestroyPost\DestroyPostData;
+use App\Modules\Post\Actions\RemoveCover\RemoveCoverAction;
+use App\Modules\Post\Actions\RemoveCover\RemoveCoverData;
 use App\Modules\Post\Actions\ShowPost\ShowPostAction;
 use App\Modules\Post\Actions\ShowPost\ShowPostData;
 use App\Modules\Post\Actions\UpdatePost\UpdatePostAction;
@@ -112,27 +114,14 @@ class PostController extends Controller
         return PostResource::loaded($action($data));
     }
 
-    #[OA\Post(
+    #[OA\Put(
         path: '/api/v1/posts/{post}',
         operationId: 'updatePost',
-        description: 'Send as POST with a `_method=PUT` field (Laravel method spoofing) so the multipart body is parsed.',
         summary: 'Update post',
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\MediaType(
-                mediaType: 'multipart/form-data',
-                schema: new OA\Schema(
-                    allOf: [
-                        new OA\Schema(ref: UpdatePostData::class),
-                        new OA\Schema(
-                            required: ['_method'],
-                            properties: [new OA\Property(property: '_method', type: 'string', default: 'PUT', enum: ['PUT'])],
-                            type: 'object',
-                        ),
-                    ],
-                ),
-            ),
+            content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: UpdatePostData::class)),
         ),
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
@@ -165,6 +154,30 @@ class PostController extends Controller
         #[FillFromAuthenticatedUser('actorUser')]
         #[FillFromRouteParameter('id', 'post')]
         DestroyPostData $data,
+    ): Response
+    {
+        $action($data);
+
+        return response()->noContent();
+    }
+
+    #[OA\Delete(
+        path: '/api/v1/posts/{post}/cover',
+        operationId: 'removePostCover',
+        summary: 'Remove post cover',
+        security: [['bearerAuth' => []]],
+        tags: ['posts'],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        responses: [
+            new OA\Response(response: '204', description: 'Successful operation'),
+            new OA\Response(response: '424', description: 'Post not found'),
+        ],
+    )]
+    public function removeCover(
+        RemoveCoverAction $action,
+        #[FillFromAuthenticatedUser('actorUser')]
+        #[FillFromRouteParameter('id', 'post')]
+        RemoveCoverData $data,
     ): Response
     {
         $action($data);

@@ -48,16 +48,15 @@ final readonly class EndpointPlanner
 
         $hasUploadedFile = $this->data->hasUploadedFile($bodyProperties);
 
-        // PHP does not parse multipart bodies on PUT/PATCH, so uploads have to arrive
-        // as a POST carrying `_method`. The route keeps the real verb; the docs follow
-        // what a client actually sends.
-        $needsSpoofing = $endpoint->method->needsMethodSpoofingForUploads()
-            && $hasUploadedFile
-            && $endpoint->wantsRequestBody()
-            && $bodyProperties !== [];
+        // The real verb is what gets documented. Laravel's `_method` spoofing exists for
+        // browser forms, which cannot send PUT at all; a proper API client just sends the
+        // PUT, so documenting the route as POST would misdescribe it for everyone else.
+        // Opting in with ->documentAs() is still possible where the browser is the client.
+        $documentedMethod = $endpoint->getDocumentedAs() ?? $endpoint->method;
 
-        $documentedMethod = $endpoint->getDocumentedAs()
-            ?? ($needsSpoofing ? HttpMethod::Post : $endpoint->method);
+        $usesMethodSpoofing = $documentedMethod !== $endpoint->method
+            && $endpoint->method->supportsMethodSpoofing()
+            && $documentedMethod === HttpMethod::Post;
 
         return new EndpointPlan(
             endpoint: $endpoint,
@@ -67,7 +66,7 @@ final readonly class EndpointPlanner
             hasUploadedFile: $hasUploadedFile,
             routeParameters: $endpoint->routeParameters(),
             documentedMethod: $documentedMethod,
-            usesMethodSpoofing: $needsSpoofing && $documentedMethod !== $endpoint->method,
+            usesMethodSpoofing: $usesMethodSpoofing,
             warnings: $warnings,
         );
     }

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post;
 
+use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\UploadedFile;
 
@@ -107,4 +108,31 @@ it('can delete a post', function () {
     ]));
 
     $response->assertNoContent();
+});
+
+it('can remove a post cover', function () {
+    $this->actingAsNewUser();
+    $model = Post::factory()->create();
+    $model->addMedia(UploadedFile::fake()->image('cover.jpg'))
+        ->toMediaCollection(PostMediaCollectionEnum::Cover->value);
+
+    $response = $this->deleteJson(route('api.v1.posts.cover.destroy', [
+        'post' => $model,
+    ]));
+
+    $response->assertNoContent();
+
+    expect($model->fresh()->getMedia(PostMediaCollectionEnum::Cover->value))->toBeEmpty();
+
+    // The post itself survives - only its cover is gone.
+    $this->getJson(route('api.v1.posts.show', ['post' => $model]))
+        ->assertOk()
+        ->assertJsonMissingPath('data.cover');
+});
+
+it('cannot remove the cover of a missing post', function () {
+    $this->actingAsNewUser();
+
+    $this->deleteJson(route('api.v1.posts.cover.destroy', ['post' => 999999]))
+        ->assertStatus(424);
 });
