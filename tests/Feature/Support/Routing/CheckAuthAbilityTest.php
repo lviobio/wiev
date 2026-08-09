@@ -23,13 +23,13 @@ final class AbilityFixtureController
     {
     }
 
-    #[CheckAuthAbility(AuthAbilityEnum::Manage)]
+    #[CheckAuthAbility(AuthAbilityEnum::Administer)]
     public function unscoped(): void
     {
     }
 
     #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
-    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
+    #[CheckAuthAbility(AuthAbilityEnum::Administer, Post::class)]
     public function both(): void
     {
     }
@@ -75,7 +75,7 @@ it('keeps abilities scoped to their model', function () {
 
 it('supports an ability with no model at all', function () {
     $user = User::factory()->create();
-    Bouncer::allow($user)->to(AuthAbilityEnum::Manage->value);
+    Bouncer::allow($user)->to(AuthAbilityEnum::Administer->value);
 
     authorizeMethod('unscoped', $user);
 })->throwsNoExceptions();

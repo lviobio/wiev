@@ -6,5 +6,5 @@ namespace App\Enums;
 enum AuthAbilityEnum: string
 {
     case Access = 'access';
-    case Manage = 'manage';
+    case Administer = 'administer';
 }

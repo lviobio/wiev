@@ -121,7 +121,7 @@ class PostController extends Controller
             new OA\Response(response: '403', description: 'Forbidden'),
         ],
     )]
-    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function store(
         CreatePostAction $action,
         #[FillFromAuthenticatedUser('authorUser')]
@@ -148,7 +148,7 @@ class PostController extends Controller
             new OA\Response(response: '424', description: 'Post not found'),
         ],
     )]
-    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function update(
         UpdatePostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -172,7 +172,7 @@ class PostController extends Controller
             new OA\Response(response: '424', description: 'Post not found'),
         ],
     )]
-    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function destroy(
         DestroyPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -198,7 +198,7 @@ class PostController extends Controller
             new OA\Response(response: '424', description: 'Post not found'),
         ],
     )]
-    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function restore(
         RestorePostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -218,7 +218,7 @@ class PostController extends Controller
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
         responses: [new OA\Response(response: '204', description: 'Post cover removed')],
     )]
-    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function removeCover(Request $request): Response
     {
         $id = PostIdentifier::fromRequestParameter($request, 'post');
