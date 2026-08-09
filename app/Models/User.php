@@ -15,6 +15,7 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\Contracts\HasApiTokens as HasApiTokensContract;
 use Laravel\Sanctum\HasApiTokens;
+use Silber\Bouncer\Database\HasRolesAndAbilities;
 
 class User extends BaseModel implements
     AuthenticatableContract,
@@ -28,6 +29,7 @@ class User extends BaseModel implements
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use HasApiTokens;
+    use HasRolesAndAbilities;
 
     /**
      * The attributes that are mass assignable.
