@@ -8,9 +8,13 @@ use App\Support\Http\Generator\EndpointPlan;
 use App\Support\Http\Generator\GeneratorException;
 use App\Support\Http\Generator\Introspection\FillerIntrospector;
 use App\Support\Http\Generator\Introspection\ReturnKind;
+use App\Authorization\CheckAuthAbility;
 use App\Support\Http\Generator\OpenApi\OperationFactory;
+use App\Support\Http\Generator\Php\AttributeExpr;
 use App\Support\Http\Generator\Php\CallbackPrinter;
+use App\Support\Http\Generator\Php\ClassRef;
 use App\Support\Http\Generator\Php\ImportCollector;
+use App\Support\Http\Generator\Php\Literal;
 use App\Support\Http\Generator\Php\Printer;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -43,6 +47,10 @@ final readonly class MethodRenderer
             $lines[] = $indent . $operation->render($imports, self::INDENT);
         }
 
+        foreach ($this->abilityAttributes($plan) as $attribute) {
+            $lines[] = $indent . $attribute->render($imports, self::INDENT);
+        }
+
         // A callback endpoint carries its own signature and body, straight from the
         // closure the declaration wrote; there is no Action to delegate to.
         if ($plan->callback !== null) {
@@ -62,6 +70,31 @@ final readonly class MethodRenderer
         $lines[] = $indent . '}';
 
         return implode(PHP_EOL, $lines);
+    }
+
+    /**
+     * The declared abilities, rebuilt as attributes on the generated method.
+     *
+     * The target renders as `Post::class` rather than a quoted string, so the generated
+     * file reads like the declaration and the import comes along with it.
+     *
+     * @return list<AttributeExpr>
+     */
+    private function abilityAttributes(EndpointPlan $plan): array
+    {
+        $attributes = [];
+
+        foreach ($plan->endpoint->getAbilities() as $ability) {
+            $arguments = [new Literal($ability->ability)];
+
+            if ($ability->target !== null) {
+                $arguments[] = new ClassRef($ability->target);
+            }
+
+            $attributes[] = new AttributeExpr(CheckAuthAbility::class, $arguments);
+        }
+
+        return $attributes;
     }
 
     private function docblock(string $text): string

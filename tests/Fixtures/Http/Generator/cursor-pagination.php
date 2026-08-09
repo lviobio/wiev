@@ -16,5 +16,5 @@ return ControllerDefinition::make(PostFeedController::class)
     ->resource(PostResource::class)
     ->routePrefix('feed')
     ->endpoints(
-        Endpoint::index(PostIndexQuery::class)->cursor(),
+        Endpoint::index(PostIndexQuery::class)->cursor()->withoutAbility(),
     );

@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Enums\AuthAbilityEnum;
 use App\Modules\Post\Actions\CreatePost\CreatePostAction;
 use App\Modules\Post\Actions\DestroyPost\DestroyPostAction;
 use App\Modules\Post\Actions\RestorePost\RestorePostAction;
@@ -26,32 +27,35 @@ return ControllerDefinition::make(PostController::class)
     ->model(Post::class)
     ->resource(PostResource::class)
     ->endpoints(
-        Endpoint::index(PostIndexQuery::class),
+        Endpoint::index(PostIndexQuery::class)
+            ->ability(AuthAbilityEnum::Access, Post::class),
 
         Endpoint::show(ShowPostAction::class)
+            ->ability(AuthAbilityEnum::Access, Post::class)
             ->fill(
                 new FillFromAuthenticatedUser('actorUser'),
                 new FillFromRouteParameter('id', 'post'),
             ),
 
         Endpoint::store(CreatePostAction::class)
+            ->ability(AuthAbilityEnum::Manage, Post::class)
             ->fill(
                 new FillFromAuthenticatedUser('authorUser'),
             ),
 
         Endpoint::update(UpdatePostAction::class)
+            ->ability(AuthAbilityEnum::Manage, Post::class)
             ->fill(
                 new FillFromAuthenticatedUser('actorUser'),
                 new FillFromRouteParameter('id', 'post'),
-            )
-            ->addResponses(Gh::response(403, 'Only the author can edit this post')),
+            ),
 
         Endpoint::destroy(DestroyPostAction::class)
+            ->ability(AuthAbilityEnum::Manage, Post::class)
             ->fill(
                 new FillFromAuthenticatedUser('actorUser'),
                 new FillFromRouteParameter('id', 'post'),
-            )
-            ->addResponses(Gh::response(403, 'Only the author can delete this post')),
+            ),
 
         Endpoint::make(
             HttpMethod::Post,
@@ -59,11 +63,11 @@ return ControllerDefinition::make(PostController::class)
             controllerMethod: 'restore',
             actionClass: RestorePostAction::class,
         )
+            ->ability(AuthAbilityEnum::Manage, Post::class)
             ->fill(
                 new FillFromAuthenticatedUser('actorUser'),
                 new FillFromRouteParameter('id', 'post'),
-            )
-            ->addResponses(Gh::response(403, 'Only the author can restore this post')),
+            ),
 
         // Small enough not to warrant an Action of its own.
         Endpoint::make(
@@ -82,9 +86,8 @@ return ControllerDefinition::make(PostController::class)
                 return response()->noContent();
             },
         )
+            ->ability(AuthAbilityEnum::Manage, Post::class)
             ->responses(
                 Gh::response(204, 'Post cover removed'),
-                Gh::response(403, 'Only the author can edit this post'),
-                Gh::response(424, 'Post not found'),
             ),
     );

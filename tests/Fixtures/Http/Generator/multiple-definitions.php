@@ -19,7 +19,7 @@ return [
         ->model(Post::class)
         ->resource(PostResource::class)
         ->endpoints(
-            Endpoint::index(PostIndexQuery::class),
+            Endpoint::index(PostIndexQuery::class)->withoutAbility(),
         ),
 
     ControllerDefinition::make(App\Modules\Post\Http\Controllers\PostArchiveController::class)
@@ -28,6 +28,6 @@ return [
         ->routePrefix('archived-posts')
         ->tag('archive')
         ->endpoints(
-            Endpoint::index(PostIndexQuery::class),
+            Endpoint::index(PostIndexQuery::class)->withoutAbility(),
         ),
 ];

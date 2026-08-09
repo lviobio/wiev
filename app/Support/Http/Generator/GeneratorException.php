@@ -62,6 +62,22 @@ final class GeneratorException extends RuntimeException
         return new self("[{$path}] has unbalanced @generated-routes markers for module [{$module}].");
     }
 
+    public static function endpointHasNoAbilityDecision(string $controllerMethod): self
+    {
+        return new self(
+            "Endpoint [{$controllerMethod}] says nothing about authorization. Declare the "
+            . 'ability it needs with ->ability(AuthAbilityEnum::..., Model::class), or '
+            . '->withoutAbility() if it deliberately needs none.',
+        );
+    }
+
+    public static function abilityConflictsWithWaiver(string $controllerMethod): self
+    {
+        return new self(
+            "Endpoint [{$controllerMethod}] both declares an ability and waives it; pick one.",
+        );
+    }
+
     public static function callbackConflictsWithAction(string $controllerMethod): self
     {
         return new self(

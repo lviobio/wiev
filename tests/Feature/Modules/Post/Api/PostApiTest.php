@@ -3,12 +3,24 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post;
 
+use App\Enums\AuthAbilityEnum;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\UploadedFile;
 
-it('can list all posts', function () {
+/**
+ * Pairs with the test below: it is what makes the ability granted there load-bearing.
+ * Drop `->ability()` from the declaration and this fails, rather than the grant quietly
+ * becoming a no-op nobody notices.
+ */
+it('requires the access ability to list posts', function () {
     $this->actingAsNewUser();
+
+    $this->getJson(route('api.v1.posts.index'))->assertForbidden();
+});
+
+it('can list all posts', function () {
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
     $collection = Post::factory()->count(10)->create();
 
     $response = $this->getJson(route('api.v1.posts.index'));

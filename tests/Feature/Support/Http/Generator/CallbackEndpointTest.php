@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Support\Http\Generator;
 
+use App\Enums\AuthAbilityEnum;
 use App\Modules\Post\Actions\ShowPost\ShowPostAction;
+use App\Modules\Post\Http\Queries\PostIndexQuery;
 use App\Support\Http\Generator\DefinitionLocator;
 use App\Support\Http\Generator\Endpoint;
 use App\Support\Http\Generator\EndpointPlanner;
@@ -81,7 +83,7 @@ it('refuses a closure that captures variables', function () {
             callback: function (Request $request) use ($captured) {
                 return $captured;
             },
-        ),
+        )->withoutAbility(),
     );
 })->throws(GeneratorException::class, 'captures variables');
 
@@ -92,5 +94,18 @@ it('refuses a callback declared alongside an action', function () {
         controllerMethod: 'bad',
         actionClass: ShowPostAction::class,
         callback: fn(Request $request) => null,
+    );
+})->throws(GeneratorException::class, 'pick one');
+
+it('refuses an endpoint that says nothing about authorization', function () {
+    // Silence is not a decision: an unguarded endpoint has to be written down as one.
+    app(EndpointPlanner::class)->plan(Endpoint::index(PostIndexQuery::class));
+})->throws(GeneratorException::class, 'says nothing about authorization');
+
+it('refuses an endpoint that both declares and waives an ability', function () {
+    app(EndpointPlanner::class)->plan(
+        Endpoint::index(PostIndexQuery::class)
+            ->ability(AuthAbilityEnum::Access, Post::class)
+            ->withoutAbility(),
     );
 })->throws(GeneratorException::class, 'pick one');

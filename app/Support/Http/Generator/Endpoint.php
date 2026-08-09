@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Support\Http\Generator;
 
+use App\Authorization\CheckAuthAbility;
+use App\Enums\AuthAbilityEnum;
 use App\Support\Data\Filling\DataPropertyFiller;
 use App\Support\Data\Filling\FillFromRouteParameter;
 use App\Support\Http\Generator\Php\Expr;
@@ -69,6 +71,11 @@ final class Endpoint
 
     /** @var list<string> */
     private array $middleware = [];
+
+    /** @var list<CheckAuthAbility> */
+    private array $abilities = [];
+
+    private bool $abilityWaived = false;
 
     private function __construct(
         public readonly EndpointKind $kind,
@@ -178,7 +185,7 @@ final class Endpoint
      * How the Data object's non-body properties are populated at the HTTP boundary.
      *
      * Re-emitted verbatim onto the generated parameter, so the existing
-     * {@see \App\Support\Routing\DataFillingControllerDispatcher} keeps doing the work.
+     * {@see \App\Support\Routing\AppControllerDispatcher} keeps doing the work.
      */
     public function fill(DataPropertyFiller ...$fillers): self
     {
@@ -358,6 +365,50 @@ final class Endpoint
         $this->middleware = array_values($middleware);
 
         return $this;
+    }
+
+    /**
+     * Require an ability, emitted as `#[CheckAuthAbility]` on the generated method and
+     * enforced by {@see \App\Support\Routing\AppControllerDispatcher}.
+     *
+     * Declaring it here rather than editing the controller is what keeps it alive: the
+     * controller is regenerated, a hand-added attribute would be wiped. Also makes the
+     * `403` show up in the spec on its own.
+     *
+     * Called more than once, all the abilities are required.
+     *
+     * @param  class-string|null  $target  Model class the ability is scoped to.
+     */
+    public function ability(AuthAbilityEnum|string $ability, ?string $target = null): self
+    {
+        $this->abilities[] = new CheckAuthAbility($ability, $target);
+
+        return $this;
+    }
+
+    /**
+     * State that this endpoint deliberately requires no ability.
+     *
+     * Generation fails for an endpoint that declares neither this nor `->ability()`, so
+     * that an unguarded endpoint is always a decision somebody wrote down rather than
+     * something nobody got round to.
+     */
+    public function withoutAbility(): self
+    {
+        $this->abilityWaived = true;
+
+        return $this;
+    }
+
+    /** @return list<CheckAuthAbility> */
+    public function getAbilities(): array
+    {
+        return $this->abilities;
+    }
+
+    public function isAbilityWaived(): bool
+    {
+        return $this->abilityWaived;
     }
 
     /** @return list<DataPropertyFiller> */

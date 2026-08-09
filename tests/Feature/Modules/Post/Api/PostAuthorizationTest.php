@@ -17,7 +17,6 @@ beforeEach(function () {
 
 it('lets a stranger read a post', function () {
     $this->getJson(route('api.v1.posts.show', ['post' => $this->model]))->assertOk();
-    $this->getJson(route('api.v1.posts.index'))->assertOk();
 });
 
 it('forbids a stranger from updating a post', function () {

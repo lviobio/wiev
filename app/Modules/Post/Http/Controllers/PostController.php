@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Http\Controllers;
 
+use App\Authorization\CheckAuthAbility;
+use App\Enums\AuthAbilityEnum;
 use App\Http\Controllers\Controller;
 use App\Modules\Post\Actions\CreatePost\CreatePostAction;
 use App\Modules\Post\Actions\CreatePost\CreatePostData;
@@ -72,8 +74,9 @@ class PostController extends Controller
                 schema: new OA\Schema(type: 'integer', format: 'int64'),
             ),
         ],
-        responses: [new PaginatedResourceResponse(PostResource::class)],
+        responses: [new PaginatedResourceResponse(PostResource::class), new OA\Response(response: '403', description: 'Forbidden')],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function index(PostIndexQuery $query): AnonymousResourceCollection
     {
         return PostResource::collection($query->paginate());
@@ -86,8 +89,13 @@ class PostController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
-        responses: [new SingleResourceResponse(PostResource::class), new OA\Response(response: '424', description: 'Post not found')],
+        responses: [
+            new SingleResourceResponse(PostResource::class),
+            new OA\Response(response: '403', description: 'Forbidden'),
+            new OA\Response(response: '424', description: 'Post not found'),
+        ],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function show(
         ShowPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -108,8 +116,12 @@ class PostController extends Controller
             content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: CreatePostData::class)),
         ),
         tags: ['posts'],
-        responses: [new SingleResourceResponse(PostResource::class, response: '201', description: 'Post created')],
+        responses: [
+            new SingleResourceResponse(PostResource::class, response: '201', description: 'Post created'),
+            new OA\Response(response: '403', description: 'Forbidden'),
+        ],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
     public function store(
         CreatePostAction $action,
         #[FillFromAuthenticatedUser('authorUser')]
@@ -132,10 +144,11 @@ class PostController extends Controller
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
         responses: [
             new SingleResourceResponse(PostResource::class, description: 'Post updated'),
+            new OA\Response(response: '403', description: 'Forbidden'),
             new OA\Response(response: '424', description: 'Post not found'),
-            new OA\Response(response: '403', description: 'Only the author can edit this post'),
         ],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
     public function update(
         UpdatePostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -155,10 +168,11 @@ class PostController extends Controller
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
         responses: [
             new OA\Response(response: '204', description: 'Post deleted'),
+            new OA\Response(response: '403', description: 'Forbidden'),
             new OA\Response(response: '424', description: 'Post not found'),
-            new OA\Response(response: '403', description: 'Only the author can delete this post'),
         ],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
     public function destroy(
         DestroyPostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -180,10 +194,11 @@ class PostController extends Controller
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
         responses: [
             new SingleResourceResponse(PostResource::class),
+            new OA\Response(response: '403', description: 'Forbidden'),
             new OA\Response(response: '424', description: 'Post not found'),
-            new OA\Response(response: '403', description: 'Only the author can restore this post'),
         ],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
     public function restore(
         RestorePostAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
@@ -201,12 +216,9 @@ class PostController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
-        responses: [
-            new OA\Response(response: '204', description: 'Post cover removed'),
-            new OA\Response(response: '403', description: 'Only the author can edit this post'),
-            new OA\Response(response: '424', description: 'Post not found'),
-        ],
+        responses: [new OA\Response(response: '204', description: 'Post cover removed')],
     )]
+    #[CheckAuthAbility(AuthAbilityEnum::Manage, Post::class)]
     public function removeCover(Request $request): Response
     {
         $id = PostIdentifier::fromRequestParameter($request, 'post');

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\User;
-use App\Support\Routing\DataFillingControllerDispatcher;
+use App\Support\Routing\AppControllerDispatcher;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Routing\Contracts\ControllerDispatcher;
@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(ControllerDispatcher::class, DataFillingControllerDispatcher::class);
+        $this->app->bind(ControllerDispatcher::class, AppControllerDispatcher::class);
     }
 
     /**

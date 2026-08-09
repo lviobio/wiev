@@ -22,6 +22,8 @@ final readonly class EndpointPlanner
 
     public function plan(Endpoint $endpoint, string $routeParameter = ''): EndpointPlan
     {
+        $this->assertAuthorizationIsDecided($endpoint);
+
         $warnings = [];
         $dataClass = null;
         $returnKind = $endpoint->queryClass !== null ? ReturnKind::Collection : ReturnKind::Other;
@@ -77,6 +79,23 @@ final readonly class EndpointPlanner
                 ? null
                 : $this->callbacks->describe($endpoint->callback),
         );
+    }
+
+    /**
+     * Authorization is never left implicit: an endpoint must either name the ability it
+     * needs or say outright that it needs none.
+     */
+    private function assertAuthorizationIsDecided(Endpoint $endpoint): void
+    {
+        $declared = $endpoint->getAbilities() !== [];
+
+        if ($declared && $endpoint->isAbilityWaived()) {
+            throw GeneratorException::abilityConflictsWithWaiver($endpoint->controllerMethod);
+        }
+
+        if (!$declared && !$endpoint->isAbilityWaived()) {
+            throw GeneratorException::endpointHasNoAbilityDecision($endpoint->controllerMethod);
+        }
     }
 
     /**

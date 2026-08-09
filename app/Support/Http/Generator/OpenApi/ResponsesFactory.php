@@ -36,6 +36,15 @@ final class ResponsesFactory
     {
         $responses = [$this->success($definition, $plan)];
 
+        // A declared ability is checked before the method runs, so the endpoint can
+        // always answer 403 - no need to spell it out in the declaration.
+        if ($plan->endpoint->getAbilities() !== []) {
+            $responses[] = new NewExpr(OA\Response::class, [
+                'response' => new Literal('403'),
+                'description' => new Literal('Forbidden'),
+            ]);
+        }
+
         if ($plan->looksUpByRouteParameter) {
             $responses[] = new NewExpr(OA\Response::class, [
                 'response' => new Literal(self::NOT_FOUND_STATUS),

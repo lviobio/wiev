@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Support\Http\Generator\Php;
 
 use App\Support\Http\Generator\GeneratorException;
+use UnitEnum;
 
 /**
  * A scalar, null, or a (possibly nested) array of them.
@@ -39,6 +40,12 @@ final readonly class Literal implements Expr
 
         if (is_array($value)) {
             return $this->renderArray($value, $imports, $indent, $reserved);
+        }
+
+        // Enums render as the case, not its backing value: a declaration that wrote
+        // `AuthAbilityEnum::Access` should read the same way in the generated file.
+        if ($value instanceof UnitEnum) {
+            return $imports->reference($value::class) . '::' . $value->name;
         }
 
         throw GeneratorException::unrenderableLiteral(get_debug_type($value));

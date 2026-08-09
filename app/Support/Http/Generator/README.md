@@ -160,7 +160,30 @@ Endpoint::show(ShowPostAction::class)->public()
 
 > Имейте в виду: `security` в спеке и реальный `auth:sanctum` в `routes/api.php` — независимы. Их расхождение ловит тест `tests/Feature/Support/OpenApi/SpecMatchesRoutesTest.php`.
 
-`security` отвечает только за аутентификацию. Права проверяются в Action — там для этого уже лежит `actorUser`, заполняемый `FillFromAuthenticatedUser`:
+`security` отвечает только за аутентификацию. Дальше есть два уровня.
+
+**Способности (Bouncer)** — грубая проверка «пускать ли к этому эндпоинту вообще», до того как что-либо загружено:
+
+```php
+Endpoint::index(PostIndexQuery::class)
+    ->ability(AuthAbilityEnum::Access, Post::class)
+```
+
+Генератор ставит на метод `#[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]` и **сам добавляет `403`** в спеку. Проверку выполняет `AppControllerDispatcher` до резолва параметров — запрещённый запрос не доходит до сборки и валидации Data.
+
+Объявлять это нужно именно в `generator.php`: атрибут, дописанный руками в контроллер, сотрёт следующая генерация.
+
+**Решение обязательно.** Эндпоинт, не объявивший ни `->ability(...)`, ни `->withoutAbility()`, не сгенерируется:
+
+```
+ERROR  [PostController] Endpoint [show] says nothing about authorization.
+       Declare the ability it needs with ->ability(AuthAbilityEnum::..., Model::class),
+       or ->withoutAbility() if it deliberately needs none.
+```
+
+Смысл в том, что незащищённый эндпоинт становится записанным решением, а не тем, до чего не дошли руки. Забыть нельзя — генерация просто не пройдёт, и никакого списка эндпоинтов поддерживать для этого не нужно.
+
+**Права на конкретную запись** проверяются в Action — там для этого уже лежит `actorUser`, заполняемый `FillFromAuthenticatedUser`:
 
 ```php
 Gate::forUser($data->actorUser)->authorize('update', $model);
