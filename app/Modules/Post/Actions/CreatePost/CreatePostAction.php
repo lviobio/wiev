@@ -12,7 +12,10 @@ class CreatePostAction
     public function __invoke(CreatePostData $data): Post
     {
         return DB::transaction(static function () use ($data) {
-            $model = new Post($data->only('title', 'content')->toArray());
+            $model = new Post;
+
+            $model->title = $data->title;
+            $model->content = $data->content;
 
             $model->authorUser()->associate($data->authorUser);
 
