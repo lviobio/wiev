@@ -9,16 +9,18 @@ use Illuminate\Support\Facades\Gate;
 
 class DestroyPostAction
 {
-    public function __invoke(DestroyPostData $data): void
+    public function __invoke(DestroyPostData $data): Post
     {
-        DB::transaction(static function () use ($data): void {
+        return DB::transaction(static function () use ($data): Post {
             $model = Post::query()
                 ->withTrashed()
-                ->findOrFail($data->id->value);
+                ->findOrFail($data->id);
 
             Gate::forUser($data->actorUser)->authorize('delete', $model);
 
             $model->delete();
+
+            return $model;
         });
     }
 }

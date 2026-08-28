@@ -10,8 +10,8 @@ use Spatie\LaravelData\Data;
 class RestorePostData extends Data
 {
     public function __construct(
-        public User           $actorUser,
         public PostIdentifier $id,
+        public User           $actorUser,
     )
     {
     }

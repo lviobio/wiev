@@ -10,8 +10,8 @@ use Spatie\LaravelData\Data;
 class DestroyPostData extends Data
 {
     public function __construct(
-        public User           $actorUser,
         public PostIdentifier $id,
+        public User           $actorUser,
     )
     {
     }
