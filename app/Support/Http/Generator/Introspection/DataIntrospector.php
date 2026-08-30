@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Http\Generator\Introspection;
 
+use App\Support\VO\FileValue;
 use Illuminate\Http\UploadedFile;
 use OpenApi\Attributes as OA;
 use ReflectionClass;
@@ -38,6 +39,19 @@ final class DataIntrospector
     }
 
     /**
+     * Types that make a request body carry a file.
+     *
+     * A Data object may declare the raw upload or a domain value wrapping it
+     * ({@see FileValue}); either way the endpoint speaks multipart.
+     *
+     * @var list<class-string>
+     */
+    private const FILE_TYPES = [
+        UploadedFile::class,
+        FileValue::class,
+    ];
+
+    /**
      * Whether the body carries a file, which forces `multipart/form-data`.
      *
      * @param  list<ReflectionParameter>  $properties
@@ -46,8 +60,14 @@ final class DataIntrospector
     {
         foreach ($properties as $property) {
             foreach ($this->namedTypesOf($property) as $type) {
-                if (!$type->isBuiltin() && is_a($type->getName(), UploadedFile::class, true)) {
-                    return true;
+                if ($type->isBuiltin()) {
+                    continue;
+                }
+
+                foreach (self::FILE_TYPES as $fileType) {
+                    if (is_a($type->getName(), $fileType, true)) {
+                        return true;
+                    }
                 }
             }
         }

@@ -49,6 +49,9 @@ return [
         DateTimeInterface::class => App\Support\Spatie\Data\SmartDateTimeInterfaceCast::class,
         BackedEnum::class => Spatie\LaravelData\Casts\EnumCast::class,
         App\Support\VO\NumberIdentifier::class => App\Support\Spatie\Data\NumberIdentifierCast::class,
+        App\Support\VO\FileValue::class => App\Support\Spatie\Data\FileValueCast::class,
+        App\Support\VO\StringValue::class => App\Support\Spatie\Data\StringValueCast::class,
+        App\Support\VO\IdentityValue::class => App\Support\Spatie\Data\IdentityValueCast::class,
 //        Enumerable::class => Spatie\LaravelData\Casts\EnumerableCast::class,
     ],
 
@@ -63,6 +66,7 @@ return [
         Spatie\LaravelData\RuleInferrers\RequiredRuleInferrer::class,
         Spatie\LaravelData\RuleInferrers\BuiltInTypesRuleInferrer::class,
         Spatie\LaravelData\RuleInferrers\AttributesRuleInferrer::class,
+        App\Support\Spatie\Data\ValueRuleInferrer::class,
     ],
 
     /*

@@ -3,29 +3,33 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Actions\CreatePost;
 
-use App\Modules\Post\Enums\PostMediaCollectionEnum;
+use App\Core\ModelManager\ModelManagerContract;
+use App\Modules\Post\Domain\Data\NewPostData;
+use App\Modules\Post\Domain\PostEntity;
 use App\Modules\Post\Models\Post;
-use Illuminate\Support\Facades\DB;
 
-class CreatePostAction
+readonly class CreatePostAction
 {
+    public function __construct(
+        private ModelManagerContract $modelManager,
+    )
+    {
+    }
+
     public function __invoke(CreatePostData $data): Post
     {
-        return DB::transaction(static function () use ($data) {
-            $model = new Post;
+        $entity = PostEntity::makeNew(new NewPostData(
+            title: $data->title,
+            content: $data->content,
+            cover: $data->cover,
+            author: $data->authorUser,
+        ));
 
-            $model->title = $data->title;
-            $model->content = $data->content;
+        $model = $entity->toModel();
 
-            $model->authorUser()->associate($data->authorUser);
+        $this->modelManager->persist($model);
+        $this->modelManager->flush();
 
-            if ($data->cover) {
-                $model->addMedia($data->cover)->toMediaCollection(PostMediaCollectionEnum::Cover->value);
-            }
-
-            $model->save();
-
-            return $model;
-        });
+        return $model;
     }
 }

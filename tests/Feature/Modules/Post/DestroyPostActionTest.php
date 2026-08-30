@@ -14,12 +14,10 @@ test('destroy post action', function () {
 
     $action = resolve(DestroyPostAction::class);
 
-    $deleted = $action(DestroyPostData::from([
+    $action(DestroyPostData::from([
         'id' => $model->getKey(),
         'actorUser' => $user,
     ]));
 
-    expect($deleted)->toBeInstanceOf(Post::class)
-        ->and($deleted->trashed())->toBeTrue()
-        ->and($model->fresh()->trashed())->toBeTrue();
+    expect($model->fresh()->trashed())->toBeTrue();
 });

@@ -3,24 +3,29 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Actions\DestroyPost;
 
+use App\Core\ModelManager\ModelManagerContract;
 use App\Modules\Post\Models\Post;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 
-class DestroyPostAction
+readonly class DestroyPostAction
 {
-    public function __invoke(DestroyPostData $data): Post
+    public function __construct(
+        private ModelManagerContract $modelManager,
+    )
     {
-        return DB::transaction(static function () use ($data): Post {
-            $model = Post::query()
-                ->withTrashed()
-                ->findOrFail($data->id);
+    }
 
-            Gate::forUser($data->actorUser)->authorize('delete', $model);
+    public function __invoke(DestroyPostData $data): void
+    {
+        $model = $this->modelManager->retrieve(
+            Post::class,
+            static fn(Builder|Post $query): Post => $query->withTrashed()->findOrFail($data->id->value),
+        );
 
-            $model->delete();
+        Gate::forUser($data->actorUser)->authorize('delete', $model);
 
-            return $model;
-        });
+        $this->modelManager->remove($model);
+        $this->modelManager->flush();
     }
 }

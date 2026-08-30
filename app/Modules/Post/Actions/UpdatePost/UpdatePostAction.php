@@ -3,32 +3,43 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Actions\UpdatePost;
 
-use App\Modules\Post\Enums\PostMediaCollectionEnum;
+use App\Core\ModelManager\ModelManagerContract;
 use App\Modules\Post\Models\Post;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Spatie\LaravelData\Optional;
 
-class UpdatePostAction
+readonly class UpdatePostAction
 {
+    public function __construct(
+        private ModelManagerContract $modelManager,
+    )
+    {
+    }
+
     public function __invoke(UpdatePostData $data): Post
     {
-        return DB::transaction(static function () use ($data): Post {
-            $model = Post::query()->findOrFail($data->id->value);
+        $model = $this->modelManager->retrieve(
+            Post::class,
+            static fn(Builder|Post $query): Post => $query->findOrFail($data->id->value),
+        );
 
-            Gate::forUser($data->actorUser)->authorize('update', $model);
+        Gate::forUser($data->actorUser)->authorize('update', $model);
 
-            $model->update($data->except('id', 'actorUser', 'cover')->toArray());
+        $this->execute($model, $data);
 
-            if (!$data->cover instanceof Optional) {
-                if ($data->cover) {
-                    $model->addMedia($data->cover)->toMediaCollection(PostMediaCollectionEnum::Cover->value);
-                } else {
-                    $model->clearMediaCollection(PostMediaCollectionEnum::Cover->value);
-                }
-            }
+        $this->modelManager->flush();
 
-            return $model;
-        });
+        return $model;
+    }
+
+    private function execute(Post $model, UpdatePostData $data): void
+    {
+        $model->title = $data->title;
+        $model->content = $data->content;
+
+        if (!$data->cover instanceof Optional) {
+            $model->setCover($data->cover);
+        }
     }
 }

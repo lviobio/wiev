@@ -6,6 +6,9 @@ namespace App\Modules\Post\Models;
 use App\Models\BaseModel;
 use App\Models\User;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
+use App\Modules\Post\VO\PostCover;
+use App\Support\Spatie\MediaLibrary\AddsMediaFromFileValue;
+use App\Support\Spatie\MediaLibrary\DefersMediaToFlush;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +23,8 @@ class Post extends BaseModel implements HasMedia
     use HasFactory;
     use SoftDeletes;
     use InteractsWithMedia;
+    use DefersMediaToFlush;
+    use AddsMediaFromFileValue;
 
     protected $fillable = [
         'title',
@@ -43,6 +48,23 @@ class Post extends BaseModel implements HasMedia
                     ->width(50)
                     ->height(50);
             });
+    }
+
+    /**
+     * Обложка. null — снять текущую.
+     *
+     * И то и другое произойдёт при flush(): media library пишет файлы вне
+     * транзакции, поэтому запись отложена до успешного коммита.
+     */
+    public function setCover(?PostCover $cover): void
+    {
+        if ($cover === null) {
+            $this->clearMediaCollectionOnFlush(PostMediaCollectionEnum::Cover->value);
+
+            return;
+        }
+
+        $this->addMediaFromValue($cover)->toMediaCollection(PostMediaCollectionEnum::Cover->value);
     }
 
     public function authorUser(): BelongsTo

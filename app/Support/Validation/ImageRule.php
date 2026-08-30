@@ -11,7 +11,8 @@ class ImageRule
     {
         return new self()
             ->push('image')
-            ->push('max:' . config('media-library.max_file_size'));
+            // правило max: считает килобайты, конфиг media library — байты
+            ->push('max:' . intdiv((int) config('media-library.max_file_size'), 1024));
     }
 
     private function push(string $rule): static

@@ -6,6 +6,7 @@ namespace Tests\Feature\Modules\Post;
 use App\Models\User;
 use App\Modules\Post\Actions\CreatePost\CreatePostAction;
 use App\Modules\Post\Actions\CreatePost\CreatePostData;
+use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\UploadedFile;
 
@@ -27,5 +28,6 @@ test('create post action', function () {
         ->toBeInstanceOf(Post::class)
         ->and($model->authorUser)->toBe($user)
         ->and($model->title)->toBe('Test title')
-        ->and($model->content)->toBe('Test content');
+        ->and($model->content)->toBe('Test content')
+        ->and($model->fresh()->getMedia(PostMediaCollectionEnum::Cover->value))->toHaveCount(1);
 });
