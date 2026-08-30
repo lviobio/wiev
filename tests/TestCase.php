@@ -25,7 +25,7 @@ abstract class TestCase extends BaseTestCase
      *
      * @param  class-string|null  $target  Model class the ability is scoped to.
      */
-    protected function allowActingUser(AuthAbilityEnum $ability, ?string $target = null): static
+    public function allowActingUser(AuthAbilityEnum $ability, ?string $target = null): static
     {
         $user = $this->app['auth']->user();
 

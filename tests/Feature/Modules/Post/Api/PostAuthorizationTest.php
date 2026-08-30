@@ -3,16 +3,21 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post;
 
+use App\Enums\AuthAbilityEnum;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\UploadedFile;
 
 /**
  * Only the author may change a post. Reading stays open to any authenticated user.
+ *
+ * The stranger holds the Access ability on purpose: without it every request below
+ * would be refused by `#[CheckAuthAbility]` before a policy ever runs, and the tests
+ * would pass without testing PostPolicy at all.
  */
 beforeEach(function () {
     $this->model = Post::factory()->create();
-    $this->stranger = $this->actingAsNewUser();
+    $this->stranger = $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
 });
 
 it('lets a stranger read a post', function () {

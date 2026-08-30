@@ -36,7 +36,7 @@ it('can list all posts', function () {
 });
 
 it('can retrieve a specific post', function () {
-    $this->actingAsNewUser();
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
     $model = Post::factory()->create();
 
     $response = $this->getJson(route('api.v1.posts.show', [
@@ -56,7 +56,7 @@ it('can retrieve a specific post', function () {
 });
 
 it('can create a new post', function () {
-    $this->actingAsNewUser();
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
     $model = Post::factory()->make();
 
     $response = $this->postJson(route('api.v1.posts.store'), [
@@ -69,7 +69,7 @@ it('can create a new post', function () {
 
 it('can update an existing post', function () {
     $model = Post::factory()->create();
-    $this->actingAs($model->authorUser);
+    $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
 
     $response = $this->putJson(route('api.v1.posts.update', [
         'post' => $model,
@@ -94,7 +94,7 @@ it('can update an existing post', function () {
 
 it('can update an existing post with a cover through method spoofing', function () {
     $model = Post::factory()->create();
-    $this->actingAs($model->authorUser);
+    $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
 
     $response = $this->post(route('api.v1.posts.update', [
         'post' => $model,
@@ -113,7 +113,7 @@ it('can update an existing post with a cover through method spoofing', function 
 
 it('can delete a post', function () {
     $model = Post::factory()->create();
-    $this->actingAs($model->authorUser);
+    $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
 
     $response = $this->deleteJson(route('api.v1.posts.destroy', [
         'post' => $model,
@@ -124,7 +124,7 @@ it('can delete a post', function () {
 
 it('can restore a soft-deleted post', function () {
     $model = Post::factory()->create();
-    $this->actingAs($model->authorUser);
+    $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
     $model->delete();
 
     expect($model->fresh()->trashed())->toBeTrue();
@@ -141,7 +141,7 @@ it('can restore a soft-deleted post', function () {
 });
 
 it('cannot restore a missing post', function () {
-    $this->actingAsNewUser();
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
 
     $this->postJson(route('api.v1.posts.restore', ['post' => 999999]))
         ->assertStatus(424);
@@ -149,7 +149,7 @@ it('cannot restore a missing post', function () {
 
 it('can remove a post cover', function () {
     $model = Post::factory()->create();
-    $this->actingAs($model->authorUser);
+    $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
     $model->addMedia(UploadedFile::fake()->image('cover.jpg'))
         ->toMediaCollection(PostMediaCollectionEnum::Cover->value);
 
@@ -168,7 +168,7 @@ it('can remove a post cover', function () {
 });
 
 it('cannot remove the cover of a missing post', function () {
-    $this->actingAsNewUser();
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
 
     $this->deleteJson(route('api.v1.posts.cover.destroy', ['post' => 999999]))
         ->assertStatus(424);
