@@ -262,6 +262,19 @@ class ModelManager implements ModelManagerContract
     }
 
     /**
+     * Колбэк, выполняемый после успешного коммита flush().
+     *
+     * Для эффектов, которые нельзя откатить и потому нельзя пускать внутрь
+     * транзакции: запись и удаление файлов, отправка писем, вызовы наружу.
+     * Если flush() упадёт, накопленные колбэки будут выброшены вместе с
+     * остальным состоянием менеджера.
+     */
+    public function afterFlush(Closure $callback): void
+    {
+        $this->afterFlushCallbacks[] = $callback;
+    }
+
+    /**
      * @throws Throwable
      */
     public function flush(): void
@@ -270,11 +283,10 @@ class ModelManager implements ModelManagerContract
             throw new LogicException('Nested flush() is not supported.');
         }
 
-        $this->inFlush            = true;
-        $this->flushed            = [];
-        $this->visiting           = [];
-        $this->extraUpdates       = [];
-        $this->afterFlushCallbacks = [];
+        $this->inFlush      = true;
+        $this->flushed      = [];
+        $this->visiting     = [];
+        $this->extraUpdates = [];
 
         DB::beginTransaction();
 
@@ -571,12 +583,6 @@ class ModelManager implements ModelManagerContract
 
     private function persistModel(Model $model): void
     {
-        if (method_exists($model, 'pullPerformOnSaved')) {
-            foreach ($model->pullPerformOnSaved() as $callback) {
-                $this->afterFlushCallbacks[] = $callback;
-            }
-        }
-
         $model->save();
 
         $oid = spl_object_id($model);

@@ -4,60 +4,49 @@ declare(strict_types=1);
 namespace App\Support\Spatie\MediaLibrary;
 
 use App\Core\ModelManager\ModelManagerContract;
+use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\FileAdder;
 use Spatie\MediaLibrary\MediaCollections\Filesystem;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- * FileAdder, откладывающий привязку медиа до flush() менеджера.
+ * FileAdder, откладывающий запись медиа управляемых моделей до коммита flush().
  *
- * Механизм отложенной привязки в media library уже есть — очередь
- * prepareToAttachMedia()/processUnattachedMedia() на модели. Оригинальный
- * FileAdder включает её только для несохранённой модели; здесь она включается
- * ещё и для управляемой менеджером, а выгребает очередь {@see DefersMediaToFlush}.
+ * Перехват стоит в одной точке — processMediaItem(). Через неё проходят оба
+ * пути media library: для существующей модели её зовёт attachMedia() сразу,
+ * для новой — листенер события created. Во втором случае к моменту вызова
+ * модель уже сохранена менеджером, поэтому проверка isManaged() работает и там.
  *
- * Семантика для всех остальных моделей не меняется: фабрики, сидеры и любой код
- * мимо менеджера как писали медиа немедленно, так и пишут.
+ * Модели ничего не знают об этом: трейтов подмешивать не нужно, достаточно
+ * штатного InteractsWithMedia. Для всего, что идёт мимо менеджера — фабрики,
+ * сидеры, разовые скрипты — поведение остаётся прежним, запись немедленная.
+ *
+ * Откладывается именно на после коммита: файлы пишутся и удаляются вне
+ * транзакции, и откат их не вернёт. Коллекция singleFile сносит предыдущий
+ * файл сразу, поэтому запись медиа внутри транзакции при откате оставила бы
+ * строку media, указывающую на уже стёртый файл.
  */
 class DeferredFileAdder extends FileAdder
 {
     public function __construct(
-        ?Filesystem                          $filesystem,
+        ?Filesystem                           $filesystem,
         private readonly ModelManagerContract $modelManager,
     )
     {
         parent::__construct($filesystem);
     }
 
-    /**
-     * Точка исполнения отложенной привязки: processMediaItem() protected,
-     * а дренаж очереди живёт на модели.
-     */
-    public function attachNow(HasMedia $model, Media $media): void
+    protected function processMediaItem(HasMedia $model, Media $media, FileAdder $fileAdder): void
     {
-        $this->processMediaItem($model, $media, $this);
-    }
-
-    protected function attachMedia(Media $media): void
-    {
-        // Несохранённая модель: media library и так откладывает до created.
-        // Оставляем её листенер страховкой на случай save() мимо менеджера —
-        // управляемую модель менеджер выгребет раньше, чем листенер сработает,
-        // и тому достанется пустая очередь.
-        if (!$this->subject->exists) {
-            parent::attachMedia($media);
+        if ($model instanceof Model && $this->modelManager->isManaged($model)) {
+            $this->modelManager->afterFlush(
+                fn() => parent::processMediaItem($model, $media, $fileAdder),
+            );
 
             return;
         }
 
-        // Существующая, но не управляемая модель — пишем сразу, как раньше.
-        if (!$this->modelManager->isManaged($this->subject)) {
-            parent::attachMedia($media);
-
-            return;
-        }
-
-        $this->subject->prepareToAttachMedia($media, $this);
+        parent::processMediaItem($model, $media, $fileAdder);
     }
 }

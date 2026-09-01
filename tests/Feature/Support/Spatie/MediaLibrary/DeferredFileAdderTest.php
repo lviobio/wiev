@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Support\Spatie\MediaLibrary;
 
 use App\Core\ModelManager\ModelManagerContract;
+use App\Support\Spatie\MediaLibrary\DeferredMedia;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,6 +16,7 @@ beforeEach(function () {
     Storage::fake('public');
 
     $this->manager = resolve(ModelManagerContract::class);
+    $this->media = resolve(DeferredMedia::class);
 });
 
 function cover(): UploadedFile
@@ -78,7 +80,7 @@ test('clearing a collection is deferred to flush for a managed model', function 
         static fn(Builder $query): Post => $query->findOrFail($model->getKey()),
     );
 
-    $managed->clearMediaCollectionOnFlush(collectionName());
+    $this->media->clear($managed, collectionName());
 
     expect($model->fresh()->getMedia(collectionName()))->toHaveCount(1);
 
@@ -87,13 +89,11 @@ test('clearing a collection is deferred to flush for a managed model', function 
     expect($model->fresh()->getMedia(collectionName()))->toHaveCount(0);
 });
 
-test('a deferred clear outside the manager still happens on save', function () {
+test('clearing a collection outside the manager happens immediately', function () {
     $model = Post::factory()->create();
     $model->addMedia(cover())->toMediaCollection(collectionName());
 
-    $model->clearMediaCollectionOnFlush(collectionName());
-    $model->title = 'Saved without the manager';
-    $model->save();
+    $this->media->clear($model, collectionName());
 
     expect($model->fresh()->getMedia(collectionName()))->toHaveCount(0);
 });

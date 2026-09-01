@@ -71,6 +71,12 @@ interface ModelManagerContract
     public function restore(Model $model): void;
 
     /**
+     * Колбэк, выполняемый после успешного коммита flush() — для эффектов,
+     * которые нельзя откатить и потому нельзя пускать внутрь транзакции.
+     */
+    public function afterFlush(Closure $callback): void;
+
+    /**
      * Записать все накопленные изменения одной транзакцией.
      */
     public function flush(): void;
