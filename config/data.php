@@ -48,10 +48,10 @@ return [
     'casts' => [
         DateTimeInterface::class => App\Support\Spatie\Data\SmartDateTimeInterfaceCast::class,
         BackedEnum::class => Spatie\LaravelData\Casts\EnumCast::class,
-        App\Support\VO\NumberIdentifier::class => App\Support\Spatie\Data\NumberIdentifierCast::class,
-        App\Support\VO\FileValue::class => App\Support\Spatie\Data\FileValueCast::class,
-        App\Support\VO\StringValue::class => App\Support\Spatie\Data\StringValueCast::class,
-        App\Support\VO\IdentityValue::class => App\Support\Spatie\Data\IdentityValueCast::class,
+        App\Core\VO\NumberIdentifier::class => App\Support\Spatie\Data\NumberIdentifierCast::class,
+        App\Core\VO\FileValue::class => App\Support\Spatie\Data\FileValueCast::class,
+        App\Core\VO\StringValue::class => App\Support\Spatie\Data\StringValueCast::class,
+        App\Core\VO\IdentityValue::class => App\Support\Spatie\Data\IdentityValueCast::class,
 //        Enumerable::class => Spatie\LaravelData\Casts\EnumerableCast::class,
     ],
 

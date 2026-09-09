@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Spatie\Data;
 
-use App\Support\VO\StringValue;
+use App\Core\VO\StringValue;
 use Spatie\LaravelData\Casts\Cast;
 use Spatie\LaravelData\Casts\Uncastable;
 use Spatie\LaravelData\Support\Creation\CreationContext;

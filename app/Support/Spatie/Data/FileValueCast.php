@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Spatie\Data;
 
-use App\Support\VO\FileValue;
+use App\Core\VO\FileValue;
 use Illuminate\Http\UploadedFile;
 use Spatie\LaravelData\Casts\Cast;
 use Spatie\LaravelData\Casts\Uncastable;

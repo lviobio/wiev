@@ -5,7 +5,7 @@ namespace App\Support\Spatie\Data;
 
 use App\Core\AppIdentity;
 use App\Models\User;
-use App\Support\VO\IdentityValue;
+use App\Core\VO\IdentityValue;
 use Spatie\LaravelData\Casts\Cast;
 use Spatie\LaravelData\Casts\Uncastable;
 use Spatie\LaravelData\Support\Creation\CreationContext;

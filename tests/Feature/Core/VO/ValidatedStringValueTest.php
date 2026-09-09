@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\Feature\Support\VO;
+namespace Tests\Feature\Core\VO;
 
 use App\Modules\Post\Actions\CreatePost\CreatePostData;
 use App\Modules\Post\Domain\VO\PostContent;
 use App\Modules\Post\Domain\VO\PostTitle;
-use App\Support\VO\InvalidValueException;
+use App\Core\VO\InvalidValueException;
 
 test('a value that satisfies its rules is accepted', function () {
     expect(new PostTitle('Long enough')->value)->toBe('Long enough');

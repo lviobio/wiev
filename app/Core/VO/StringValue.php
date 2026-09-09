@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Support\VO;
+namespace App\Core\VO;
 
 /**
  * Значение, которое строится из строки.

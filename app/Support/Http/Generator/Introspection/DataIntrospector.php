@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Http\Generator\Introspection;
 
-use App\Support\VO\FileValue;
+use App\Core\VO\FileValue;
 use Illuminate\Http\UploadedFile;
 use OpenApi\Attributes as OA;
 use ReflectionClass;

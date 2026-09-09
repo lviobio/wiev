@@ -3,18 +3,17 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Models;
 
+use App\Core\ModelManager\InteractsWithMedia;
 use App\Models\BaseModel;
 use App\Models\User;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\VO\PostCover;
-use App\Support\Spatie\MediaLibrary\DeferredMedia;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[UseFactory(PostFactory::class)]
 class Post extends BaseModel implements HasMedia
@@ -45,25 +44,6 @@ class Post extends BaseModel implements HasMedia
                     ->width(50)
                     ->height(50);
             });
-    }
-
-    /**
-     * Обложка. null — снять текущую.
-     *
-     * И то и другое произойдёт после коммита flush(): media library пишет
-     * файлы вне транзакции, откатить их нельзя.
-     */
-    public function setCover(?PostCover $cover): void
-    {
-        $media = app(DeferredMedia::class);
-
-        if ($cover === null) {
-            $media->clear($this, PostMediaCollectionEnum::Cover->value);
-
-            return;
-        }
-
-        $media->add($this, $cover)->toMediaCollection(PostMediaCollectionEnum::Cover->value);
     }
 
     public function authorUser(): BelongsTo

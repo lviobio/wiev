@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Core\ModelManager\Guards\ManagedModelGuard;
 use InvalidArgumentException;
 use LogicException;
 use Throwable;
@@ -72,6 +73,22 @@ class ModelManager implements ModelManagerContract
 
     /** @var array<int, true> находящиеся в обработке — детектор циклов */
     private array $visiting = [];
+
+    /**
+     * Классы, уже прошедшие проверки.
+     *
+     * @var array<class-string, true>
+     */
+    private array $checkedClasses = [];
+
+    /**
+     * @param list<ManagedModelGuard> $guards проверки пригодности класса модели
+     */
+    public function __construct(
+        private readonly array $guards = [],
+    )
+    {
+    }
 
     /**
      * Модели, запланированные к удалению. Выполняются в конце flush(),
@@ -320,11 +337,15 @@ class ModelManager implements ModelManagerContract
         // Снапшоты после успешной записи становятся новым «оригиналом».
         $this->resnapshot();
 
-        $callbacks                 = $this->afterFlushCallbacks;
-        $this->afterFlushCallbacks = [];
+        // колбэк может зарегистрировать следующий — забирать очередь нужно
+        // до опустошения, иначе поздняя регистрация потерялась бы до следующего flush()
+        while ($this->afterFlushCallbacks !== []) {
+            $callbacks                 = $this->afterFlushCallbacks;
+            $this->afterFlushCallbacks = [];
 
-        foreach ($callbacks as $callback) {
-            $callback();
+            foreach ($callbacks as $callback) {
+                $callback();
+            }
         }
     }
 
@@ -431,6 +452,8 @@ class ModelManager implements ModelManagerContract
             return $model;
         }
 
+        $this->guardModelClass($model);
+
         if ($model->exists && $model->getKey() !== null) {
             $hash     = $this->keyHash($model);
             $existing = $this->identityMap[$model::class][$hash] ?? null;
@@ -449,6 +472,26 @@ class ModelManager implements ModelManagerContract
         $this->snapshotAll($model, $partial);
 
         return $model;
+    }
+
+    /**
+     * Пригодность модели проверяют внешние {@see ManagedModelGuard}: менеджер
+     * не знает, чего требуют конкретные пакеты, он лишь зовёт проверки — один
+     * раз на класс, потому что их ответ от экземпляра не зависит.
+     */
+    private function guardModelClass(Model $model): void
+    {
+        $class = $model::class;
+
+        if (isset($this->checkedClasses[$class])) {
+            return;
+        }
+
+        foreach ($this->guards as $guard) {
+            $guard->guard($class);
+        }
+
+        $this->checkedClasses[$class] = true;
     }
 
     private function keyHash(Model $model): string

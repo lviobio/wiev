@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Modules\Post\VO;
 
 use App\Support\Validation\ImageRule;
-use App\Support\VO\FileValue;
+use App\Core\VO\FileValue;
 
 readonly class PostCover extends FileValue
 {

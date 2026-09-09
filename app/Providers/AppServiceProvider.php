@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Core\ModelManager\Guards\ManagedModelGuard;
 use App\Core\ModelManager\ModelManager;
 use App\Core\ModelManager\ModelManagerContract;
 use App\Models\User;
 use App\Support\Routing\AppControllerDispatcher;
 use App\Support\Spatie\MediaLibrary\DeferredFileAdder;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Routing\Contracts\ControllerDispatcher;
@@ -22,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(ControllerDispatcher::class, AppControllerDispatcher::class);
+
+        // Проверки пригодности моделей объявляются конфигом, а не менеджером:
+        // интеграция с новым пакетом добавляется строкой в config/model-manager.php.
+        $this->app->bind(ModelManager::class, static fn(Application $app): ModelManager => new ModelManager(
+            array_map(
+                static fn(string $guard): ManagedModelGuard => $app->make($guard),
+                config('model-manager.guards', []),
+            ),
+        ));
 
         // Unit of Work живёт ровно один запрос / одну джобу: identity map и
         // снапшоты связей не должны переживать своё окружение.

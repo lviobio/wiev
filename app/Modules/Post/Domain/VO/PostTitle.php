@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\Domain\VO;
 
-use App\Support\VO\ValidatedStringValue;
+use App\Core\VO\ValidatedStringValue;
 
 final readonly class PostTitle extends ValidatedStringValue
 {

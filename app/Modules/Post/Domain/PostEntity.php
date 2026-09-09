@@ -7,6 +7,7 @@ use App\Modules\Post\Domain\Data\NewPostData;
 use App\Modules\Post\Domain\VO\PostAuthor;
 use App\Modules\Post\Domain\VO\PostContent;
 use App\Modules\Post\Domain\VO\PostTitle;
+use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use App\Modules\Post\VO\PostCover;
 
@@ -28,7 +29,13 @@ class PostEntity
 
     public function setCover(?PostCover $value): void
     {
-        $this->model->setCover($value);
+        if ($value === null) {
+            $this->model->clearMediaCollection(PostMediaCollectionEnum::Cover->value);
+
+            return;
+        }
+
+        $this->model->addMedia($value)->toMediaCollection(PostMediaCollectionEnum::Cover->value);
     }
 
     public function setAuthor(PostAuthor $value): void

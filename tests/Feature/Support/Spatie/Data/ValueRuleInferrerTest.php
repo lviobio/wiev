@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Support\Spatie\Data;
 
-use App\Support\VO\ValidatedStringValue;
+use App\Core\VO\ValidatedStringValue;
 use Spatie\LaravelData\Attributes\Validation\Rule;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;

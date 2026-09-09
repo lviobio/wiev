@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Support\VO;
+namespace App\Core\VO;
 
 /**
  * Значение, которое само знает, какой формы должен быть его сырой вход.

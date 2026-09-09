@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Spatie\Data;
 
-use App\Support\VO\HasValidationRules;
+use App\Core\VO\HasValidationRules;
 use Spatie\LaravelData\Attributes\Validation\Rule;
 use Spatie\LaravelData\RuleInferrers\RuleInferrer;
 use Spatie\LaravelData\Support\DataProperty;
