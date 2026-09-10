@@ -12,7 +12,7 @@ use Symfony\Component\TypeInfo\Type\ObjectType;
 use Symfony\Component\TypeInfo\Type\UnionType;
 
 /**
- * Teaches swagger-php's default type resolver the two things it doesn't know about a
+ * Teaches swagger-php's default type resolver three things it doesn't know about a
  * Spatie\LaravelData property, so a bare `#[OA\Property]` is enough on it:
  *
  * - {@see Optional} marks "this key may be missing from the payload", not a real type.
@@ -21,16 +21,26 @@ use Symfony\Component\TypeInfo\Type\UnionType;
  * - The project's own value objects say what they wrap in their base class already
  *   ({@see ScalarVoType}), so `PostIdentifier $id` resolves to `integer` without a
  *   property having to repeat it.
+ * - A PHP enum has no schema of its own to `$ref` either - {@see EnumSchemaType} reads
+ *   its cases directly instead of leaving `type` undefined.
  *
- * Everything else - enums, collections, nested Data objects that do have a schema -
- * is left to the parent; this class only intercepts the two cases above.
+ * Everything else - collections, nested Data objects that do have a schema - is left to
+ * the parent; this class only intercepts the cases above.
  */
 final class SpatieDataTypeResolver extends TypeInfoTypeResolver
 {
     protected function setSchemaType(OA\Schema $schema, Type $type, Analysis $analysis, string $sourceClass = OA\Schema::class): OA\Schema
     {
         if ($type instanceof ObjectType) {
-            $voType = ScalarVoType::for($type->getClassName());
+            $class = $type->getClassName();
+
+            $enumType = EnumSchemaType::for($class);
+
+            if ($enumType !== null) {
+                return $enumType->applyTo($schema);
+            }
+
+            $voType = ScalarVoType::for($class);
 
             if ($voType !== null) {
                 return $voType->applyTo($schema);
