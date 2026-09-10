@@ -117,9 +117,4 @@ final readonly class Naming
     {
         return "{$this->titleSingular} not found";
     }
-
-    public function trashedFilterDescription(): string
-    {
-        return "Include soft-deleted {$this->labelPlural}";
-    }
 }

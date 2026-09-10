@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Support\Http\Generator\OpenApi;
 
 use App\Support\Http\Generator\Introspection\QueryDescriptor;
-use App\Support\Http\Generator\Naming;
 use App\Support\Http\Generator\Php\Expr;
 use App\Support\Http\Generator\Php\Literal;
 use App\Support\Http\Generator\Php\NewExpr;
@@ -25,7 +24,7 @@ final class QueryParametersFactory
     /**
      * @return list<Expr>
      */
-    public function build(QueryDescriptor $query, Naming $naming, bool $cursorPaginated = false): array
+    public function build(QueryDescriptor $query, bool $cursorPaginated = false): array
     {
         $parameters = [
             $cursorPaginated ? $this->cursor() : $this->page(),
@@ -39,7 +38,7 @@ final class QueryParametersFactory
         $filterParameter = (string)config('query-builder.parameters.filter', 'filter');
 
         foreach ($query->filters as $filter) {
-            $parameters = [...$parameters, ...$this->filters->build($filter, $filterParameter, $naming)];
+            $parameters = [...$parameters, ...$this->filters->build($filter, $filterParameter)];
         }
 
         $this->warnings = $this->filters->warnings();

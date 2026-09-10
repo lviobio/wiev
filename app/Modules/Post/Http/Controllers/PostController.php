@@ -44,37 +44,8 @@ class PostController extends Controller
         summary: 'List posts',
         security: [['bearerAuth' => []]],
         tags: ['posts'],
-        parameters: [
-            new OA\QueryParameter(name: 'page', schema: new OA\Schema(type: 'integer', default: 1, minimum: 1)),
-            new OA\QueryParameter(name: 'per_page', schema: new OA\Schema(type: 'integer', default: 15, enum: [15, 25, 50, 100])),
-            new OA\QueryParameter(
-                name: 'sort',
-                description: 'Sort field, prefix with `-` for descending order',
-                schema: new OA\Schema(type: 'string', default: 'id', enum: ['id', '-id', 'title', '-title', 'created_at', '-created_at']),
-            ),
-            new OA\QueryParameter(name: 'filter[title]', description: 'Partial title match', schema: new OA\Schema(type: 'string')),
-            new OA\QueryParameter(
-                name: 'filter[trashed]',
-                description: 'Include soft-deleted posts',
-                schema: new OA\Schema(type: 'string', enum: ['with', 'only']),
-            ),
-            new OA\QueryParameter(
-                name: 'filter[search]',
-                description: 'Partial match against title and content',
-                schema: new OA\Schema(type: 'string'),
-            ),
-            new OA\QueryParameter(
-                name: 'filter[created_at][from]',
-                description: 'Unix timestamp in milliseconds',
-                schema: new OA\Schema(type: 'integer', format: 'int64'),
-            ),
-            new OA\QueryParameter(
-                name: 'filter[created_at][to]',
-                description: 'Unix timestamp in milliseconds',
-                schema: new OA\Schema(type: 'integer', format: 'int64'),
-            ),
-        ],
         responses: [new PaginatedResourceResponse(PostResource::class), new OA\Response(response: '403', description: 'Forbidden')],
+        x: ['query-params-ref' => PostIndexQuery::class],
     )]
     #[CheckAuthAbility(AuthAbilityEnum::Access, Post::class)]
     public function index(PostIndexQuery $query): AnonymousResourceCollection

@@ -7,6 +7,7 @@ use App\Support\Http\Generator\DefinitionLocator;
 use App\Support\Http\Generator\Introspection\QueryIntrospector;
 use App\Support\Http\Generator\OpenApi\OperationFactory;
 use App\Support\Http\Generator\Render\ControllerRenderer;
+use App\Support\OpenApi\Swagger\ListingQueryParameters;
 
 function renderCursorFixture(): string
 {
@@ -24,19 +25,16 @@ it('paginates by cursor when asked to', function () {
         ->not->toContain('$query->paginate()');
 });
 
-it('documents the cursor envelope and parameter', function () {
+it('documents the cursor envelope and marks the operation cursor-paginated', function () {
     $rendered = renderCursorFixture();
 
+    // The parameters themselves aren't written here at all - ListingQueryParameters
+    // expands the `x` marker into `cursor`/`per_page`/`sort`/`filter[...]` when the
+    // spec is actually built. See ListingQueryParametersTest for that expansion,
+    // including that cursor mode drops `page` in favour of `cursor`.
     expect($rendered)
         ->toContain("new PaginatedResourceResponse(PostResource::class, paginationType: 'CursorPagination')")
-        // There are no page numbers to ask for; the client echoes a cursor back instead.
-        ->toContain("name: 'cursor'")
-        ->not->toContain("name: 'page'");
-});
-
-it('keeps sorting and filtering under cursor pagination', function () {
-    expect(renderCursorFixture())
-        ->toContain("name: 'per_page'")
-        ->toContain("name: 'sort'")
-        ->toContain("name: 'filter[title]'");
+        ->toContain("'" . ListingQueryParameters::X_QUERY_PARAMS_CURSOR . "' => true")
+        ->toContain("'" . ListingQueryParameters::X_QUERY_PARAMS_REF . "' => PostIndexQuery::class")
+        ->not->toContain('parameters:');
 });

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Support\Http\Generator\OpenApi;
 
 use App\Support\Http\Generator\Introspection\FilterIntrospection;
-use App\Support\Http\Generator\Naming;
 use App\Support\Http\Generator\Php\Expr;
 use App\Support\Http\Generator\Php\Literal;
 use App\Support\Http\Generator\Php\NewExpr;
@@ -28,9 +27,9 @@ final class FilterParameterFactory
     /**
      * @return list<Expr>
      */
-    public function build(FilterIntrospection $filter, string $filterParameter, Naming $naming): array
+    public function build(FilterIntrospection $filter, string $filterParameter): array
     {
-        foreach ($this->descriptorsFor($filter, $naming) as $descriptor) {
+        foreach ($this->describe($filter) as $descriptor) {
             $parameters[] = $this->toParameter($descriptor, $filter, $filterParameter);
         }
 
@@ -48,9 +47,13 @@ final class FilterParameterFactory
     }
 
     /**
+     * The parameters one allowed filter expands into, as data - shared with
+     * {@see \App\Support\OpenApi\Swagger\ListingQueryParameters}, which turns the same
+     * descriptors into real `OA\QueryParameter` objects instead of printable {@see Expr}.
+     *
      * @return list<FilterParameterDescriptor>
      */
-    private function descriptorsFor(FilterIntrospection $filter, Naming $naming): array
+    public function describe(FilterIntrospection $filter): array
     {
         if ($filter->descriptors !== []) {
             return $filter->descriptors;
@@ -62,7 +65,7 @@ final class FilterParameterFactory
             ],
             FiltersTrashed::class => [
                 new FilterParameterDescriptor(
-                    description: $naming->trashedFilterDescription(),
+                    description: 'Include soft-deleted records',
                     enum: ['with', 'only'],
                 ),
             ],

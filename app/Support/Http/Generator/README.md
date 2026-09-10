@@ -101,9 +101,9 @@ return [
 | HTTP-глагол в спеке | тот же, что у роута |
 | `424` | если эндпоинт достаёт запись по роут-параметру (есть `FillFromRouteParameter`) |
 
-Тело запроса **никогда не расписывается по свойствам** — это `new OA\Schema(ref: CreatePostData::class)`, а схему собирает сам swagger-php из `#[OA\Property]` на Data. Практическое следствие: добавили поле в Data — контроллер не меняется, `--check` останется зелёным, и это правильно.
+Тело запроса **никогда не расписывается по свойствам** — это `new OA\Schema(ref: CreatePostData::class)`, а схему собирает сам swagger-php при сборке спеки: из `#[OA\Property]` на Data, если они есть, либо (когда их нет) выводит сам — {@see `App\Support\OpenApi\Swagger\ImplicitDataSchema`} и {@see `SpatieDataTypeResolver`}. Практическое следствие: добавили поле в Data — контроллер не меняется, `--check` останется зелёным, и это правильно.
 
-Query-параметры `index` читаются из Query-класса: `page`, `per_page`, `sort` (enum из `allowedSorts` и их `-`-вариантов) и по параметру на каждый `allowedFilter`.
+Query-параметры `index` — та же история: контроллер несёт только `x: ['query-params-ref' => PostIndexQuery::class, ...]`, а `page`, `per_page`, `sort` (enum из `allowedSorts` и их `-`-вариантов) и по параметру на каждый `allowedFilter` разворачивает {@see `App\Support\OpenApi\Swagger\ListingQueryParameters`} при сборке спеки — из того же Query-класса, что уже используется в рантайме. Добавили `allowedFilter` — спека обновилась без `http:generate`.
 
 Для кастомных эндпоинтов существительное подставляется по-разному в зависимости от имени метода: односложное имя его получает (`restore` → `Restore post` / `restorePost`), многословное уже само называет объект (`removeCover` → `Remove cover` / `removePostCover`). В operationId существительное есть всегда — идентификаторы операций глобальны, и `removeCover` может встретиться в двух модулях.
 

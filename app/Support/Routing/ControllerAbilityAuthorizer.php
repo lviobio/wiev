@@ -36,7 +36,10 @@ final readonly class ControllerAbilityAuthorizer
             $check = $attribute->newInstance();
 
             if ($check->ability instanceof AuthAbilityEnum) {
-                $this->bouncer->setGate($this->gate->forUser($request->user()))->can($check->ability->value);
+                $this->bouncer
+                    ->setGate($this->gate->forUser($request->user()))
+                    ->authorize($check->ability->value, $check->gateArguments());
+
                 continue;
             }
 

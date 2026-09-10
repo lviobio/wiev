@@ -4,12 +4,16 @@ declare(strict_types=1);
 namespace App\Support\Http\Generator\OpenApi;
 
 use App\Support\Http\Generator\ControllerDefinition;
+use App\Support\Http\Generator\Endpoint;
 use App\Support\Http\Generator\EndpointPlan;
 use App\Support\Http\Generator\Introspection\QueryIntrospector;
 use App\Support\Http\Generator\Php\AttributeExpr;
+use App\Support\Http\Generator\Php\ClassRef;
 use App\Support\Http\Generator\Php\Expr;
 use App\Support\Http\Generator\Php\ListLiteral;
 use App\Support\Http\Generator\Php\Literal;
+use App\Support\Http\Generator\Php\MapLiteral;
+use App\Support\OpenApi\Swagger\ListingQueryParameters;
 
 /**
  * Assembles the single `#[OA\Get|Post|...]` attribute documenting an endpoint.
@@ -79,9 +83,17 @@ final class OperationFactory
 
         $arguments['tags'] = new Literal($endpoint->getTags() ?? $definition->getTags());
 
+        if ($endpoint->queryClass !== null) {
+            // Discarded - kept only so an unrecognised filter still surfaces as a
+            // `http:generate` warning at commit-review time, same as always. The
+            // parameters themselves are never written here: ListingQueryParameters
+            // expands `x` into them straight off the query class when the spec is
+            // actually built, so a filter added later shows up without regenerating.
+            $this->listingParameters($plan);
+        }
+
         $parameters = [
             ...$this->pathParameters->build($plan),
-            ...$this->listingParameters($definition, $plan),
             ...$endpoint->getExtraParameters(),
         ];
 
@@ -93,6 +105,10 @@ final class OperationFactory
             ...$endpoint->getResponsesOverride() ?? $this->responses->build($definition, $plan),
             ...$endpoint->getExtraResponses(),
         ]);
+
+        if ($endpoint->queryClass !== null) {
+            $arguments['x'] = $this->listingParametersMarker($endpoint);
+        }
 
         return new AttributeExpr($plan->documentedMethod->attributeClass(), $arguments);
     }
@@ -108,7 +124,7 @@ final class OperationFactory
     /**
      * @return list<Expr>
      */
-    private function listingParameters(ControllerDefinition $definition, EndpointPlan $plan): array
+    private function listingParameters(EndpointPlan $plan): array
     {
         if ($plan->endpoint->queryClass === null) {
             return [];
@@ -116,13 +132,29 @@ final class OperationFactory
 
         $parameters = $this->queryParameters->build(
             $this->queries->describe($plan->endpoint->queryClass),
-            $definition->naming(),
             $plan->endpoint->isCursorPaginated(),
         );
 
         $this->warnings = [...$this->warnings, ...$this->queryParameters->warnings()];
 
         return $parameters;
+    }
+
+    /**
+     * Names the query class (and cursor mode) under a vendor extension, so
+     * {@see ListingQueryParameters} can find and expand it at doc-build time.
+     */
+    private function listingParametersMarker(Endpoint $endpoint): Expr
+    {
+        $marker = [
+            ListingQueryParameters::X_QUERY_PARAMS_REF => new ClassRef((string)$endpoint->queryClass),
+        ];
+
+        if ($endpoint->isCursorPaginated()) {
+            $marker[ListingQueryParameters::X_QUERY_PARAMS_CURSOR] = new Literal(true);
+        }
+
+        return new MapLiteral($marker);
     }
 
     private function spoofingDescription(EndpointPlan $plan): ?string
