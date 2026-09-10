@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Modules\Post\Actions\UpdatePost;
 
 use App\Core\ModelManager\ModelManagerContract;
+use App\Modules\Post\Domain\PostEntity;
 use App\Modules\Post\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
@@ -39,7 +40,7 @@ readonly class UpdatePostAction
         $model->content = $data->content;
 
         if (!$data->cover instanceof Optional) {
-            $model->setCover($data->cover);
+            new PostEntity($model)->setCover($data->cover);
         }
     }
 }

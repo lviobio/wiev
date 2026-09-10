@@ -13,6 +13,7 @@ use App\Support\Http\Generator\Php\Expr;
 use App\Support\Http\Generator\Php\Literal;
 use App\Support\Http\Generator\Php\NewExpr;
 use App\Support\OpenApi\PaginatedResourceResponse;
+use App\Support\OpenApi\ResourceCollectionResponse;
 use App\Support\OpenApi\SingleResourceResponse;
 use OpenApi\Attributes as OA;
 
@@ -84,6 +85,13 @@ final class ResponsesFactory
 
         if ($plan->returnKind === ReturnKind::Collection) {
             $arguments = [new ClassRef($resource)];
+
+            // Условие то же, что у MethodRenderer::body(): пагинирует Query,
+            // а коллекция из Action отдаётся как есть — конверт должен совпадать
+            // с тем, что метод действительно возвращает.
+            if ($plan->endpoint->queryClass === null) {
+                return new NewExpr(ResourceCollectionResponse::class, $arguments);
+            }
 
             if ($plan->endpoint->isCursorPaginated()) {
                 $arguments['paginationType'] = new Literal('CursorPagination');

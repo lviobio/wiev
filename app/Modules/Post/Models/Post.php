@@ -7,11 +7,11 @@ use App\Core\ModelManager\InteractsWithMedia;
 use App\Models\BaseModel;
 use App\Models\User;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
-use App\Modules\Post\VO\PostCover;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 
@@ -44,6 +44,18 @@ class Post extends BaseModel implements HasMedia
                     ->width(50)
                     ->height(50);
             });
+
+        $this->addMediaCollection(PostMediaCollectionEnum::Files->value);
+    }
+
+    /**
+     * Файлы поста — та же морф-связь media, суженная до своей коллекции.
+     *
+     * @return MorphMany<\Spatie\MediaLibrary\MediaCollections\Models\Media, $this>
+     */
+    public function mediaFiles(): MorphMany
+    {
+        return $this->media()->where('collection_name', PostMediaCollectionEnum::Files->value);
     }
 
     public function authorUser(): BelongsTo

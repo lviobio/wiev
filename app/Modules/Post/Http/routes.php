@@ -17,3 +17,15 @@ Route::group(['prefix' => 'posts', 'as' => 'posts.', 'controller' => C\PostContr
     });
 });
 // @generated-routes:end PostController
+
+// @generated-routes:start PostFileController
+Route::group(['prefix' => 'posts', 'as' => 'posts.files.', 'controller' => C\PostFileController::class], function () {
+    Route::group(['prefix' => '{post}'], function () {
+        Route::get('files', 'listFiles')->name('index');
+        Route::post('files', 'attachFile')->name('store');
+        Route::patch('files/{file}', 'renameFile')->name('update');
+        Route::delete('files/{file}', 'detachFile')->name('destroy');
+        Route::get('files/{file}/download', 'downloadFile')->name('download');
+    });
+});
+// @generated-routes:end PostFileController

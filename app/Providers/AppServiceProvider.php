@@ -13,6 +13,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Routing\Contracts\ControllerDispatcher;
+use App\Models\Media;
 use Spatie\MediaLibrary\MediaCollections\FileAdder;
 use Illuminate\Support\ServiceProvider;
 
@@ -53,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
 
         Relation::enforceMorphMap([
             'user' => User::class,
+            'media' => Media::class,
         ]);
     }
 }

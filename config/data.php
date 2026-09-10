@@ -49,6 +49,7 @@ return [
         DateTimeInterface::class => App\Support\Spatie\Data\SmartDateTimeInterfaceCast::class,
         BackedEnum::class => Spatie\LaravelData\Casts\EnumCast::class,
         App\Core\VO\NumberIdentifier::class => App\Support\Spatie\Data\NumberIdentifierCast::class,
+        App\Core\VO\UuidIdentifier::class => App\Support\Spatie\Data\UuidIdentifierCast::class,
         App\Core\VO\FileValue::class => App\Support\Spatie\Data\FileValueCast::class,
         App\Core\VO\StringValue::class => App\Support\Spatie\Data\StringValueCast::class,
         App\Core\VO\IdentityValue::class => App\Support\Spatie\Data\IdentityValueCast::class,

@@ -6,5 +6,6 @@ namespace App\Modules\Post\Enums;
 enum PostMediaCollectionEnum: string
 {
     case Cover = 'cover';
+    case Files = 'files';
     case CoverConversionThumb = 'thumb';
 }
