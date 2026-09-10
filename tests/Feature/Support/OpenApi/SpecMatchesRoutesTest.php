@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Support\OpenApi;
 
+use App\Support\OpenApi\Swagger\SpatieDataGenerator;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use OpenApi\Generator;
@@ -12,7 +13,7 @@ use OpenApi\Generator;
  * This walks every documented operation and demands a real route behind it.
  */
 it('documents only paths that are actually routed', function () {
-    $specification = (new Generator())->generate([app_path()]);
+    $specification = SpatieDataGenerator::configure(new Generator())->generate([app_path()]);
 
     expect($specification?->paths)->not->toBeEmpty();
 

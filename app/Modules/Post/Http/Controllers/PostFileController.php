@@ -43,7 +43,7 @@ class PostFileController extends Controller
         summary: 'List files',
         security: [['bearerAuth' => []]],
         tags: ['post-files'],
-        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new ResourceCollectionResponse(PostFileResource::class),
             new OA\Response(response: '403', description: 'Forbidden'),
@@ -70,7 +70,7 @@ class PostFileController extends Controller
             content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: AttachFileData::class)),
         ),
         tags: ['post-files'],
-        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new SingleResourceResponse(PostFileResource::class, response: '201', description: 'File attached'),
             new OA\Response(response: '403', description: 'Forbidden'),
@@ -99,7 +99,7 @@ class PostFileController extends Controller
         ),
         tags: ['post-files'],
         parameters: [
-            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer')),
             new OA\PathParameter(name: 'file', required: true, schema: new OA\Schema(type: 'string')),
         ],
         responses: [
@@ -127,7 +127,7 @@ class PostFileController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['post-files'],
         parameters: [
-            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer')),
             new OA\PathParameter(name: 'file', required: true, schema: new OA\Schema(type: 'string')),
         ],
         responses: [

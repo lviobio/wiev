@@ -88,7 +88,7 @@ class PostController extends Controller
         summary: 'Show post',
         security: [['bearerAuth' => []]],
         tags: ['posts'],
-        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new SingleResourceResponse(PostResource::class),
             new OA\Response(response: '403', description: 'Forbidden'),
@@ -141,7 +141,7 @@ class PostController extends Controller
             content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: UpdatePostData::class)),
         ),
         tags: ['posts'],
-        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new SingleResourceResponse(PostResource::class, description: 'Post updated'),
             new OA\Response(response: '403', description: 'Forbidden'),
@@ -165,7 +165,7 @@ class PostController extends Controller
         summary: 'Delete post',
         security: [['bearerAuth' => []]],
         tags: ['posts'],
-        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new OA\Response(response: '204', description: 'Post deleted'),
             new OA\Response(response: '403', description: 'Forbidden'),
@@ -191,7 +191,7 @@ class PostController extends Controller
         summary: 'Restore post',
         security: [['bearerAuth' => []]],
         tags: ['posts'],
-        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'string'))],
+        parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
             new SingleResourceResponse(PostResource::class),
             new OA\Response(response: '403', description: 'Forbidden'),

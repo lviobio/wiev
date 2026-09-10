@@ -79,6 +79,11 @@ final class DataIntrospector
      * Body properties missing an `#[OA\Property]`, which would silently vanish from
      * the request schema.
      *
+     * A Data class without its own `#[OA\Schema]` gets one synthesized from its
+     * constructor instead ({@see \App\Support\OpenApi\Swagger\ImplicitDataSchema}) -
+     * every property is documented there by default, so only a class that opted into
+     * manual annotation by writing `#[OA\Schema]` can still leave one behind.
+     *
      * @param  list<ReflectionParameter>  $properties
      * @return list<string>
      */
@@ -87,6 +92,12 @@ final class DataIntrospector
         $undocumented = [];
 
         foreach ($properties as $property) {
+            $declaringClass = $property->getDeclaringClass();
+
+            if ($declaringClass === null || $declaringClass->getAttributes(OA\Schema::class) === []) {
+                continue;
+            }
+
             if ($property->getAttributes(OA\Property::class) === []) {
                 $undocumented[] = $property->getName();
             }
