@@ -70,7 +70,7 @@ final class FilterParameterFactory
                 ),
             ],
             FiltersExact::class => [new FilterParameterDescriptor()],
-            FiltersBelongsTo::class => [new FilterParameterDescriptor(type: 'integer')],
+            FiltersBelongsTo::class => [new FilterParameterDescriptor(type: $filter->relatedKeyType ?? 'integer')],
             default => $this->unrecognised($filter),
         };
     }
