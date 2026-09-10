@@ -1,5 +1,6 @@
 export { default as Create } from './PostCreate'
 export { default as Edit } from './PostEdit'
+export { default as Files } from './PostFiles'
 
 export const List = {
   Component: defineAsyncComponent(() => import('./PostList.vue')),

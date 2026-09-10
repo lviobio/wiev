@@ -1,8 +1,10 @@
 <script setup lang="tsx">
 import Icon from '@/modules/post/icon'
+import { usePostFileRepository } from '@/modules/post/repositories/PostFileRepository'
 import { PostRepository } from '@/modules/post/repositories/PostRepository'
 import { postRouteNames } from '@/modules/post/router/names'
 import { PostIdentifier } from '@/modules/post/types'
+import Files from '@/modules/post/ui/components/PostFiles'
 
 const { repository, id } = defineProps<{
   id: PostIdentifier
@@ -10,6 +12,8 @@ const { repository, id } = defineProps<{
 }>()
 
 const { data } = await repository.find(id)
+
+const fileRepository = usePostFileRepository()
 
 const router = useRouter()
 
@@ -44,6 +48,9 @@ function onBack() {
       <span>ID: {{ data.id }}</span>
     </template>
     <div>{{ data.content }}</div>
+    <template #footer>
+      <Files.Component :id="data.id" :repository="fileRepository" />
+    </template>
     <template #action>
       <NFlex>
         <NButton size="small" @click="onEdit">Edit</NButton>
