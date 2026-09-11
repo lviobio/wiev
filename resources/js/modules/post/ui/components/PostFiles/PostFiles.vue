@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { useTemporaryUploadRepository } from '@/core/api/TemporaryUploadRepository'
 import { PostFileRepository } from '@/modules/post/repositories/PostFileRepository'
 import { PostFile, PostIdentifier } from '@/modules/post/types'
 import type { UploadCustomRequestOptions } from 'naive-ui'
@@ -10,6 +11,7 @@ const { id, repository } = defineProps<{
 
 const message = useMessage()
 const dialog = useDialog()
+const uploadRepository = useTemporaryUploadRepository()
 
 const files = ref<PostFile[]>([])
 const loading = ref(false)
@@ -36,8 +38,11 @@ function customRequest({ file, onFinish, onError }: UploadCustomRequestOptions) 
   }
 
   uploading.value = true
-  repository
-    .attach(id, { data: { file: file.file } })
+  // Files are staged first (like the cover, see AppIllustrationInput.vue) and then
+  // attached by identifier - the backend no longer accepts raw bytes here.
+  uploadRepository
+    .upload({ data: { file: file.file } })
+    .then(({ data: upload }) => repository.attach(id, { data: { file: upload.uuid } }))
     .then(({ data }) => {
       files.value.push(data)
       message.success('File attached')

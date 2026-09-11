@@ -4,7 +4,7 @@ import {
   DefaultUpdateQueryContract,
   DefaultUpdateQueryResultContract,
   HasSignalContract,
-  sendAxiosPostRequest,
+  sendAxiosPostRequestJson,
 } from '@/core/api/simple-repository-helpers-v1/main'
 import { AxiosInstance } from 'axios'
 import { PostFile, PostFileIdentifier, PostIdentifier } from '../types'
@@ -13,7 +13,9 @@ import { PostFile, PostFileIdentifier, PostIdentifier } from '../types'
 type PostFileListResult = { data: PostFile[] }
 
 /** Attach */
-type PostFileAttachQuery = DefaultCreateQueryContract<{ file: File }>
+// `file` is a temporary-upload identifier (see core/api/TemporaryUploadRepository.ts),
+// not the raw file - it must already be staged before this is called.
+type PostFileAttachQuery = DefaultCreateQueryContract<{ file: string }>
 type PostFileAttachResult = DefaultCreateQueryResultContract<PostFile>
 
 /** Rename */
@@ -49,7 +51,7 @@ class PostFileApiRepository implements PostFileRepository {
   }
 
   async attach(postId: PostIdentifier, options: PostFileAttachQuery) {
-    const { data } = await sendAxiosPostRequest<PostFileAttachResult>(
+    const { data } = await sendAxiosPostRequestJson<PostFileAttachResult>(
       this.axios,
       `posts/${postId}/files`,
       options,

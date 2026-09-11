@@ -37,7 +37,7 @@ it('wires config/l5-swagger.php to the custom generator', function () {
     // ImplicitDataSchema: CreatePostData documents itself with no #[OA\Schema] of its
     // own, and the request body's $ref resolves to it rather than staying a bare FQCN.
     expect($spec['components']['schemas'])->toHaveKey('CreatePostData')
-        ->and($spec['paths']['/api/v1/posts']['post']['requestBody']['content']['multipart/form-data']['schema'])
+        ->and($spec['paths']['/api/v1/posts']['post']['requestBody']['content']['application/json']['schema'])
         ->toBe(['$ref' => '#/components/schemas/CreatePostData']);
 
     // ListingQueryParameters: the `x` marker expanded into real parameters instead of

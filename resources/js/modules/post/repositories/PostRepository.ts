@@ -6,8 +6,8 @@ import {
   DefaultUpdateQueryContract,
   DefaultUpdateQueryResultContract,
   sendAxiosGetRequest,
-  sendAxiosPostRequest,
-  sendAxiosPutRequest,
+  sendAxiosPostRequestJson,
+  sendAxiosPutRequestJson,
 } from '@/core/api/simple-repository-helpers-v1/main'
 import { zFilterTrashed } from '@/core/filters/trashed'
 import { MaybePaginatedData } from '@/core/pagination/base'
@@ -37,19 +37,32 @@ type PostListQueryResult = MaybePaginatedData<Post>
 export const postFormSchema = z.object({
   title: z.string(),
   content: z.string().nullable(),
+  // The API's actual wire type is `string | null` (a temporary-upload identifier),
+  // not `File` - kept as `File` here so `transformSchemaForForm`'s file-field
+  // detection still treats this as an upload field. `prepareFormData` (see
+  // core/utils/form-schemas.ts) is what actually resolves it to the identifier.
   cover: z.custom<File>().nullish(),
 })
 
 type PostFormSchema = z.infer<typeof postFormSchema>
 
+/**
+ * The shape actually sent to the API once `prepareFormData()` has run: `cover` is a
+ * temporary-upload identifier by then (see `AppIllustrationInput.vue`'s
+ * `customRequest`), not the raw `File` `postFormSchema` declares above - that
+ * declaration exists only so `transformSchemaForForm()` treats the field as an upload
+ * field in the first place.
+ */
+type PostWireData = Omit<PostFormSchema, 'cover'> & { cover?: string | null }
+
 /** Create */
-type PostCreateData = PostFormSchema
+type PostCreateData = PostWireData
 
 type PostCreateQuery = DefaultCreateQueryContract<PostCreateData>
 type PostCreateQueryResult = DefaultCreateQueryResultContract<Post>
 
 /** Update */
-type PostUpdateData = PostFormSchema
+type PostUpdateData = PostWireData
 
 type PostUpdateQuery = DefaultUpdateQueryContract<PostUpdateData>
 type PostUpdateQueryResult = DefaultUpdateQueryResultContract<Post>
@@ -86,13 +99,17 @@ class PostApiRepository implements PostRepository {
   }
 
   async create(options: PostCreateQuery) {
-    const { data } = await sendAxiosPostRequest<PostCreateQueryResult>(this.axios, 'posts', options)
+    const { data } = await sendAxiosPostRequestJson<PostCreateQueryResult>(
+      this.axios,
+      'posts',
+      options,
+    )
 
     return data
   }
 
   async update(id: PostIdentifier, options: PostUpdateQuery) {
-    const { data } = await sendAxiosPutRequest<PostUpdateQueryResult>(
+    const { data } = await sendAxiosPutRequestJson<PostUpdateQueryResult>(
       this.axios,
       `posts/${id}`,
       options,

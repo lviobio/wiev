@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post\Api;
 
+use App\Core\ModelManager\ModelManagerContract;
+use App\Core\Upload\Models\TemporaryUpload;
 use App\Enums\AuthAbilityEnum;
 use App\Models\Media;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
@@ -13,6 +15,7 @@ use Illuminate\Support\Str;
 
 beforeEach(function () {
     Storage::fake('public');
+    Storage::fake(config('uploads.disk'));
 
     $this->model = Post::factory()->create();
     $this->actingAs($this->model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
@@ -37,17 +40,40 @@ it('lists the files of a post', function () {
 });
 
 it('attaches a file to a post', function () {
-    $response = $this->post(route('api.v1.posts.files.store', ['post' => $this->model]), [
-        'file' => UploadedFile::fake()->create('contract.pdf', 4),
+    $upload = TemporaryUpload::factory()->create([
+        'user_id' => $this->model->authorUser->getKey(),
+        'original_name' => 'contract.pdf',
+    ]);
+
+    $response = $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
+        'file' => $upload->uuid,
     ])->assertCreated();
 
     expect($response->json('data.file_name'))->toBe('contract.pdf')
         ->and($this->model->fresh()->mediaFiles()->count())->toBe(1);
 });
 
-it('rejects an attachment that is not a file', function () {
+it('rejects an attachment that is not a valid upload reference', function () {
     $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
         'file' => 'not a file',
+    ])->assertStatus(422);
+});
+
+it('rejects an attachment referencing an upload it does not own', function () {
+    $upload = TemporaryUpload::factory()->create();
+
+    $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
+        'file' => $upload->uuid,
+    ])->assertStatus(422);
+});
+
+it('rejects an attachment referencing an already-used upload', function () {
+    $upload = TemporaryUpload::factory()->used()->create([
+        'user_id' => $this->model->authorUser->getKey(),
+    ]);
+
+    $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
+        'file' => $upload->uuid,
     ])->assertStatus(422);
 });
 
@@ -92,9 +118,10 @@ it('forbids a stranger from touching the files', function () {
     $file = attachFileTo($this->model);
 
     $this->actingAsNewUser()->allowActingUser(AuthAbilityEnum::Access, Post::class);
+    $upload = TemporaryUpload::factory()->create(['user_id' => auth()->id()]);
 
     $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
-        'file' => UploadedFile::fake()->create('hijack.pdf', 1),
+        'file' => $upload->uuid,
     ])->assertForbidden();
 
     $this->patchJson(route('api.v1.posts.files.update', ['post' => $this->model, 'file' => $file->uuid]), [
@@ -108,6 +135,45 @@ it('forbids a stranger from touching the files', function () {
     $this->getJson(route('api.v1.posts.files.index', ['post' => $this->model]))->assertOk();
 
     expect($this->model->fresh()->mediaFiles()->count())->toBe(1);
+});
+
+it('can retry with the same file after a domain-level authorization check fails', function () {
+    // The controller-level ability check only requires generic Access - it's
+    // AttachFileAction's own in-action Gate::authorize('update', $post) that rejects
+    // this, well after the Data object (and the file it claimed) already exists.
+    $this->actingAsNewUser()->allowActingUser(AuthAbilityEnum::Access, Post::class);
+    $upload = TemporaryUpload::factory()->create(['user_id' => auth()->id()]);
+
+    $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
+        'file' => $upload->uuid,
+    ])->assertForbidden();
+
+
+    // The file must not have been burned by the failed attempt.
+    $ownPost = Post::factory()->create(['author_user_id' => auth()->id()]);
+
+    $this->postJson(route('api.v1.posts.files.store', ['post' => $ownPost]), [
+        'file' => $upload->uuid,
+    ])->assertCreated();
+
+    expect($ownPost->fresh()->mediaFiles()->count())->toBe(1);
+});
+
+it('answers 409 when another request used the same file first', function () {
+    $upload = TemporaryUpload::factory()->create(['user_id' => $this->model->authorUser->getKey()]);
+
+    // Registered before the request, so it runs first inside the flush transaction:
+    // stands in for a concurrent request that claimed the file a moment earlier.
+    resolve(ModelManagerContract::class)->beforeCommit(
+        fn() => TemporaryUpload::query()->whereKey($upload->getKey())->update(['used_at' => now()]),
+    );
+
+    $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
+        'file' => $upload->uuid,
+    ])->assertStatus(409);
+
+    expect($this->model->fresh()->mediaFiles()->count())->toBe(0)
+        ->and(Storage::disk($upload->disk)->exists($upload->path))->toBeTrue();
 });
 
 it('requires the access ability', function () {

@@ -5,6 +5,8 @@ namespace App\Support\Routing;
 
 use App\Authorization\CheckAuthAbility;
 use App\Enums\AuthAbilityEnum;
+use App\Modules\Post\Models\Post;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use ReflectionMethod;

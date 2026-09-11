@@ -106,6 +106,9 @@ class ModelManager implements ModelManagerContract
     private array $extraUpdates = [];
 
     /** @var list<Closure> */
+    private array $beforeCommitCallbacks = [];
+
+    /** @var list<Closure> */
     private array $afterFlushCallbacks = [];
 
     private bool $inFlush = false;
@@ -279,6 +282,22 @@ class ModelManager implements ModelManagerContract
     }
 
     /**
+     * Колбэк, выполняемый внутри транзакции flush() — после записи графа,
+     * перед коммитом.
+     *
+     * Для того, что должно жить и умирать вместе с транзакцией: например,
+     * атомарно пометить временную загрузку использованной ровно тогда, когда
+     * коммитятся изменения, ради которых она нужна. Исключение из колбэка
+     * откатывает транзакцию целиком — так пара «проверить и записать»
+     * выражается одним UPDATE ... WHERE и блокировкой строки, а не отдельным
+     * механизмом блокировок.
+     */
+    public function beforeCommit(Closure $callback): void
+    {
+        $this->beforeCommitCallbacks[] = $callback;
+    }
+
+    /**
      * Колбэк, выполняемый после успешного коммита flush().
      *
      * Для эффектов, которые нельзя откатить и потому нельзя пускать внутрь
@@ -322,6 +341,16 @@ class ModelManager implements ModelManagerContract
             $this->applyExtraUpdates();
             $this->applyRemovals();
 
+            // как и afterFlush: колбэк может зарегистрировать следующий
+            while ($this->beforeCommitCallbacks !== []) {
+                $callbacks                  = $this->beforeCommitCallbacks;
+                $this->beforeCommitCallbacks = [];
+
+                foreach ($callbacks as $callback) {
+                    $callback();
+                }
+            }
+
             DB::commit();
         } catch (Throwable $e) {
             DB::rollBack();
@@ -362,6 +391,7 @@ class ModelManager implements ModelManagerContract
         $this->visiting            = [];
         $this->extraUpdates        = [];
         $this->removals            = [];
+        $this->beforeCommitCallbacks = [];
         $this->afterFlushCallbacks = [];
     }
 

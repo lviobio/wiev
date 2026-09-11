@@ -130,6 +130,46 @@ export function sendAxiosPutRequest<T>(
   return axios.post<T>(url, data, config)
 }
 
+function buildAxiosJsonConfigFromOptions(options: OptionsContract) {
+  const config: AxiosRequestConfig = {}
+  const data: any = {}
+
+  handleHasSignalContract(options, config)
+  handleHasDataContract(options, data)
+  handleHasPaginationContract(options, data)
+
+  return { config, data }
+}
+
+/**
+ * Same shape as {@see sendAxiosPostRequest}, minus the FormData/File handling - for a
+ * body that carries no File, so it can go as plain JSON instead of multipart.
+ */
+export function sendAxiosPostRequestJson<T>(
+  axios: AxiosInstance,
+  url: string,
+  options: OptionsContract,
+) {
+  const { config, data } = buildAxiosJsonConfigFromOptions(options)
+
+  return axios.post<T>(url, data, config)
+}
+
+/**
+ * Unlike {@see sendAxiosPutRequest}, this sends a real PUT rather than a POST with
+ * `_method` spoofing - that trick exists only because browsers can't submit multipart
+ * forms with a PUT verb, which doesn't apply to a JSON request.
+ */
+export function sendAxiosPutRequestJson<T>(
+  axios: AxiosInstance,
+  url: string,
+  options: OptionsContract,
+) {
+  const { config, data } = buildAxiosJsonConfigFromOptions(options)
+
+  return axios.put<T>(url, data, config)
+}
+
 function buildFormData<T extends object>(
   source: T,
   formData?: FormData,

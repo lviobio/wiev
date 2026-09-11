@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post;
 
+use App\Core\Upload\Models\TemporaryUpload;
 use App\Models\User;
 use App\Modules\Post\Actions\UpdatePost\UpdatePostAction;
 use App\Modules\Post\Actions\UpdatePost\UpdatePostData;
@@ -10,10 +11,17 @@ use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+
+beforeEach(function () {
+    Storage::fake('public');
+    Storage::fake(config('uploads.disk'));
+});
 
 test('update post action', function () {
     $model = Post::factory()->create();
     $this->actingAs($user = $model->authorUser);
+    $cover = TemporaryUpload::factory()->image()->create(['user_id' => $user->getKey()]);
 
     $action = resolve(UpdatePostAction::class);
 
@@ -22,7 +30,7 @@ test('update post action', function () {
         'actorUser' => $user,
         'title' => 'Updated title',
         'content' => 'Updated content',
-        'cover' => UploadedFile::fake()->image('cover.jpg'),
+        'cover' => $cover->uuid,
     ]));
 
     expect($updated->title)->toBe('Updated title')

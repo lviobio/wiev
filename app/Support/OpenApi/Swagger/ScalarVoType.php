@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace App\Support\OpenApi\Swagger;
 
-use App\Core\VO\FileValue;
 use App\Core\VO\HasValidationRules;
 use App\Core\VO\NumberIdentifier;
+use App\Core\VO\StoredFileValue;
 use App\Core\VO\StringValue;
+use App\Core\VO\UploadedFileValue;
 use App\Core\VO\UuidIdentifier;
 use OpenApi\Annotations as OA;
 
@@ -52,7 +53,11 @@ final readonly class ScalarVoType
         return match (true) {
             is_subclass_of($class, NumberIdentifier::class) => new self('integer'),
             is_subclass_of($class, UuidIdentifier::class) => new self('string', 'uuid'),
-            is_subclass_of($class, FileValue::class) => new self('string', 'binary'),
+            // Raw bytes in the request body (NewUpload) ...
+            is_subclass_of($class, UploadedFileValue::class) => new self('string', 'binary'),
+            // ... versus a reference to a file already staged (PostCover, PostFile) -
+            // on the wire that's the temporary upload's identifier.
+            is_subclass_of($class, StoredFileValue::class) => new self('string', 'uuid'),
             is_a($class, StringValue::class, true) => self::string($class),
             default => null,
         };

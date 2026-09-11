@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Core\ModelManager;
 
 use App\Core\VO\FileValue;
+use App\Core\VO\StoredFileValue;
+use App\Core\VO\UploadedFileValue;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia as MediaLibraryInteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\FileAdder;
@@ -29,17 +31,28 @@ trait InteractsWithMedia
     /**
      * Кроме исходных типов принимает доменное значение файла.
      *
-     * Значение разворачивается в путь плюс исходное имя: из временного пути
-     * media library вывела бы имя вида "phpA1B2C3".
+     * Файл на диске ({@see StoredFileValue}) уходит через `addMediaFromDisk()`: media
+     * library сама копирует его с любого диска на диск медиа — временное хранилище
+     * и медиа могут жить где угодно, хоть в разных бакетах. Удалять ли оригинал,
+     * решает {@see \App\Support\Spatie\MediaLibrary\DeferredFileAdder}.
+     * Файл из запроса ({@see UploadedFileValue}) — как обычный UploadedFile.
+     *
+     * Имя в обоих случаях берётся из значения: иначе media library вывела бы его
+     * из пути на диске (uuid-каталог, phpA1B2C3 и т.п.).
      */
     public function addMedia(string|UploadedFile|FileValue $file): FileAdder
     {
+        $adder = match (true) {
+            $file instanceof StoredFileValue => $this->addMediaFromDisk($file->path, $file->disk),
+            $file instanceof UploadedFileValue => $this->addMediaThroughMediaLibrary($file->source),
+            default => $this->addMediaThroughMediaLibrary($file),
+        };
+
         if (!$file instanceof FileValue) {
-            return $this->addMediaThroughMediaLibrary($file);
+            return $adder;
         }
 
-        return $this
-            ->addMediaThroughMediaLibrary($file->path)
+        return $adder
             ->usingFileName($file->originalName)
             ->usingName($file->nameWithoutExtension());
     }

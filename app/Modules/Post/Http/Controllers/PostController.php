@@ -84,7 +84,7 @@ class PostController extends Controller
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: CreatePostData::class)),
+            content: new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(ref: CreatePostData::class)),
         ),
         tags: ['posts'],
         responses: [
@@ -109,7 +109,7 @@ class PostController extends Controller
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: UpdatePostData::class)),
+            content: new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(ref: UpdatePostData::class)),
         ),
         tags: ['posts'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],

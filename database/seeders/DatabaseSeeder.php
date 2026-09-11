@@ -5,8 +5,8 @@ namespace Database\Seeders;
 use App\Enums\AuthAbilityEnum;
 use App\Models\User;
 use App\Modules\Post\Models\Post;
-use Illuminate\Database\Seeder;
 use Bouncer;
+use Illuminate\Database\Seeder;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -19,24 +19,35 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
+        $this->seedAuthorization();
+
+        tap(User::factory()->create([
             'name' => 'Super Administrator User',
             'email' => 'test-1@example.com',
-        ]);
+        ]), function (User $user) {
+            $user->assign('superadmin');
+        });
 
-        User::factory()->create([
+        tap(User::factory()->create([
             'name' => 'Administrator User',
             'email' => 'test-2@example.com',
-        ]);
+        ]), function (User $user) {
+            $user->assign('admin');
+        });
 
-        User::factory()->create([
+        tap(User::factory()->create([
             'name' => 'User',
             'email' => 'test-3@example.com',
+        ]), function (User $user) {
+            $user->assign('user');
+        });
+
+        User::factory()->create([
+            'name' => 'User without roles',
+            'email' => 'test-4@example.com',
         ]);
 
         Post::factory()->count(100)->create();
-
-        $this->seedAuthorization();
     }
 
     private function seedAuthorization(): void

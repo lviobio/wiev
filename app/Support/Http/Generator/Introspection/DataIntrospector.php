@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Support\Http\Generator\Introspection;
 
-use App\Core\VO\FileValue;
+use App\Core\VO\UploadedFileValue;
 use Illuminate\Http\UploadedFile;
 use OpenApi\Attributes as OA;
 use ReflectionClass;
@@ -41,14 +41,16 @@ final class DataIntrospector
     /**
      * Types that make a request body carry a file.
      *
-     * A Data object may declare the raw upload or a domain value wrapping it
-     * ({@see FileValue}); either way the endpoint speaks multipart.
+     * A Data object may declare the raw upload directly, or a domain value wrapping it
+     * ({@see UploadedFileValue}) - either way the endpoint speaks multipart. A
+     * {@see \App\Core\VO\StoredFileValue} (e.g. `PostCover`) is referenced by a
+     * temporary-upload identifier instead and stays JSON.
      *
      * @var list<class-string>
      */
     private const FILE_TYPES = [
         UploadedFile::class,
-        FileValue::class,
+        UploadedFileValue::class,
     ];
 
     /**

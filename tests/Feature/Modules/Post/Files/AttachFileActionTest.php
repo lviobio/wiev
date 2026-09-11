@@ -3,18 +3,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post\Files;
 
+use App\Core\Upload\Models\TemporaryUpload;
 use App\Models\User;
 use App\Modules\Post\Actions\Files\AttachFile\AttachFileAction;
 use App\Modules\Post\Actions\Files\AttachFile\AttachFileData;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 beforeEach(function () {
     Storage::fake('public');
+    Storage::fake(config('uploads.disk'));
 
     $this->model = Post::factory()->create();
     $this->author = $this->model->authorUser;
@@ -22,11 +23,15 @@ beforeEach(function () {
 
 test('attach file action', function () {
     $this->actingAs($this->author);
+    $upload = TemporaryUpload::factory()->create([
+        'user_id' => $this->author->getKey(),
+        'original_name' => 'contract draft.pdf',
+    ]);
 
     $media = resolve(AttachFileAction::class)(AttachFileData::from([
         'id' => $this->model->getKey(),
         'actorUser' => $this->author,
-        'file' => UploadedFile::fake()->create('contract draft.pdf', 12),
+        'file' => $upload->uuid,
     ]));
 
     expect($media)->toBeInstanceOf(Media::class)
@@ -41,10 +46,11 @@ test('attach file action', function () {
 test('attach file action forbids a stranger', function () {
     $stranger = User::factory()->create();
     $this->actingAs($stranger);
+    $upload = TemporaryUpload::factory()->create(['user_id' => $stranger->getKey()]);
 
     resolve(AttachFileAction::class)(AttachFileData::from([
         'id' => $this->model->getKey(),
         'actorUser' => $stranger,
-        'file' => UploadedFile::fake()->create('doc.pdf', 1),
+        'file' => $upload->uuid,
     ]));
 })->throws(AuthorizationException::class);

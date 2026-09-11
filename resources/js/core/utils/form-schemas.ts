@@ -4,6 +4,13 @@ import { z, ZodObject, ZodRawShape } from 'zod'
 export type RemovableUploadFileInfo = UploadFileInfo | null
 
 /**
+ * An `UploadFileInfo` that has already been uploaded ahead of time (see
+ * `AppIllustrationInput.vue`'s `customRequest`), carrying the identifier
+ * `prepareFormData` sends instead of the raw `File`.
+ */
+export type UploadFileInfoWithReference = UploadFileInfo & { reference?: string }
+
+/**
  * Символ для хранения ссылки на оригинальную схему в объекте
  */
 export const SCHEMA_SYMBOL = Symbol('schema')
@@ -268,7 +275,7 @@ function isUploadFileInfo(value: unknown): value is UploadFileInfo {
   )
 }
 
-// Рекурсивный тип для преобразования UploadFileInfo в File
+// Рекурсивный тип для преобразования UploadFileInfo в идентификатор загруженного файла
 type TransformUploadFileInfo<T> =
   // Сначала проверяем примитивы null/undefined, чтобы избежать их преобразования
   T extends null
@@ -277,7 +284,7 @@ type TransformUploadFileInfo<T> =
       ? undefined
       : // Затем проверяем UploadFileInfo
         T extends UploadFileInfo
-        ? File | undefined
+        ? string | undefined
         : // Массивы
           T extends (infer U)[]
           ? TransformUploadFileInfo<U>[]
@@ -329,9 +336,13 @@ export function prepareFormData<T>(data: T): TransformUploadFileInfo<T> {
     return undefined as TransformUploadFileInfo<T>
   }
 
-  // Если это UploadFileInfo - извлекаем File
+  // Если это UploadFileInfo - отдаём ссылку на уже загруженный файл (см.
+  // UploadFileInfoWithReference), а не сам File: он не отправляется никуда напрямую,
+  // файл к этому моменту уже загружен заранее (см. AppIllustrationInput.vue). Ничего
+  // не изменившийся элемент (например, обложка поста без новой загрузки) не несёт
+  // reference - тогда поле пропускается из тела запроса как есть.
   if (isUploadFileInfo(data)) {
-    return (data.file ?? undefined) as TransformUploadFileInfo<T>
+    return ((data as UploadFileInfoWithReference).reference ?? undefined) as TransformUploadFileInfo<T>
   }
 
   // Если это массив - обрабатываем каждый элемент

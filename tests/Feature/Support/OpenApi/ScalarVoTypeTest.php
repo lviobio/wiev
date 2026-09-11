@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Support\OpenApi;
 
+use App\Core\Upload\VO\NewUpload;
 use App\Modules\Post\Domain\VO\PostContent;
 use App\Modules\Post\Domain\VO\PostFileName;
 use App\Modules\Post\Domain\VO\PostTitle;
@@ -33,11 +34,22 @@ it('reads the same constraint for every ValidatedStringValue, not just one', fun
     expect(ScalarVoType::for(PostFileName::class)->maxLength)->toBe(255);
 });
 
-it('does not read length constraints into a FileValue', function () {
-    // FileValue matches its own branch in ScalarVoType::for() - the length-constraint
-    // reading only ever runs for a plain StringValue, so a file's rules (e.g. an upload
-    // size limit) never get misread as a string length.
+it('reads a stored file value as a uuid, not binary', function () {
+    // PostCover doesn't carry bytes - the client references a staged file by its
+    // temporary-upload identifier (see App\Support\Spatie\Data\StoredFileValueCast),
+    // so its wire shape is a uuid string, same as PostFileIdentifier's.
     $type = ScalarVoType::for(PostCover::class);
+
+    expect($type->type)->toBe('string')
+        ->and($type->format)->toBe('uuid')
+        ->and($type->minLength)->toBeNull()
+        ->and($type->maxLength)->toBeNull();
+});
+
+it('reads an uploaded file value as binary', function () {
+    // NewUpload is the one file value that carries actual bytes - the temporary
+    // upload endpoint's own request.
+    $type = ScalarVoType::for(NewUpload::class);
 
     expect($type->type)->toBe('string')
         ->and($type->format)->toBe('binary')

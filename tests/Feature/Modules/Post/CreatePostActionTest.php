@@ -3,22 +3,27 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post;
 
+use App\Core\Upload\Models\TemporaryUpload;
 use App\Models\User;
 use App\Modules\Post\Actions\CreatePost\CreatePostAction;
 use App\Modules\Post\Actions\CreatePost\CreatePostData;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('create post action', function () {
+    Storage::fake('public');
+    Storage::fake(config('uploads.disk'));
+
     $this->actingAs($user = User::factory()->create());
+    $cover = TemporaryUpload::factory()->image()->create(['user_id' => $user->getKey()]);
 
     $action = resolve(CreatePostAction::class);
 
     $data = CreatePostData::from([
         'title' => 'Test title',
         'content' => 'Test content',
-        'cover' => UploadedFile::fake()->image('cover.jpg'),
+        'cover' => $cover->uuid,
         'authorUser' => $user,
     ]);
 

@@ -3,13 +3,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Post\VO;
 
-use App\Support\Validation\ImageRule;
-use App\Core\VO\FileValue;
+use App\Core\VO\ImageFileValue;
 
-readonly class PostCover extends FileValue
+readonly class PostCover extends ImageFileValue
 {
-    public static function rules(): array
-    {
-        return ImageRule::make()->toArray();
-    }
 }

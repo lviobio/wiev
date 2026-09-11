@@ -67,7 +67,7 @@ class PostFileController extends Controller
         security: [['bearerAuth' => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: AttachFileData::class)),
+            content: new OA\MediaType(mediaType: 'application/json', schema: new OA\Schema(ref: AttachFileData::class)),
         ),
         tags: ['post-files'],
         parameters: [new OA\PathParameter(name: 'post', required: true, schema: new OA\Schema(type: 'integer'))],

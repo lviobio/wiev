@@ -3,10 +3,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Modules\Post;
 
+use App\Core\Upload\Models\TemporaryUpload;
 use App\Enums\AuthAbilityEnum;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+
+beforeEach(function () {
+    Storage::fake('public');
+    Storage::fake(config('uploads.disk'));
+});
 
 /**
  * Pairs with the test below: it is what makes the ability granted there load-bearing.
@@ -67,6 +74,57 @@ it('can create a new post', function () {
     $response->assertCreated();
 });
 
+it('can create a new post with a cover staged through the uploads endpoint', function () {
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
+    $model = Post::factory()->make();
+
+    $upload = $this->post(route('api.v1.uploads.store'), [
+        'file' => UploadedFile::fake()->image('cover.jpg'),
+    ])->assertCreated()->json('data');
+
+    $response = $this->postJson(route('api.v1.posts.store'), [
+        'title' => $model->title,
+        'content' => $model->content,
+        'cover' => $upload['uuid'],
+    ]);
+
+    $response->assertCreated();
+
+    $created = Post::query()->findOrFail($response->json('data.id'));
+
+    expect($response->json('data.cover'))->toBeString()
+        ->and($created->getFirstMedia(PostMediaCollectionEnum::Cover->value))->not->toBeNull();
+});
+
+it('can retry with the same cover after a sibling field fails validation', function () {
+    $this->actingAsUserAllowedTo(AuthAbilityEnum::Access, Post::class);
+
+    $upload = $this->post(route('api.v1.uploads.store'), [
+        'file' => UploadedFile::fake()->image('cover.jpg'),
+    ])->assertCreated()->json('data');
+
+    // 'ab' is shorter than PostTitle's own min:3 - the cover itself is perfectly
+    // valid, but the request as a whole must still fail.
+    $this->postJson(route('api.v1.posts.store'), [
+        'title' => 'ab',
+        'content' => null,
+        'cover' => $upload['uuid'],
+    ])->assertStatus(422);
+
+    // The cover must not have been burned by the failed attempt.
+    $response = $this->postJson(route('api.v1.posts.store'), [
+        'title' => 'A valid title',
+        'content' => null,
+        'cover' => $upload['uuid'],
+    ]);
+
+    $response->assertCreated();
+
+    $created = Post::query()->findOrFail($response->json('data.id'));
+
+    expect($created->getFirstMedia(PostMediaCollectionEnum::Cover->value))->not->toBeNull();
+});
+
 it('can update an existing post', function () {
     $model = Post::factory()->create();
     $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
@@ -92,23 +150,37 @@ it('can update an existing post', function () {
     ]);
 });
 
-it('can update an existing post with a cover through method spoofing', function () {
+it('can update an existing post with a cover uploaded ahead of time', function () {
     $model = Post::factory()->create();
     $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
 
-    $response = $this->post(route('api.v1.posts.update', [
+    $upload = TemporaryUpload::factory()->image()->create(['user_id' => $model->authorUser->getKey()]);
+
+    $response = $this->putJson(route('api.v1.posts.update', [
         'post' => $model,
     ]), [
-        '_method' => 'PUT',
         'title' => 'Updated title',
         'content' => 'Updated content',
-        'cover' => UploadedFile::fake()->image('cover.jpg'),
+        'cover' => $upload->uuid,
     ]);
 
     $response->assertOk();
 
     expect($response->json('data.title'))->toBe('Updated title')
         ->and($response->json('data.cover'))->toBeString();
+});
+
+it('rejects a cover referencing an upload it does not own', function () {
+    $model = Post::factory()->create();
+    $this->actingAs($model->authorUser)->allowActingUser(AuthAbilityEnum::Access, Post::class);
+
+    $upload = TemporaryUpload::factory()->image()->create();
+
+    $this->putJson(route('api.v1.posts.update', ['post' => $model]), [
+        'title' => 'Updated title',
+        'content' => 'Updated content',
+        'cover' => $upload->uuid,
+    ])->assertStatus(422);
 });
 
 it('can delete a post', function () {
