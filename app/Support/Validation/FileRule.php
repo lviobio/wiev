@@ -7,12 +7,18 @@ class FileRule
 {
     private array $set = [];
 
-    public static function make(): static
+    /**
+     * @param  int|null  $maxBytes  Defaults to `media-library.max_file_size` - pass an
+     *                              override for a value with a different limit of its
+     *                              own (e.g. `UploadedChunk`, sized to `uploads.chunked.
+     *                              chunk_max_size` rather than a whole file's cap).
+     */
+    public static function make(?int $maxBytes = null): static
     {
         return new self()
             ->push('file')
-            // правило max: считает килобайты, конфиг media library — байты
-            ->push('max:' . intdiv((int) config('media-library.max_file_size'), 1024));
+            // правило max: считает килобайты, конфиг — байты
+            ->push('max:' . intdiv($maxBytes ?? (int) config('media-library.max_file_size'), 1024));
     }
 
     private function push(string $rule): static

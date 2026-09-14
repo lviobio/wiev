@@ -6,6 +6,8 @@ namespace App\Providers;
 use App\Core\ModelManager\Guards\ManagedModelGuard;
 use App\Core\ModelManager\ModelManager;
 use App\Core\ModelManager\ModelManagerContract;
+use App\Core\Upload\Models\ChunkedUpload;
+use App\Core\Upload\Models\TemporaryUpload;
 use App\Models\User;
 use App\Support\Routing\AppControllerDispatcher;
 use App\Support\Spatie\MediaLibrary\DeferredFileAdder;
@@ -55,6 +57,12 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'user' => User::class,
             'media' => Media::class,
+            // Not morphed against anything themselves - registered so getMorphClass()
+            // doesn't throw when bootstrap/app.php's generic ModelNotFoundException
+            // renderable (the 424 path every "id not found" endpoint goes through)
+            // reads the model off a findOrFail() failure for either of them.
+            'temporary_upload' => TemporaryUpload::class,
+            'chunked_upload' => ChunkedUpload::class,
         ]);
     }
 }

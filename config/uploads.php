@@ -40,4 +40,28 @@ return [
      * this long before deleting them, so the second case can still be inspected.
      */
     'used_grace_minutes' => (int) env('TEMPORARY_UPLOAD_USED_GRACE_MINUTES', 60),
+
+    /*
+     * Chunked uploads (App\Core\Upload\Actions\Chunked) - large files staged in
+     * pieces instead of one multipart request, ending in the same TemporaryUpload
+     * a single-shot /uploads call would produce. See App\Core\Upload\Chunked\
+     * ChunkedUploadStrategyResolver for how the assembly mechanics depend on
+     * whether `disk` above is a local or an S3-driven disk.
+     */
+    'chunked' => [
+        // Cap on the fully assembled file - independent of media-library.max_file_size
+        // (which bounds a single ordinary multipart request; chunking exists to get
+        // past that, not to inherit it).
+        'max_size' => (int) env('TEMPORARY_UPLOAD_CHUNKED_MAX_SIZE', 1024 * 1024 * 1024), // 1GB
+
+        // Caps one chunk request - independent of the frontend's own chunk-size
+        // default, so a misbehaving/other client can't send an arbitrarily large
+        // single chunk and defeat the point of chunking.
+        'chunk_max_size' => (int) env('TEMPORARY_UPLOAD_CHUNKED_CHUNK_MAX_SIZE', 1024 * 1024 * 20), // 20MB
+
+        // How long an abandoned session (no chunk received / never completed)
+        // survives before App\Core\Upload\Console\Commands\PruneChunkedUploadsCommand
+        // deletes it.
+        'ttl_hours' => (int) env('TEMPORARY_UPLOAD_CHUNKED_TTL_HOURS', 24),
+    ],
 ];

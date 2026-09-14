@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTemporaryUploadRepository } from '@/core/api/TemporaryUploadRepository'
+import { useChunkedUpload } from '@/core/upload/useChunkedUpload'
 import { RemovableUploadFileInfo, UploadFileInfoWithReference } from '@/core/utils/form-schemas'
 import { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui'
 import { computed, ref } from 'vue'
@@ -22,7 +22,7 @@ const image = defineModel<RemovableUploadFileInfo | undefined>('image')
 const initiallySet = Boolean(image.value)
 const uploading = ref(false)
 
-const uploadRepository = useTemporaryUploadRepository()
+const chunkedUpload = useChunkedUpload()
 
 // naive-ui's own onFinish handling rebuilds its file-info object from its internally
 // tracked `file` (Object.assign({}, file, {status, percentage})) and re-emits
@@ -65,16 +65,16 @@ const updateImage = (value: UploadFileInfo[]) => {
 // own submit only ever sends the resulting identifier - never the raw file. naive-ui
 // generates its own local preview from the raw File automatically (list-type
 // "image-card"), so nothing extra is needed for that here.
-function customRequest({ file, onFinish, onError }: UploadCustomRequestOptions) {
+function customRequest({ file, onFinish, onError, onProgress }: UploadCustomRequestOptions) {
   if (!file.file) {
     onError()
     return
   }
 
   uploading.value = true
-  uploadRepository
-    .upload({ data: { file: file.file } })
-    .then(({ data }) => {
+  chunkedUpload
+    .upload(file.file, { onProgress: (percent) => onProgress({ percent }) })
+    .then((data) => {
       references.value[file.id] = data.uuid
       onFinish()
     })

@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
+use App\Core\Upload\Console\Commands\PruneChunkedUploadsCommand;
 use App\Core\Upload\Console\Commands\PruneTemporaryUploadsCommand;
+use App\Core\Upload\Exceptions\ChunkedUploadOffsetMismatchException;
 use App\Core\Upload\Exceptions\TemporaryUploadAlreadyUsedException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -28,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         app_path('Console/Commands'),
         PruneTemporaryUploadsCommand::class,
+        PruneChunkedUploadsCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
@@ -48,6 +51,19 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response()->json(['message' => $e->getMessage()], 409);
+        });
+
+        // A chunk's declared offset didn't match the session's received_bytes - the
+        // client can resync from the received_bytes carried here and retry.
+        $exceptions->renderable(function (ChunkedUploadOffsetMismatchException $e, Request $request): ?JsonResponse {
+            if (!$request->wantsJson()) {
+                return null;
+            }
+
+            return response()->json([
+                'message' => $e->getMessage(),
+                'received_bytes' => $e->receivedBytes,
+            ], 409);
         });
 
         $exceptions->renderable(function (NotFoundHttpException $e, Request $request): ?JsonResponse {

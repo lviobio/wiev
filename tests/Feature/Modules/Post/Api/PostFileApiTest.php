@@ -181,3 +181,27 @@ it('requires the access ability', function () {
 
     $this->getJson(route('api.v1.posts.files.index', ['post' => $this->model]))->assertForbidden();
 });
+
+it('attaches a file that was uploaded in chunks - the two upload paths converge', function () {
+    $start = $this->postJson(route('api.v1.uploads.chunked.store'), [
+        'originalName' => 'large-report.pdf',
+        'mimeType' => 'application/pdf',
+        'totalSize' => 11,
+    ])->assertCreated()->json('data');
+
+    $this->post(route('api.v1.uploads.chunked.chunks.store', ['chunkedUpload' => $start['uuid']]), [
+        'chunk' => UploadedFile::fake()->createWithContent('a.bin', 'hello world'),
+        'offset' => 0,
+    ])->assertOk();
+
+    $upload = $this->postJson(route('api.v1.uploads.chunked.complete', ['chunkedUpload' => $start['uuid']]))
+        ->assertCreated()
+        ->json('data');
+
+    $response = $this->postJson(route('api.v1.posts.files.store', ['post' => $this->model]), [
+        'file' => $upload['uuid'],
+    ])->assertCreated();
+
+    expect($response->json('data.file_name'))->toBe('large-report.pdf')
+        ->and($this->model->fresh()->mediaFiles()->count())->toBe(1);
+});

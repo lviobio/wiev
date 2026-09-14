@@ -8,11 +8,14 @@ declare(strict_types=1);
 
 namespace App\Core\Upload\Http\Controllers;
 
+use App\Core\Upload\Actions\Chunked\CompleteChunkedUpload\CompleteChunkedUploadAction;
+use App\Core\Upload\Actions\Chunked\CompleteChunkedUpload\CompleteChunkedUploadData;
 use App\Core\Upload\Actions\StoreUpload\StoreUploadAction;
 use App\Core\Upload\Actions\StoreUpload\StoreUploadData;
 use App\Core\Upload\Http\Resources\TemporaryUploadResource;
 use App\Http\Controllers\Controller;
 use App\Support\Data\Filling\FillFromAuthenticatedUser;
+use App\Support\Data\Filling\FillFromRouteParameter;
 use App\Support\OpenApi\SingleResourceResponse;
 use OpenApi\Attributes as OA;
 
@@ -34,6 +37,28 @@ class UploadController extends Controller
         StoreUploadAction $action,
         #[FillFromAuthenticatedUser('actorUser')]
         StoreUploadData $data,
+    ): TemporaryUploadResource
+    {
+        return TemporaryUploadResource::loaded($action($data));
+    }
+
+    #[OA\Post(
+        path: '/api/v1/uploads/chunked/{chunkedUpload}/complete',
+        operationId: 'completeTemporaryUploadChunked',
+        summary: 'Complete chunked',
+        security: [['bearerAuth' => []]],
+        tags: ['uploads'],
+        parameters: [new OA\PathParameter(name: 'chunkedUpload', required: true, schema: new OA\Schema(type: 'string'))],
+        responses: [
+            new SingleResourceResponse(TemporaryUploadResource::class),
+            new OA\Response(response: '424', description: 'Temporary Upload not found'),
+        ],
+    )]
+    public function completeChunked(
+        CompleteChunkedUploadAction $action,
+        #[FillFromAuthenticatedUser('actorUser')]
+        #[FillFromRouteParameter('id', 'chunkedUpload')]
+        CompleteChunkedUploadData $data,
     ): TemporaryUploadResource
     {
         return TemporaryUploadResource::loaded($action($data));

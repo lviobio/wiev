@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { useTemporaryUploadRepository } from '@/core/api/TemporaryUploadRepository'
+import { useChunkedUpload } from '@/core/upload/useChunkedUpload'
 import { PostFileRepository } from '@/modules/post/repositories/PostFileRepository'
 import { PostFile, PostIdentifier } from '@/modules/post/types'
 import type { UploadCustomRequestOptions } from 'naive-ui'
@@ -11,7 +11,7 @@ const { id, repository } = defineProps<{
 
 const message = useMessage()
 const dialog = useDialog()
-const uploadRepository = useTemporaryUploadRepository()
+const chunkedUpload = useChunkedUpload()
 
 const files = ref<PostFile[]>([])
 const loading = ref(false)
@@ -31,7 +31,7 @@ async function load() {
 
 await load()
 
-function customRequest({ file, onFinish, onError }: UploadCustomRequestOptions) {
+function customRequest({ file, onFinish, onError, onProgress }: UploadCustomRequestOptions) {
   if (!file.file) {
     onError()
     return
@@ -39,10 +39,12 @@ function customRequest({ file, onFinish, onError }: UploadCustomRequestOptions) 
 
   uploading.value = true
   // Files are staged first (like the cover, see AppIllustrationInput.vue) and then
-  // attached by identifier - the backend no longer accepts raw bytes here.
-  uploadRepository
-    .upload({ data: { file: file.file } })
-    .then(({ data: upload }) => repository.attach(id, { data: { file: upload.uuid } }))
+  // attached by identifier - the backend no longer accepts raw bytes here. Large
+  // files are chunked automatically (useChunkedUpload); small ones still go through
+  // a single request, so nothing about the common case changes.
+  chunkedUpload
+    .upload(file.file, { onProgress: (percent) => onProgress({ percent }) })
+    .then((upload) => repository.attach(id, { data: { file: upload.uuid } }))
     .then(({ data }) => {
       files.value.push(data)
       message.success('File attached')
