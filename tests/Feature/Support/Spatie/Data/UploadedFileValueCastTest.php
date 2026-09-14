@@ -25,5 +25,5 @@ test('the raw upload is validated as a file within the media library limit', fun
     $rules = StoreUploadData::getValidationRules([]);
 
     expect($rules['file'])->toContain('file')
-        ->and($rules['file'])->toContain('max:10240');
+        ->and($rules['file'])->toContain('max:102400');
 });
