@@ -5,11 +5,11 @@ namespace Tests\Feature\Support\OpenApi;
 
 use App\Core\Upload\VO\NewUpload;
 use App\Modules\Post\Domain\VO\PostContent;
+use App\Modules\Post\Domain\VO\PostCover;
+use App\Modules\Post\Domain\VO\PostFileIdentifier;
 use App\Modules\Post\Domain\VO\PostFileName;
+use App\Modules\Post\Domain\VO\PostIdentifier;
 use App\Modules\Post\Domain\VO\PostTitle;
-use App\Modules\Post\VO\PostCover;
-use App\Modules\Post\VO\PostFileIdentifier;
-use App\Modules\Post\VO\PostIdentifier;
 use App\Support\OpenApi\Swagger\ScalarVoType;
 
 it('reads minLength and maxLength off a validated string value\'s own rules', function () {

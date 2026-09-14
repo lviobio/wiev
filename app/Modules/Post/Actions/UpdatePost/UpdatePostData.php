@@ -5,9 +5,9 @@ namespace App\Modules\Post\Actions\UpdatePost;
 
 use App\Models\User;
 use App\Modules\Post\Domain\VO\PostContent;
+use App\Modules\Post\Domain\VO\PostCover;
+use App\Modules\Post\Domain\VO\PostIdentifier;
 use App\Modules\Post\Domain\VO\PostTitle;
-use App\Modules\Post\VO\PostCover;
-use App\Modules\Post\VO\PostIdentifier;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 

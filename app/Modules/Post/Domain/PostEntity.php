@@ -6,13 +6,13 @@ namespace App\Modules\Post\Domain;
 use App\Modules\Post\Domain\Data\NewPostData;
 use App\Modules\Post\Domain\VO\PostAuthor;
 use App\Modules\Post\Domain\VO\PostContent;
+use App\Modules\Post\Domain\VO\PostCover;
+use App\Modules\Post\Domain\VO\PostFile;
+use App\Modules\Post\Domain\VO\PostFileIdentifier;
 use App\Modules\Post\Domain\VO\PostFileName;
 use App\Modules\Post\Domain\VO\PostTitle;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
-use App\Modules\Post\VO\PostCover;
-use App\Modules\Post\VO\PostFile;
-use App\Modules\Post\VO\PostFileIdentifier;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 

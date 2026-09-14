@@ -6,9 +6,9 @@ namespace Tests\Feature\Core\ModelManager;
 use App\Core\Upload\Models\TemporaryUpload;
 use App\Modules\Post\Actions\Files\AttachFile\AttachFileAction;
 use App\Modules\Post\Actions\Files\AttachFile\AttachFileData;
+use App\Modules\Post\Domain\VO\PostFile;
 use App\Modules\Post\Enums\PostMediaCollectionEnum;
 use App\Modules\Post\Models\Post;
-use App\Modules\Post\VO\PostFile;
 use Illuminate\Support\Facades\Storage;
 
 /**

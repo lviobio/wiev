@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * Stages a client-uploaded file so it can be referenced by id, not re-sent as bytes,
- * by whatever request later claims it (e.g. {@see \App\Modules\Post\VO\PostCover}).
+ * by whatever request later claims it (e.g. {@see \App\Modules\Post\Domain\VO\PostCover}).
  *
  * Not run through ModelManager: a standalone row, not part of any aggregate's
  * transactional graph.

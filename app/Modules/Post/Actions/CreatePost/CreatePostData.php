@@ -5,8 +5,8 @@ namespace App\Modules\Post\Actions\CreatePost;
 
 use App\Modules\Post\Domain\VO\PostAuthor;
 use App\Modules\Post\Domain\VO\PostContent;
+use App\Modules\Post\Domain\VO\PostCover;
 use App\Modules\Post\Domain\VO\PostTitle;
-use App\Modules\Post\VO\PostCover;
 use Spatie\LaravelData\Data;
 
 class CreatePostData extends Data

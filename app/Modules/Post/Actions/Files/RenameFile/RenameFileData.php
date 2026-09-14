@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Modules\Post\Actions\Files\RenameFile;
 
 use App\Models\User;
+use App\Modules\Post\Domain\VO\PostFileIdentifier;
 use App\Modules\Post\Domain\VO\PostFileName;
-use App\Modules\Post\VO\PostFileIdentifier;
-use App\Modules\Post\VO\PostIdentifier;
+use App\Modules\Post\Domain\VO\PostIdentifier;
 use Spatie\LaravelData\Data;
 
 class RenameFileData extends Data
