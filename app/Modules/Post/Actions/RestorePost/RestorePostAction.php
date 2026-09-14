@@ -20,7 +20,7 @@ readonly class RestorePostAction
     {
         $model = $this->modelManager->retrieve(
             Post::class,
-            static fn(Builder|Post $query): Post => $query->withTrashed()->findOrFail($data->id->value),
+            static fn(Builder|Post $query): Post => $query->withTrashed()->findOrFail($data->id),
         );
 
         Gate::forUser($data->actorUser)->authorize('restore', $model);

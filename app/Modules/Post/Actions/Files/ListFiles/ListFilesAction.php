@@ -26,7 +26,7 @@ readonly class ListFilesAction
     {
         $post = $this->modelManager->retrieve(
             Post::class,
-            static fn(Builder|Post $query): Post => $query->findOrFail($data->id->value),
+            static fn(Builder|Post $query): Post => $query->findOrFail($data->id),
         );
 
         return new PostEntity($post)->files();

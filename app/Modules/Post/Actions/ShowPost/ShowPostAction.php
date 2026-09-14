@@ -19,7 +19,7 @@ readonly class ShowPostAction
     {
         return $this->modelManager->retrieve(
             Post::class,
-            static fn(Builder|Post $query): Post => $query->withTrashed()->findOrFail($data->id->value),
+            static fn(Builder|Post $query): Post => $query->withTrashed()->findOrFail($data->id),
         );
     }
 }

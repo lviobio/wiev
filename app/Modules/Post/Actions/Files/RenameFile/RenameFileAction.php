@@ -22,7 +22,7 @@ readonly class RenameFileAction
     {
         $post = $this->modelManager->retrieve(
             Post::class,
-            static fn(Builder|Post $query): Post => $query->findOrFail($data->id->value),
+            static fn(Builder|Post $query): Post => $query->findOrFail($data->id),
         );
 
         Gate::forUser($data->actorUser)->authorize('update', $post);
