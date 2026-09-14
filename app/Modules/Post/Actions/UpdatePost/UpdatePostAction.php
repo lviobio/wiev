@@ -27,20 +27,20 @@ readonly class UpdatePostAction
 
         Gate::forUser($data->actorUser)->authorize('update', $model);
 
-        $this->execute($model, $data);
+        $this->execute(new PostEntity($model), $data);
 
         $this->modelManager->flush();
 
         return $model;
     }
 
-    private function execute(Post $model, UpdatePostData $data): void
+    private function execute(PostEntity $post, UpdatePostData $data): void
     {
-        $model->title = $data->title;
-        $model->content = $data->content;
+        $post->setTitle($data->title);
+        $post->setContent($data->content);
 
         if (!$data->cover instanceof Optional) {
-            new PostEntity($model)->setCover($data->cover);
+            $post->setCover($data->cover);
         }
     }
 }
