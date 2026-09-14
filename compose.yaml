@@ -86,7 +86,44 @@ services:
     networks:
       - main
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "${EXPOSE_MINIO_PORT:-7003}:9000"
+      - "${EXPOSE_MINIO_CONSOLE_PORT:-7004}:9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      - minio-data:/data
+    networks:
+      - main
+
+  # One-shot: waits for minio, then makes sure the app's bucket exists and is
+  # readable anonymously (media URLs are plain, unsigned `url()` calls - see
+  # config/filesystems.php - so this mirrors the "public" local disk's
+  # world-readable symlink). Reuses the app's own S3 credentials as the mc
+  # alias via MC_HOST_*, so there's one source of truth for them, not two.
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      - minio
+    environment:
+      MC_HOST_local: http://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@minio:9000
+    entrypoint: >
+      /bin/sh -c "
+      until mc ls local >/dev/null 2>&1; do sleep 1; done;
+      mc mb --ignore-existing local/${AWS_BUCKET};
+      mc anonymous set download local/${AWS_BUCKET};
+      "
+    networks:
+      - main
+
 networks:
   main:
 volumes:
   db-data:
+  minio-data:
